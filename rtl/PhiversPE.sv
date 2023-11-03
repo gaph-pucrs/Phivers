@@ -88,7 +88,7 @@ module PhiversPE
         .interrupt_ack_o        (irq_ack        )
     );
 
-    logic plic_en; /* @todo */
+    logic        plic_en; /* @todo */
     logic [31:0] plic_data_read; /* @todo */
 
     plic #(
@@ -225,6 +225,15 @@ module PhiversPE
 
     assign brlite_ack_snd = (brlite_flit_snd[(NPORT - 1)].service == BR_SVC_MON) ? brlite_mon_ack : brlite_svc_ack;
 
+    logic [4:0] brlite_id;
+
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (!rst_ni)
+            brlite_id <= '0;
+        else if (brlite_ack_rcv[(NPORT - 1)])
+            brlite_id <= brlite_id + 1'b1;
+    end
+
     brlite_out_t brlite_flit_ni;
 
     assign brlite_flit_rcv[(NPORT - 1)].payload    = brlite_flit_ni.payload;
@@ -232,7 +241,7 @@ module PhiversPE
     assign brlite_flit_rcv[(NPORT - 1)].seq_source = SEQ_ADDRESS;
     assign brlite_flit_rcv[(NPORT - 1)].producer   = brlite_flit_ni.producer;
     assign brlite_flit_rcv[(NPORT - 1)].ksvc       = brlite_flit_ni.ksvc;
-    assign brlite_flit_rcv[(NPORT - 1)].id         = /* @todo */;
+    assign brlite_flit_rcv[(NPORT - 1)].id         = brlite_id;
     assign brlite_flit_rcv[(NPORT - 1)].service    = brlite_flit_ni.service;
 
     DMNI #(
