@@ -1,0 +1,15 @@
+[submodule "RS5"]
+	path = RS5
+	url = https://github.com/gaph-pucrs/RS5
+[submodule "Hermes"]
+	path = Hermes
+	url = https://github.com/gaph-pucrs/Hermes
+[submodule "BrLite"]
+	path = BrLite
+	url = https://github.com/gaph-pucrs/BrLite
+[submodule "DMNI"]
+	path = DMNI
+	url = https://github.com/gaph-pucrs/DMNI
+[submodule "TaskInjector"]
+	path = TaskInjector
+	url = https://github.com/gaph-pucrs/TaskInjector
