@@ -25,6 +25,15 @@ module PhiversPE
     input  logic [31:0] dmem_data_i,
     output logic [31:0] dmem_data_o,
 
+    /* DMA memory interface: read/write on instruction/data */
+    output logic        idma_en_o,
+    output logic        ddma_en_o
+    output logic [3:0]  dma_we_o,
+    output logic [31:0] dma_addr_o,
+    input  logic [31:0] idma_data_i,
+    input  logic [31:0] ddma_data_i,
+    output logic [31:0] dma_data_o,
+
     /* NoC input interface */
     input  logic        noc_rx_i     [(NPORT - 2):0],
     output logic        noc_credit_o [(NPORT - 2):0],
@@ -46,6 +55,10 @@ module PhiversPE
     output br_data_t    brlite_flit_o[(NPORT - 2):0]
 );
 
+////////////////////////////////////////////////////////////////////////////////
+// Core
+////////////////////////////////////////////////////////////////////////////////
+
     logic rst;
 
     assign rst = ~rst_ni;
@@ -56,15 +69,15 @@ module PhiversPE
 
     assign irq = {20'b0, mei, 3'b0, mti, 7'b0};
 
-    logic        dmem_en;         /* @todo */
-    logic [3:0]  dmem_we;
-    logic [31:0] dmem_addr;
-    logic [31:0] dmem_data_write;
-    logic [31:0] dmem_data_read;  /* @todo */
+    logic        cpu_en;
+    logic [3:0]  cpu_we;
+    logic [31:0] cpu_addr;
+    logic [31:0] cpu_data_write;
+    logic [31:0] cpu_data_read;
 
-    assign dmem_we_o   = dmem_we;
-    assign dmem_addr_o = dmem_addr;
-    assign dmem_data_o = dmem_data_write;
+    assign dmem_we_o   = cpu_we;
+    assign dmem_addr_o = cpu_addr;
+    assign dmem_data_o = cpu_data_write;
 
     RS5 #(
         .Environment(Environment),
@@ -73,57 +86,69 @@ module PhiversPE
         .ZIHPMEnable(1)
     )
     processor (
-        .clk                    (clk_i          ),
-        .reset                  (rst            ),
-        .stall                  (1'b0           ),
-        .instruction_i          (imem_data_i    ),
-        .mem_data_i             (dmem_data_read ),
-        .mtime_i                (mtime          ),
-        .irq_i                  (irq            ),
-        .instruction_address_o  (imem_addr_o    ),
-        .mem_operation_enable_o (dmem_en        ),
-        .mem_write_enable_o     (dmem_we        ),
-        .mem_address_o          (dmem_addr      ),
-        .mem_data_o             (dmem_data_write),
-        .interrupt_ack_o        (irq_ack        )
+        .clk                    (clk_i         ),
+        .reset                  (rst           ),
+        .stall                  (1'b0          ),
+        .instruction_i          (imem_data_i   ),
+        .mem_data_i             (dmem_data_read),
+        .mtime_i                (mtime         ),
+        .irq_i                  (irq           ),
+        .instruction_address_o  (imem_addr_o   ),
+        .mem_operation_enable_o (cpu_en        ),
+        .mem_write_enable_o     (cpu_we        ),
+        .mem_address_o          (cpu_addr      ),
+        .mem_data_o             (cpu_data_write),
+        .interrupt_ack_o        (irq_ack       )
     );
 
-    logic        plic_en; /* @todo */
-    logic [31:0] plic_data_read; /* @todo */
+////////////////////////////////////////////////////////////////////////////////
+// PLIC
+////////////////////////////////////////////////////////////////////////////////
+
+    logic        plic_en;
+    logic [31:0] plic_data_read;
 
     plic #(
         .i_cnt(/* @todo */),
     )
     plic_m (
-        .clk    (clk_i          ),
-        .reset  (rst            ),
-        .en_i   (plic_en        ),
-        .we_i   (dmem_we        ),
-        .addr_i (dmem_addr      ),
-        .data_i (dmem_data_write),
-        .data_o (plic_data_read ),
-        .irq_i  (/* @todo */    ),
-        .iack_i (irq_ack        ),
-        .iack_o (/* @todo */    ),
-        .irq_o  (mei            )
+        .clk    (clk_i         ),
+        .reset  (rst           ),
+        .en_i   (plic_en       ),
+        .we_i   (cpu_we        ),
+        .addr_i (cpu_addr      ),
+        .data_i (cpu_data_write),
+        .data_o (plic_data_read),
+        .irq_i  (/* @todo */   ),
+        .iack_i (irq_ack       ),
+        .iack_o (/* @todo */   ),
+        .irq_o  (mei           )
     );
 
-    logic        rtc_en;        /* @todo */
-    logic [31:0] rtc_data_read; /* @todo */
+////////////////////////////////////////////////////////////////////////////////
+// RTC
+////////////////////////////////////////////////////////////////////////////////
+
+    logic        rtc_en;
+    logic [31:0] rtc_data_read;
     logic [63:0] mtime;
 
     rtc 
     rtc_m (
-        .clk     (clk_i          ),
-        .reset   (rst            ),
-        .en_i    (rtc_en         ),
-        .addr_i  (dmem_addr      ),
-        .we_i    (dmem_we        ),
-        .data_i  (dmem_data_write),
-        .data_o  (rtc_data_read  ),
-        .mti_o   (mti            ),
-        .mtime_o (mtime          ),
+        .clk     (clk_i         ),
+        .reset   (rst           ),
+        .en_i    (rtc_en        ),
+        .addr_i  (cpu_addr      ),
+        .we_i    (cpu_we        ),
+        .data_i  (cpu_data_write),
+        .data_o  (rtc_data_read ),
+        .mti_o   (mti           ),
+        .mtime_o (mtime         ),
     );
+
+////////////////////////////////////////////////////////////////////////////////
+// NoC
+////////////////////////////////////////////////////////////////////////////////
 
     logic        noc_rx         [(NPORT - 1):0];
     logic        noc_credit_rcv [(NPORT - 1):0];
@@ -156,6 +181,10 @@ module PhiversPE
         .credit_o (noc_credit_rcv),
         .data_o   (noc_data_snd  )
     );
+
+////////////////////////////////////////////////////////////////////////////////
+// BrNoC
+////////////////////////////////////////////////////////////////////////////////
 
     logic brlite_local_busy;
 
@@ -193,10 +222,14 @@ module PhiversPE
         .ack_i        (brlite_ack_snd   ),
     );
 
+////////////////////////////////////////////////////////////////////////////////
+// DMNI
+////////////////////////////////////////////////////////////////////////////////
+
     logic        dmni_irq;     /* @todo */
 
-    logic        ni_en;        /* @todo */
-    logic [31:0] ni_data_read; /* @todo */
+    logic        ni_en;
+    logic [31:0] ni_data_read;
 
     logic [3:0]  dma_we;         /* @todo */
     logic [31:0] dma_addr;       /* @todo */
@@ -257,9 +290,9 @@ module PhiversPE
         .rst_ni          (rst_ni                      ),
         .irq_o           (dmni_irq                    ),
         .cfg_en_i        (ni_en                       ),
-        .cfg_we_i        (dmem_we                     ),
-        .cfg_addr_i      (dmem_addr                   ),
-        .cfg_data_i      (dmem_data_write             ),
+        .cfg_we_i        (cpu_we                      ),
+        .cfg_addr_i      (cpu_addr                    ),
+        .cfg_data_i      (cpu_data_write              ),
         .cfg_data_o      (ni_data_read                ),
         .mem_we_o        (dma_we                      ),
         .mem_addr_o      (dma_addr                    ),
@@ -282,5 +315,57 @@ module PhiversPE
         .br_ack_i        (brlite_ack_rcv[(NPORT - 1)] ),
         .br_data_o       (brlite_flit_ni              )
     );
+
+////////////////////////////////////////////////////////////////////////////////
+// Memory address multiplexing
+////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Memory map:
+     * [0x00000000, 0x80000000[ (bit 31 = 0) -> instruction
+     * [0x80000000, 0xFFFFFFFF] (bit 31 = 1) -> data
+     *  [0x80000000, 0xC0000000[ (bit 30 = 0) -> data memory
+     *  [0xC1000000, 0xFFFFFFFF] (bit 30 = 1) -> MMR
+     *   [0xC1000000, 0xC2000000[ (bit 24 = 1) -> PLIC
+     *   [0xC2000000, 0xC3000000[ (bit 25 = 1) -> RTC
+     *   [0xC4000000, 0xC5000000[ (bit 26 = 1) -> NI
+     *   [0xC8000000, 0xC9000000[ (bit 27 = 1) -> Reserved
+     *   [0xD0000000, 0xD1000000[ (bit 28 = 1) -> Reserved
+     *   [0xE0000000, 0xE1000000[ (bit 29 = 1) -> Reserved
+     */
+
+    assign dmem_en_o = cpu_en && (cpu_addr <= 32'h00000000);
+    assign rtc_en    = cpu_en && (cpu_addr >  32'h00000000 && cpu_addr <= 32'h00000000);
+    assign plic_en   = cpu_en && (cpu_addr >  32'h00000000 && cpu_addr <= 32'h00000000);
+    assign ni_en     = cpu_en && (cpu_addr >  32'h00000000 && cpu_addr <= 32'h00000000);
+
+    /* On read, the data is available at the next cycle */
+    logic rtc_en_r;
+    logic plic_en_r;
+    logic ni_en_r;
+
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (!rst_ni) begin
+            rtc_en_r  <= '0;
+            plic_en_r <= '0;
+            ni_en_r   <= '0;
+        end
+        else begin
+            rtc_en_r  <= rtc_en;
+            plic_en_r <= plic_en;
+            ni_en_r   <= plic_en;
+        end;
+    end
+
+    always_comb begin
+        if (rtc_en_r)
+            cpu_data_read <= rtc_data_read;
+        else if (plic_en_r)
+            cpu_data_read <= plic_data_read;
+        else if (ni_en_r)
+            cpu_data_read <= ni_data_read;
+        else
+            cpu_data_read <= dmem_data_i;
+    end
 
 endmodule
