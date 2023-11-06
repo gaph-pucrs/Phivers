@@ -35,24 +35,24 @@ module PhiversPE
     output logic [31:0] dma_data_o,
 
     /* NoC input interface */
-    input  logic        noc_rx_i     [(NPORT - 2):0],
-    output logic        noc_credit_o [(NPORT - 2):0],
-    input  logic [31:0] noc_data_i   [(NPORT - 2):0],
+    input  logic        noc_rx_i     [(HERMES_NPORT - 2):0],
+    output logic        noc_credit_o [(HERMES_NPORT - 2):0],
+    input  logic [31:0] noc_data_i   [(HERMES_NPORT - 2):0],
 
     /* NoC output interface */
-    output logic        noc_tx_i     [(NPORT - 2):0],
-    input  logic        noc_credit_i [(NPORT - 2):0],
-    output logic [31:0] noc_data_o   [(NPORT - 2):0],
+    output logic        noc_tx_o     [(HERMES_NPORT - 2):0],
+    input  logic        noc_credit_i [(HERMES_NPORT - 2):0],
+    output logic [31:0] noc_data_o   [(HERMES_NPORT - 2):0],
 
     /* BrLite input interface */
-    input  logic        brlite_req_i [(NPORT - 2):0],
-    output logic        brlite_ack_o [(NPORT - 2):0],
-    input  br_data_t    brlite_flit_i[(NPORT - 2):0],
+    input  logic        brlite_req_i [(BR_NPORT - 2):0],
+    output logic        brlite_ack_o [(BR_NPORT - 2):0],
+    input  br_data_t    brlite_flit_i[(BR_NPORT - 2):0],
 
     /* BrLite output interface */
-    output logic        brlite_req_o [(NPORT - 2):0],
-    input  logic        brlite_ack_i [(NPORT - 2):0],
-    output br_data_t    brlite_flit_o[(NPORT - 2):0]
+    output logic        brlite_req_o [(BR_NPORT - 2):0],
+    input  logic        brlite_ack_i [(BR_NPORT - 2):0],
+    output br_data_t    brlite_flit_o[(BR_NPORT - 2):0]
 );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -75,6 +75,7 @@ module PhiversPE
     logic [31:0] cpu_addr;
     logic [31:0] cpu_data_write;
     logic [31:0] cpu_data_read;
+    logic [63:0] mtime;
 
     assign imem_addr_o = imem_addr[23:0];
     assign dmem_we_o   = cpu_we;
@@ -114,7 +115,7 @@ module PhiversPE
     logic [31:0] plic_data_read;
 
     plic #(
-        .i_cnt(1),
+        .i_cnt(1)
     )
     plic_m (
         .clk    (clk_i         ),
@@ -136,7 +137,6 @@ module PhiversPE
 
     logic        rtc_en;
     logic [31:0] rtc_data_read;
-    logic [63:0] mtime;
 
     rtc 
     rtc_m (
@@ -148,28 +148,28 @@ module PhiversPE
         .data_i  (cpu_data_write),
         .data_o  (rtc_data_read ),
         .mti_o   (mti           ),
-        .mtime_o (mtime         ),
+        .mtime_o (mtime         )
     );
 
 ////////////////////////////////////////////////////////////////////////////////
 // NoC
 ////////////////////////////////////////////////////////////////////////////////
 
-    logic        noc_rx         [(NPORT - 1):0];
-    logic        noc_credit_rcv [(NPORT - 1):0];
-    logic [31:0] noc_data_rcv   [(NPORT - 1):0];
+    logic        noc_rx         [(HERMES_NPORT - 1):0];
+    logic        noc_credit_rcv [(HERMES_NPORT - 1):0];
+    logic [31:0] noc_data_rcv   [(HERMES_NPORT - 1):0];
 
-    assign noc_rx[(NPORT - 2):0]       = noc_rx_i;
-    assign noc_credit_o                = noc_credit_rcv[(NPORT - 2):0];
-    assign noc_data_rcv[(NPORT - 2):0] = noc_data_i;
+    assign noc_rx[(HERMES_NPORT - 2):0]       = noc_rx_i;
+    assign noc_credit_o                       = noc_credit_rcv[(HERMES_NPORT - 2):0];
+    assign noc_data_rcv[(HERMES_NPORT - 2):0] = noc_data_i;
 
-    logic        noc_tx         [(NPORT - 1):0];
-    logic        noc_credit_snd [(NPORT - 1):0];
-    logic [31:0] noc_data_snd   [(NPORT - 1):0];
+    logic        noc_tx         [(HERMES_NPORT - 1):0];
+    logic        noc_credit_snd [(HERMES_NPORT - 1):0];
+    logic [31:0] noc_data_snd   [(HERMES_NPORT - 1):0];
 
-    assign noc_tx_o                      = noc_tx[(NPORT - 2):0];
-    assign noc_credit_snd[(NPORT - 2):0] = noc_credit_i;
-    assign noc_data_o                    = noc_data_snd[(NPORT - 2):0];
+    assign noc_tx_o                             = noc_tx[(HERMES_NPORT - 2):0];
+    assign noc_credit_snd[(HERMES_NPORT - 2):0] = noc_credit_i;
+    assign noc_data_o                           = noc_data_snd[(HERMES_NPORT - 2):0];
 
     HermesRouter #(
         .ADDRESS(ADDRESS),
@@ -193,21 +193,21 @@ module PhiversPE
 
     logic brlite_local_busy;
 
-    logic     brlite_req_rcv  [(NPORT - 1):0];
-    logic     brlite_ack_rcv  [(NPORT - 1):0];
-    br_data_t brlite_flit_rcv [(NPORT - 1):0];
+    logic     brlite_req_rcv  [(BR_NPORT - 1):0];
+    logic     brlite_ack_rcv  [(BR_NPORT - 1):0];
+    br_data_t brlite_flit_rcv [(BR_NPORT - 1):0];
 
-    assign brlite_req_rcv[(NPORT - 2):0]  = brlite_req_i;
-    assign brlite_ack_rcv                 = brlite_ack_o[(NPORT - 2):0];
-    assign brlite_flit_rcv[(NPORT - 2):0] = brlite_flit_i;
+    assign brlite_req_rcv[(BR_NPORT - 2):0]  = brlite_req_i;
+    assign brlite_ack_o                      = brlite_ack_rcv[(BR_NPORT - 2):0];
+    assign brlite_flit_rcv[(BR_NPORT - 2):0] = brlite_flit_i;
 
-    logic     brlite_req_snd  [(NPORT - 1):0];
-    logic     brlite_ack_snd  [(NPORT - 1):0];
-    br_data_t brlite_flit_snd [(NPORT - 1):0];
+    logic     brlite_req_snd  [(BR_NPORT - 1):0];
+    logic     brlite_ack_snd  [(BR_NPORT - 1):0];
+    br_data_t brlite_flit_snd [(BR_NPORT - 1):0];
 
-    assign brlite_req_o                  = brlite_req_snd[(NPORT - 2):0];
-    assign brlite_ack_snd[(NPORT - 2):0] = brlite_ack_i;
-    assign brlite_flit_o                 = brlite_flit_snd[(NPORT - 2):0];
+    assign brlite_req_o                     = brlite_req_snd[(BR_NPORT - 2):0];
+    assign brlite_ack_snd[(BR_NPORT - 2):0] = brlite_ack_i;
+    assign brlite_flit_o                    = brlite_flit_snd[(BR_NPORT - 2):0];
 
     BrLiteRouter #(
         .SEQ_ADDRESS (SEQ_ADDRESS),
@@ -224,7 +224,7 @@ module PhiversPE
         .ack_o        (brlite_ack_rcv   ),
         .flit_o       (brlite_flit_snd  ),
         .req_o        (brlite_req_snd   ),
-        .ack_i        (brlite_ack_snd   ),
+        .ack_i        (brlite_ack_snd   )
     );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -253,42 +253,42 @@ module PhiversPE
     logic        brlite_mon_ack;
     brlite_mon_t brlite_mon_flit;
 
-    assign brlite_mon_req             = brlite_req_snd[(NPORT - 1)] && (brlite_flit_snd[(NPORT - 1)].service == BR_SVC_MON);
-    assign brlite_mon_flit.payload    = brlite_flit_snd[(NPORT - 1)].payload;
-    assign brlite_mon_flit.seq_source = brlite_flit_snd[(NPORT - 1)].seq_source;
-    assign brlite_mon_flit.producer   = brlite_flit_snd[(NPORT - 1)].producer;
-    assign brlite_mon_flit.msvc       = brlite_flit_snd[(NPORT - 1)].ksvc[($clog2(BRLITE_MON_NSVC) - 1):0];
+    assign brlite_mon_req             = brlite_req_snd[(BR_NPORT - 1)] && (brlite_flit_snd[(BR_NPORT - 1)].service == BR_SVC_MON);
+    assign brlite_mon_flit.payload    = brlite_flit_snd[(BR_NPORT - 1)].payload;
+    assign brlite_mon_flit.seq_source = brlite_flit_snd[(BR_NPORT - 1)].seq_source;
+    assign brlite_mon_flit.producer   = brlite_flit_snd[(BR_NPORT - 1)].producer;
+    assign brlite_mon_flit.msvc       = brlite_flit_snd[(BR_NPORT - 1)].ksvc[($clog2(BRLITE_MON_NSVC) - 1):0];
 
     logic        brlite_svc_req;
     logic        brlite_svc_ack;
     brlite_svc_t brlite_svc_flit;
 
-    assign brlite_svc_req = brlite_req_snd[(NPORT - 1)] && (brlite_flit_snd[(NPORT - 1)].service != BR_SVC_MON);
-    assign brlite_svc_flit.payload    = brlite_flit_snd[(NPORT - 1)].payload;
-    assign brlite_svc_flit.seq_source = brlite_flit_snd[(NPORT - 1)].seq_source;
-    assign brlite_svc_flit.producer   = brlite_flit_snd[(NPORT - 1)].producer;
-    assign brlite_svc_flit.ksvc       = brlite_flit_snd[(NPORT - 1)].ksvc;
+    assign brlite_svc_req = brlite_req_snd[(BR_NPORT - 1)] && (brlite_flit_snd[(BR_NPORT - 1)].service != BR_SVC_MON);
+    assign brlite_svc_flit.payload    = brlite_flit_snd[(BR_NPORT - 1)].payload;
+    assign brlite_svc_flit.seq_source = brlite_flit_snd[(BR_NPORT - 1)].seq_source;
+    assign brlite_svc_flit.producer   = brlite_flit_snd[(BR_NPORT - 1)].producer;
+    assign brlite_svc_flit.ksvc       = brlite_flit_snd[(BR_NPORT - 1)].ksvc;
 
-    assign brlite_ack_snd = (brlite_flit_snd[(NPORT - 1)].service == BR_SVC_MON) ? brlite_mon_ack : brlite_svc_ack;
+    assign brlite_ack_snd[(BR_NPORT - 1)] = (brlite_flit_snd[(BR_NPORT - 1)].service == BR_SVC_MON) ? brlite_mon_ack : brlite_svc_ack;
 
     logic [4:0] brlite_id;
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni)
             brlite_id <= '0;
-        else if (brlite_ack_rcv[(NPORT - 1)])
+        else if (brlite_ack_rcv[(BR_NPORT - 1)])
             brlite_id <= brlite_id + 1'b1;
     end
 
     brlite_out_t brlite_flit_ni;
 
-    assign brlite_flit_rcv[(NPORT - 1)].payload    = brlite_flit_ni.payload;
-    assign brlite_flit_rcv[(NPORT - 1)].seq_target = brlite_flit_ni.seq_target;
-    assign brlite_flit_rcv[(NPORT - 1)].seq_source = SEQ_ADDRESS;
-    assign brlite_flit_rcv[(NPORT - 1)].producer   = brlite_flit_ni.producer;
-    assign brlite_flit_rcv[(NPORT - 1)].ksvc       = brlite_flit_ni.ksvc;
-    assign brlite_flit_rcv[(NPORT - 1)].id         = brlite_id;
-    assign brlite_flit_rcv[(NPORT - 1)].service    = brlite_flit_ni.service;
+    assign brlite_flit_rcv[(BR_NPORT - 1)].payload    = brlite_flit_ni.payload;
+    assign brlite_flit_rcv[(BR_NPORT - 1)].seq_target = brlite_flit_ni.seq_target;
+    assign brlite_flit_rcv[(BR_NPORT - 1)].seq_source = SEQ_ADDRESS;
+    assign brlite_flit_rcv[(BR_NPORT - 1)].producer   = brlite_flit_ni.producer;
+    assign brlite_flit_rcv[(BR_NPORT - 1)].ksvc       = brlite_flit_ni.ksvc;
+    assign brlite_flit_rcv[(BR_NPORT - 1)].id         = brlite_id;
+    assign brlite_flit_rcv[(BR_NPORT - 1)].service    = br_svc_t'(brlite_flit_ni.service);
 
     DMNI #(
         .HERMES_FLIT_SIZE   (32),
@@ -299,34 +299,34 @@ module PhiversPE
         .TASKS_PER_PE       (TASKS_PER_PE)
     )
     dmni (
-        .clk_i           (clk_i                       ),
-        .rst_ni          (rst_ni                      ),
-        .irq_o           (dmni_irq                    ),
-        .cfg_en_i        (ni_en                       ),
-        .cfg_we_i        (cpu_we                      ),
-        .cfg_addr_i      (cpu_addr                    ),
-        .cfg_data_i      (cpu_data_write              ),
-        .cfg_data_o      (ni_data_read                ),
-        .mem_we_o        (dma_we                      ),
-        .mem_addr_o      (dma_addr                    ),
-        .mem_data_o      (dma_data_o                  ),
-        .mem_data_i      (dma_data_read               ),
-        .noc_rx_i        (noc_tx[(NPORT - 1)]         ),
-        .noc_credit_o    (noc_credit_snd[(NPORT - 1)] ),
-        .noc_data_i      (noc_data_snd[(NPORT - 1)]   ),
-        .noc_tx_o        (noc_rx[(NPORT - 1)]         ),
-        .noc_credit_i    (noc_credit_rcv[(NPORT - 1)] ),
-        .noc_data_o      (noc_data_rcv[(NPORT - 1)]   ),
-        .br_req_mon_i    (brlite_mon_req              ),
-        .br_ack_mon_o    (brlite_mon_ack              ),
-        .br_mon_data_i   (brlite_mon_flit             ),
-        .br_req_svc_i    (brlite_svc_req              ),
-        .br_ack_svc_o    (brlite_svc_ack              ),
-        .br_svc_data_i   (brlite_svc_flit             ),
-        .br_local_busy_i (brlite_local_busy           ),
-        .br_req_o        (brlite_req_rcv[(NPORT - 1)] ),
-        .br_ack_i        (brlite_ack_rcv[(NPORT - 1)] ),
-        .br_data_o       (brlite_flit_ni              )
+        .clk_i           (clk_i                             ),
+        .rst_ni          (rst_ni                            ),
+        .irq_o           (dmni_irq                          ),
+        .cfg_en_i        (ni_en                             ),
+        .cfg_we_i        (cpu_we                            ),
+        .cfg_addr_i      (cpu_addr                          ),
+        .cfg_data_i      (cpu_data_write                    ),
+        .cfg_data_o      (ni_data_read                      ),
+        .mem_we_o        (dma_we                            ),
+        .mem_addr_o      (dma_addr                          ),
+        .mem_data_o      (dma_data_o                        ),
+        .mem_data_i      (dma_data_read                     ),
+        .noc_rx_i        (noc_tx[(HERMES_NPORT - 1)]        ),
+        .noc_credit_o    (noc_credit_snd[(HERMES_NPORT - 1)]),
+        .noc_data_i      (noc_data_snd[(HERMES_NPORT - 1)]  ),
+        .noc_tx_o        (noc_rx[(HERMES_NPORT - 1)]        ),
+        .noc_credit_i    (noc_credit_rcv[(HERMES_NPORT - 1)]),
+        .noc_data_o      (noc_data_rcv[(HERMES_NPORT - 1)]  ),
+        .br_req_mon_i    (brlite_mon_req                    ),
+        .br_ack_mon_o    (brlite_mon_ack                    ),
+        .br_mon_data_i   (brlite_mon_flit                   ),
+        .br_req_svc_i    (brlite_svc_req                    ),
+        .br_ack_svc_o    (brlite_svc_ack                    ),
+        .br_svc_data_i   (brlite_svc_flit                   ),
+        .br_local_busy_i (brlite_local_busy                 ),
+        .br_req_o        (brlite_req_rcv[(BR_NPORT - 1)]    ),
+        .br_ack_i        (brlite_ack_rcv[(BR_NPORT - 1)]    ),
+        .br_data_o       (brlite_flit_ni                    )
     );
 
 ////////////////////////////////////////////////////////////////////////////////

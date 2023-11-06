@@ -125,22 +125,22 @@ module PhiversMC
 ////////////////////////////////////////////////////////////////////////////////
 
     /* Hermes signals */
-    logic        rx        [(N_PE_X - 1):0][(N_PE_Y - 1):0][(NPORT - 2):0];
-    logic        credit_rx [(N_PE_X - 1):0][(N_PE_Y - 1):0][(NPORT - 2):0];
-    logic [31:0] data_rx   [(N_PE_X - 1):0][(N_PE_Y - 1):0][(NPORT - 2):0];
+    logic        rx        [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
+    logic        credit_rx [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
+    logic [31:0] data_rx   [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
 
-    logic        tx        [(N_PE_X - 1):0][(N_PE_Y - 1):0][(NPORT - 2):0];
-    logic        credit_tx [(N_PE_X - 1):0][(N_PE_Y - 1):0][(NPORT - 2):0];
-    logic [31:0] data_tx   [(N_PE_X - 1):0][(N_PE_Y - 1):0][(NPORT - 2):0];
+    logic        tx        [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
+    logic        credit_tx [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
+    logic [31:0] data_tx   [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
 
     /* BrLite signals */
-    logic        req_rx    [(N_PE_X - 1):0][(N_PE_Y - 1):0][(NPORT - 2):0];
-    logic        ack_rx    [(N_PE_X - 1):0][(N_PE_Y - 1):0][(NPORT - 2):0];
-    br_data_t    flit_rx   [(N_PE_X - 1):0][(N_PE_Y - 1):0][(NPORT - 2):0];
+    logic        req_rx    [(N_PE_X - 1):0][(N_PE_Y - 1):0][(BR_NPORT - 2):0];
+    logic        ack_rx    [(N_PE_X - 1):0][(N_PE_Y - 1):0][(BR_NPORT - 2):0];
+    br_data_t    flit_rx   [(N_PE_X - 1):0][(N_PE_Y - 1):0][(BR_NPORT - 2):0];
 
-    logic        req_tx    [(N_PE_X - 1):0][(N_PE_Y - 1):0][(NPORT - 2):0];
-    logic        ack_tx    [(N_PE_X - 1):0][(N_PE_Y - 1):0][(NPORT - 2):0];
-    br_data_t    flit_tx   [(N_PE_X - 1):0][(N_PE_Y - 1):0][(NPORT - 2):0];
+    logic        req_tx    [(N_PE_X - 1):0][(N_PE_Y - 1):0][(BR_NPORT - 2):0];
+    logic        ack_tx    [(N_PE_X - 1):0][(N_PE_Y - 1):0][(BR_NPORT - 2):0];
+    br_data_t    flit_tx   [(N_PE_X - 1):0][(N_PE_Y - 1):0][(BR_NPORT - 2):0];
 
     generate
         for (genvar x = 0; x < N_PE_X; x++) begin : gen_x
@@ -157,7 +157,7 @@ module PhiversMC
                 ) 
                 pe (
                     .clk_i        (clk_i            ),
-                    .rst_ni       (rst_ni           )
+                    .rst_ni       (rst_ni           ),
                     .imem_addr_o  (imem_addr_o[x][y]),
                     .imem_data_i  (imem_data_i[x][y]),
                     .dmem_en_o    (dmem_en_o[x][y]  ),
@@ -230,19 +230,19 @@ module PhiversMC
                 /* BrLite connection */
                 assign req_rx[x][y][BR_EAST]     = (x != N_PE_X - 1) ? req_tx[x + 1][y][BR_WEST]  : '0;
                 assign ack_tx[x + 1][y][BR_WEST] = (x != N_PE_X - 1) ? ack_rx[x][y][BR_EAST]      : '0;
-                assign flit_rx[x][y][BR_EAST]    = (x != N_PE_X - 1) ? flit_Tx[x + 1][y][BR_WEST] : '0;
+                assign flit_rx[x][y][BR_EAST]    = (x != N_PE_X - 1) ? flit_tx[x + 1][y][BR_WEST] : '0;
 
                 assign req_rx[x][y][BR_WEST]     = (x != 0) ? req_tx[x - 1][y][BR_EAST]  : '0;
                 assign ack_tx[x - 1][y][BR_EAST] = (x != 0) ? ack_rx[x][y][BR_WEST]      : '0;
-                assign flit_rx[x][y][BR_WEST]    = (x != 0) ? flit_Tx[x - 1][y][BR_EAST] : '0;
+                assign flit_rx[x][y][BR_WEST]    = (x != 0) ? flit_tx[x - 1][y][BR_EAST] : '0;
 
                 assign req_rx[x][y][BR_NORTH]     = (y != N_PE_Y - 1) ? req_tx[x][y + 1][BR_SOUTH]  : '0;
                 assign ack_tx[x][y + 1][BR_SOUTH] = (y != N_PE_Y - 1) ? ack_rx[x][y][BR_NORTH]      : '0;
-                assign flit_rx[x][y][BR_NORTH]    = (y != N_PE_Y - 1) ? flit_Tx[x][y + 1][BR_SOUTH] : '0;
+                assign flit_rx[x][y][BR_NORTH]    = (y != N_PE_Y - 1) ? flit_tx[x][y + 1][BR_SOUTH] : '0;
 
                 assign req_rx[x][y][BR_SOUTH]     = (y != 0) ? req_tx[x][y - 1][BR_NORTH]  : '0;
                 assign ack_tx[x][y - 1][BR_NORTH] = (y != 0) ? ack_rx[x][y][BR_SOUTH]      : '0;
-                assign flit_rx[x][y][BR_SOUTH]    = (y != 0) ? flit_Tx[x][y - 1][BR_NORTH] : '0;
+                assign flit_rx[x][y][BR_SOUTH]    = (y != 0) ? flit_tx[x][y - 1][BR_NORTH] : '0;
             end
         end
     endgenerate
