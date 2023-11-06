@@ -13,3 +13,6 @@
 [submodule "TaskInjector"]
 	path = TaskInjector
 	url = https://github.com/gaph-pucrs/TaskInjector
+[submodule "RingBuffer"]
+	path = RingBuffer
+	url = https://github.com/gaph-pucrs/RingBuffer
