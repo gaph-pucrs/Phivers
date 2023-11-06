@@ -125,22 +125,23 @@ module PhiversMC
 ////////////////////////////////////////////////////////////////////////////////
 
     /* Hermes signals */
-    logic        rx        [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
-    logic        credit_rx [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
-    logic [31:0] data_rx   [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
+    logic        release_peripheral [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
+    logic        rx                 [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
+    logic        credit_rx          [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
+    logic [31:0] data_rx            [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
 
-    logic        tx        [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
-    logic        credit_tx [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
-    logic [31:0] data_tx   [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
+    logic        tx                 [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
+    logic        credit_tx          [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
+    logic [31:0] data_tx            [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
 
     /* BrLite signals */
-    logic        req_rx    [(N_PE_X - 1):0][(N_PE_Y - 1):0][(BR_NPORT - 2):0];
-    logic        ack_rx    [(N_PE_X - 1):0][(N_PE_Y - 1):0][(BR_NPORT - 2):0];
-    br_data_t    flit_rx   [(N_PE_X - 1):0][(N_PE_Y - 1):0][(BR_NPORT - 2):0];
+    logic        req_rx             [(N_PE_X - 1):0][(N_PE_Y - 1):0][(BR_NPORT - 2):0];
+    logic        ack_rx             [(N_PE_X - 1):0][(N_PE_Y - 1):0][(BR_NPORT - 2):0];
+    br_data_t    flit_rx            [(N_PE_X - 1):0][(N_PE_Y - 1):0][(BR_NPORT - 2):0];
 
-    logic        req_tx    [(N_PE_X - 1):0][(N_PE_Y - 1):0][(BR_NPORT - 2):0];
-    logic        ack_tx    [(N_PE_X - 1):0][(N_PE_Y - 1):0][(BR_NPORT - 2):0];
-    br_data_t    flit_tx   [(N_PE_X - 1):0][(N_PE_Y - 1):0][(BR_NPORT - 2):0];
+    logic        req_tx             [(N_PE_X - 1):0][(N_PE_Y - 1):0][(BR_NPORT - 2):0];
+    logic        ack_tx             [(N_PE_X - 1):0][(N_PE_Y - 1):0][(BR_NPORT - 2):0];
+    br_data_t    flit_tx            [(N_PE_X - 1):0][(N_PE_Y - 1):0][(BR_NPORT - 2):0];
 
     generate
         for (genvar x = 0; x < N_PE_X; x++) begin : gen_x
@@ -156,34 +157,35 @@ module PhiversMC
                     .Environment(Environment)
                 ) 
                 pe (
-                    .clk_i        (clk_i            ),
-                    .rst_ni       (rst_ni           ),
-                    .imem_addr_o  (imem_addr_o[x][y]),
-                    .imem_data_i  (imem_data_i[x][y]),
-                    .dmem_en_o    (dmem_en_o[x][y]  ),
-                    .dmem_we_o    (dmem_we_o[x][y]  ),
-                    .dmem_addr_o  (dmem_addr_o[x][y]),
-                    .dmem_data_i  (dmem_data_i[x][y]),
-                    .dmem_data_o  (dmem_data_o[x][y]),
-                    .idma_en_o    (idma_en_o[x][y]  ),
-                    .ddma_en_o    (ddma_en_o[x][y]  ),
-                    .dma_we_o     (dma_we_o[x][y]   ),
-                    .dma_addr_o   (dma_addr_o[x][y] ),
-                    .idma_data_i  (idma_data_i[x][y]),
-                    .ddma_data_i  (ddma_data_i[x][y]),
-                    .dma_data_o   (dma_data_o[x][y] ),
-                    .noc_rx_i     (rx[x][y]         ),
-                    .noc_credit_o (credit_rx[x][y]  ),
-                    .noc_data_i   (data_rx[x][y]    ),
-                    .noc_tx_i     (tx[x][y]         ),
-                    .noc_credit_i (credit_tx[x][y]  ),
-                    .noc_data_o   (data_tx[x][y]    ),
-                    .brlite_req_i (req_rx[x][y]     ),
-                    .brlite_ack_o (ack_rx[x][y]     ),
-                    .brlite_flit_i(flit_rx[x][y]    ),
-                    .brlite_req_o (req_tx[x][y]     ),
-                    .brlite_ack_i (ack_tx[x][y]     ),
-                    .brlite_flit_o(flit_tx[x][y]    )
+                    .clk_i                (clk_i                   ),
+                    .rst_ni               (rst_ni                  ),
+                    .imem_addr_o          (imem_addr_o[x][y]       ),
+                    .imem_data_i          (imem_data_i[x][y]       ),
+                    .dmem_en_o            (dmem_en_o[x][y]         ),
+                    .dmem_we_o            (dmem_we_o[x][y]         ),
+                    .dmem_addr_o          (dmem_addr_o[x][y]       ),
+                    .dmem_data_i          (dmem_data_i[x][y]       ),
+                    .dmem_data_o          (dmem_data_o[x][y]       ),
+                    .idma_en_o            (idma_en_o[x][y]         ),
+                    .ddma_en_o            (ddma_en_o[x][y]         ),
+                    .dma_we_o             (dma_we_o[x][y]          ),
+                    .dma_addr_o           (dma_addr_o[x][y]        ),
+                    .idma_data_i          (idma_data_i[x][y]       ),
+                    .ddma_data_i          (ddma_data_i[x][y]       ),
+                    .dma_data_o           (dma_data_o[x][y]        ),
+                    .release_peripheral_o (release_peripheral[x][y]),
+                    .noc_rx_i             (rx[x][y]                ),
+                    .noc_credit_o         (credit_rx[x][y]         ),
+                    .noc_data_i           (data_rx[x][y]           ),
+                    .noc_tx_i             (tx[x][y]                ),
+                    .noc_credit_i         (credit_tx[x][y]         ),
+                    .noc_data_o           (data_tx[x][y]           ),
+                    .brlite_req_i         (req_rx[x][y]            ),
+                    .brlite_ack_o         (ack_rx[x][y]            ),
+                    .brlite_flit_i        (flit_rx[x][y]           ),
+                    .brlite_req_o         (req_tx[x][y]            ),
+                    .brlite_ack_i         (ack_tx[x][y]            ),
+                    .brlite_flit_o        (flit_tx[x][y]           )
                 );
 
                 /* Hermes connection */
@@ -215,11 +217,11 @@ module PhiversMC
                     end
 
                     if (address == ADDR_APP_INJ) begin
-                        rx[x][y][PORT_APP_INJ]      = app_inj_tx;
+                        rx[x][y][PORT_APP_INJ]      = app_inj_tx && release_peripheral[x][y];
                         app_inj_credit_tx           = credit_rx[x][y][PORT_APP_INJ];
                         data_rx[x][y][PORT_APP_INJ] = app_inj_data_tx;
 
-                        app_inj_rx                    = tx[x][y][PORT_APP_INJ];
+                        app_inj_rx                    = tx[x][y][PORT_APP_INJ] && release_peripheral[x][y];
                         credit_tx[x][y][PORT_APP_INJ] = app_inj_credit_rx;
                         app_inj_data_rx               = data_tx[x][y][PORT_APP_INJ];
                     end
