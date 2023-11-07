@@ -4,8 +4,19 @@ module PhiversTB
 (
 );
 
-    logic clk;
+    logic clk = 1'b1;
     logic rst_n;
+
+    always begin
+        #5.0 clk = 0;
+        #5.0 clk = 1;
+    end
+
+    initial begin
+        rst_n = 1'b0;
+        
+        #100 rst_n = 1'b1;
+    end
 
     logic [15:0] mapper_address;
     
@@ -49,8 +60,8 @@ module PhiversTB
         .Environment  (ASIC        )
     )
     mc (
-        .clk              (clk            ),
-        .rst_n            (rst_n          ),
+        .clk_i            (clk            ),
+        .rst_ni           (rst_n          ),
         .mapper_address_i (mapper_address ),
         .ma_src_rx_i      (ma_src_rx      ),
         .ma_src_credit_o  (ma_src_credit  ),
@@ -92,19 +103,19 @@ module PhiversTB
                     .BIN_FILE  (KERNEL_TEXT)
                 ) 
                 I_MEM (
-                    .clk        (clk            ),
+                    .clk        (clk                                     ),
 
-                    .enA_i      (1'b1           ), 
-                    .weA_i      (4'h0           ), 
-                    .addrA_i    (imem_addr[x][y]), 
-                    .dataA_i    (32'h0          ), 
-                    .dataA_o    (imem_data[x][y]),
+                    .enA_i      (1'b1                                    ), 
+                    .weA_i      (4'h0                                    ), 
+                    .addrA_i    (imem_addr[x][y][($clog2(IMEM_SZ) - 1):0]), 
+                    .dataA_i    (32'h0                                   ), 
+                    .dataA_o    (imem_data[x][y]                         ),
 
-                    .enB_i      (idma_en[x][y]  ), 
-                    .weB_i      (dma_we[x][y]   ), 
-                    .addrB_i    (dma_addr[x][y] ), 
-                    .dataB_i    (dma_data[x][y] ), 
-                    .dataB_o    (idma_data[x][y])
+                    .enB_i      (idma_en[x][y]                           ), 
+                    .weB_i      (dma_we[x][y]                            ), 
+                    .addrB_i    (dma_addr[x][y][($clog2(IMEM_SZ) - 1):0] ), 
+                    .dataB_i    (dma_data[x][y]                          ), 
+                    .dataB_o    (idma_data[x][y]                         )
                 );
 
                 RAM_mem #(
@@ -112,19 +123,19 @@ module PhiversTB
                     .BIN_FILE  (KERNEL_DATA)
                 ) 
                 D_MEM (
-                    .clk        (clk                  ), 
+                    .clk        (clk                                     ), 
 
-                    .enA_i      (dmem_en[x][y]        ), 
-                    .weA_i      (dmem_we[x][y]        ), 
-                    .addrA_i    (dmem_addr[x][y]      ), 
-                    .dataA_i    (dmem_data_write[x][y]), 
-                    .dataA_o    (dmem_data_read[x][y] ),
+                    .enA_i      (dmem_en[x][y]                           ), 
+                    .weA_i      (dmem_we[x][y]                           ), 
+                    .addrA_i    (dmem_addr[x][y][($clog2(DMEM_SZ) - 1):0]), 
+                    .dataA_i    (dmem_data_write[x][y]                   ), 
+                    .dataA_o    (dmem_data_read[x][y]                    ),
 
-                    .enB_i      (ddma_en[x][y]        ), 
-                    .weB_i      (dma_we[x][y]         ), 
-                    .addrB_i    (dma_addr[x][y]       ), 
-                    .dataB_i    (dma_data[x][y]       ), 
-                    .dataB_o    (ddma_data[x][y]      )
+                    .enB_i      (ddma_en[x][y]                           ), 
+                    .weB_i      (dma_we[x][y]                            ), 
+                    .addrB_i    (dma_addr[x][y][($clog2(DMEM_SZ) - 1):0] ), 
+                    .dataB_i    (dma_data[x][y]                          ), 
+                    .dataB_o    (ddma_data[x][y]                         )
                 );
 
             end
