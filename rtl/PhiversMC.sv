@@ -125,7 +125,7 @@ module PhiversMC
 ////////////////////////////////////////////////////////////////////////////////
 
     /* Hermes signals */
-    logic        release_peripheral [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
+    logic        release_peripheral [(N_PE_X - 1):0][(N_PE_Y - 1):0];
     logic        rx                 [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
     logic        credit_rx          [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
     logic [31:0] data_rx            [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
