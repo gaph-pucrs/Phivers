@@ -35,3 +35,5 @@ vlog ../TaskInjector/sim/MAParser.sv
 vlog ../TaskInjector/sim/AppParser.sv
 vlog PhiversPkg.sv
 vlog PhiversTB.sv
+
+vsim work.PhiversTB
