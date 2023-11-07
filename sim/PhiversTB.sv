@@ -1,5 +1,6 @@
 module PhiversTB
     import RS5_pkg::*;
+    import PhiversPkg::*;
 (
 );
 
@@ -19,6 +20,7 @@ module PhiversTB
     logic [23:0] imem_addr       [(N_PE_X - 1):0][(N_PE_Y - 1):0];
     logic [31:0] imem_data       [(N_PE_X - 1):0][(N_PE_Y - 1):0];
 
+    logic        dmem_en         [(N_PE_X - 1):0][(N_PE_Y - 1):0];
     logic [3:0]  dmem_we         [(N_PE_X - 1):0][(N_PE_Y - 1):0];
     logic [23:0] dmem_addr       [(N_PE_X - 1):0][(N_PE_Y - 1):0];
     logic [31:0] dmem_data_read  [(N_PE_X - 1):0][(N_PE_Y - 1):0];
@@ -26,26 +28,25 @@ module PhiversTB
 
     logic        idma_en         [(N_PE_X - 1):0][(N_PE_Y - 1):0];
     logic        ddma_en         [(N_PE_X - 1):0][(N_PE_Y - 1):0];
-    logic [3:0]  dma_we          [(N_PE_X - 1):0][(N_PE_Y - 1):0],
+    logic [3:0]  dma_we          [(N_PE_X - 1):0][(N_PE_Y - 1):0];
     logic [23:0] dma_addr        [(N_PE_X - 1):0][(N_PE_Y - 1):0];
     logic [31:0] idma_data       [(N_PE_X - 1):0][(N_PE_Y - 1):0];
     logic [31:0] ddma_data       [(N_PE_X - 1):0][(N_PE_Y - 1):0];
     logic [31:0] dma_data        [(N_PE_X - 1):0][(N_PE_Y - 1):0];
-
 
 //////////////////////////////////////////////////////////////////////////////
 // Many Core
 //////////////////////////////////////////////////////////////////////////////
 
     PhiversMC #(
-        .N_PE_X       (/* @todo */),
-        .N_PE_Y       (/* @todo */),
-        .TASKS_PER_PE (/* @todo */),
-        .ADDR_MA_INJ  (/* @todo */),
-        .PORT_MA_INJ  (/* @todo */),
-        .ADDR_APP_INJ (/* @todo */),
-        .PORT_APP_INJ (/* @todo */),
-        .Environment  (ASIC)
+        .N_PE_X       (N_PE_X      ),
+        .N_PE_Y       (N_PE_Y      ),
+        .TASKS_PER_PE (TASKS_PER_PE),
+        .ADDR_MA_INJ  (ADDR_MA_INJ ),
+        .PORT_MA_INJ  (PORT_MA_INJ ),
+        .ADDR_APP_INJ (ADDR_APP_INJ),
+        .PORT_APP_INJ (PORT_APP_INJ),
+        .Environment  (ASIC        )
     )
     mc (
         .clk              (clk            ),
@@ -74,15 +75,21 @@ module PhiversTB
     );
 
 //////////////////////////////////////////////////////////////////////////////
-// Instruction Memory
+// Memory
 //////////////////////////////////////////////////////////////////////////////
+
+    localparam IMEM_SZ = IMEM_PAGE_SZ * (TASKS_PER_PE + 1);
+    localparam KERNEL_TEXT = {PATH, "ikernel.bin"};
+
+    localparam DMEM_SZ = DMEM_PAGE_SZ * (TASKS_PER_PE + 1);
+    localparam KERNEL_DATA = {PATH, "dkernel.bin"};
 
     generate
         for (genvar x = 0; x < N_PE_X; x++) begin
             for (genvar y = 0; y < N_PE_Y; y++) begin
                 RAM_mem #(
-                    .MEM_WIDTH (/* @todo */),
-                    .BIN_FILE  (/* @todo */)
+                    .MEM_WIDTH (IMEM_SZ),
+                    .BIN_FILE  (KERNEL_TEXT)
                 ) 
                 I_MEM (
                     .clk        (clk            ),
@@ -101,8 +108,8 @@ module PhiversTB
                 );
 
                 RAM_mem #(
-                    .MEM_WIDTH (/* @todo */),
-                    .BIN_FILE  (/* @todo */)
+                    .MEM_WIDTH (DMEM_SZ    ),
+                    .BIN_FILE  (KERNEL_DATA)
                 ) 
                 D_MEM (
                     .clk        (clk                  ), 
@@ -129,8 +136,8 @@ module PhiversTB
 //////////////////////////////////////////////////////////////////////////////
 
     MAParser #(
-        .PATH      (/* @todo */),
-        .FLIT_SIZE (32         )
+        .PATH      (PATH),
+        .FLIT_SIZE (32  )
     )
     ma_src (
         .clk_i            (clk           ),
@@ -141,18 +148,20 @@ module PhiversTB
         .mapper_address_o (mapper_address)
     );
 
+    logic eoa; /* @todo */
+
     AppParser #(
-        .PATH      (/* @todo */),
-        .SIM_FREQ  (/* @todo */),
-        .FLIT_SIZE (32         )
+        .PATH      (PATH    ),
+        .SIM_FREQ  (SIM_FREQ),
+        .FLIT_SIZE (32      )
     )
     app_src (
         .clk_i            (clk           ),
         .rst_ni           (rst_n         ),
-        .eoa_o            (/* @todo */   ),
+        .eoa_o            (eoa           ),
         .tx_o             (app_src_rx    ),
         .credit_i         (app_src_credit),
-        .data_o           (app_src_data  ),
+        .data_o           (app_src_data  )
     );
 
 endmodule
