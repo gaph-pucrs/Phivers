@@ -11,49 +11,49 @@ module PhiversPE
     parameter environment_e Environment  = ASIC
 )
 (
-    input  logic clk_i,
-    input  logic rst_ni,
+    input  logic                        clk_i,
+    input  logic                        rst_ni,
 
     /* Instruction memory interface: read-only */
-    output logic [23:0] imem_addr_o,
-    input  logic [31:0] imem_data_i,
+    output logic     [23:0]             imem_addr_o,
+    input  logic     [31:0]             imem_data_i,
 
     /* Data memory interface: read/write */
-    output logic        dmem_en_o,
-    output logic [3:0]  dmem_we_o,
-    output logic [23:0] dmem_addr_o,
-    input  logic [31:0] dmem_data_i,
-    output logic [31:0] dmem_data_o,
+    output logic                        dmem_en_o,
+    output logic     [3:0]              dmem_we_o,
+    output logic     [23:0]             dmem_addr_o,
+    input  logic     [31:0]             dmem_data_i,
+    output logic     [31:0]             dmem_data_o,
 
     /* DMA memory interface: read/write on instruction/data */
-    output logic        idma_en_o,
-    output logic        ddma_en_o,
-    output logic [3:0]  dma_we_o,
-    output logic [23:0] dma_addr_o,
-    input  logic [31:0] idma_data_i,
-    input  logic [31:0] ddma_data_i,
-    output logic [31:0] dma_data_o,
+    output logic                        idma_en_o,
+    output logic                        ddma_en_o,
+    output logic     [3:0]              dma_we_o,
+    output logic     [23:0]             dma_addr_o,
+    input  logic     [31:0]             idma_data_i,
+    input  logic     [31:0]             ddma_data_i,
+    output logic     [31:0]             dma_data_o,
 
     /* NoC input interface */
-    output logic        release_peripheral_o,
-    input  logic        noc_rx_i              [(HERMES_NPORT - 2):0],
-    output logic        noc_credit_o          [(HERMES_NPORT - 2):0],
-    input  logic [31:0] noc_data_i            [(HERMES_NPORT - 2):0],
+    output logic                        release_peripheral_o,
+    input  logic                        noc_rx_i              [(HERMES_NPORT - 2):0],
+    output logic                        noc_credit_o          [(HERMES_NPORT - 2):0],
+    input  logic     [31:0]             noc_data_i            [(HERMES_NPORT - 2):0],
 
     /* NoC output interface */
-    output logic        noc_tx_o              [(HERMES_NPORT - 2):0],
-    input  logic        noc_credit_i          [(HERMES_NPORT - 2):0],
-    output logic [31:0] noc_data_o            [(HERMES_NPORT - 2):0],
+    output logic                        noc_tx_o              [(HERMES_NPORT - 2):0],
+    input  logic                        noc_credit_i          [(HERMES_NPORT - 2):0],
+    output logic     [31:0]             noc_data_o            [(HERMES_NPORT - 2):0],
 
     /* BrLite input interface */
-    input  logic        brlite_req_i          [(BR_NPORT - 2):0],
-    output logic        brlite_ack_o          [(BR_NPORT - 2):0],
-    input  br_data_t    brlite_flit_i         [(BR_NPORT - 2):0],
+    input  logic     [(BR_NPORT - 2):0] brlite_req_i,
+    output logic     [(BR_NPORT - 2):0] brlite_ack_o,
+    input  br_data_t [(BR_NPORT - 2):0] brlite_flit_i,
 
     /* BrLite output interface */
-    output logic        brlite_req_o          [(BR_NPORT - 2):0],
-    input  logic        brlite_ack_i          [(BR_NPORT - 2):0],
-    output br_data_t    brlite_flit_o         [(BR_NPORT - 2):0]
+    output logic     [(BR_NPORT - 2):0] brlite_req_o,
+    input  logic     [(BR_NPORT - 2):0] brlite_ack_i,
+    output br_data_t [(BR_NPORT - 2):0] brlite_flit_o
 );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -94,7 +94,7 @@ module PhiversPE
         .reset                  (rst           ),
         .stall                  (1'b0          ),
         .instruction_i          (imem_data_i   ),
-        .mem_data_i             (dmem_data_read),
+        .mem_data_i             (cpu_data_read ),
         .mtime_i                (mtime         ),
         .irq_i                  (irq           ),
         .instruction_address_o  (imem_addr     ),
@@ -123,7 +123,7 @@ module PhiversPE
         .reset  (rst           ),
         .en_i   (plic_en       ),
         .we_i   (cpu_we        ),
-        .addr_i (cpu_addr      ),
+        .addr_i (cpu_addr[23:0]),
         .data_i (cpu_data_write),
         .data_o (plic_data_read),
         .irq_i  (dmni_irq      ),
@@ -137,19 +137,19 @@ module PhiversPE
 ////////////////////////////////////////////////////////////////////////////////
 
     logic        rtc_en;
-    logic [31:0] rtc_data_read;
+    logic [63:0] rtc_data_read;
 
     rtc 
     rtc_m (
-        .clk     (clk_i         ),
-        .reset   (rst           ),
-        .en_i    (rtc_en        ),
-        .addr_i  (cpu_addr      ),
-        .we_i    (cpu_we        ),
-        .data_i  (cpu_data_write),
-        .data_o  (rtc_data_read ),
-        .mti_o   (mti           ),
-        .mtime_o (mtime         )
+        .clk     (clk_i                  ),
+        .reset   (rst                    ),
+        .en_i    (rtc_en                 ),
+        .addr_i  (cpu_addr[3:0]          ),
+        .we_i    ({4'h0, cpu_we}         ),
+        .data_i  ({32'h0, cpu_data_write}),
+        .data_o  (rtc_data_read          ),
+        .mti_o   (mti                    ),
+        .mtime_o (mtime                  )
     );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -194,17 +194,17 @@ module PhiversPE
 
     logic brlite_local_busy;
 
-    logic     brlite_req_rcv  [(BR_NPORT - 1):0];
-    logic     brlite_ack_rcv  [(BR_NPORT - 1):0];
-    br_data_t brlite_flit_rcv [(BR_NPORT - 1):0];
+    logic     [(BR_NPORT - 1):0] brlite_req_rcv;
+    logic     [(BR_NPORT - 1):0] brlite_ack_rcv;
+    br_data_t [(BR_NPORT - 1):0] brlite_flit_rcv;
 
     assign brlite_req_rcv[(BR_NPORT - 2):0]  = brlite_req_i;
     assign brlite_ack_o                      = brlite_ack_rcv[(BR_NPORT - 2):0];
     assign brlite_flit_rcv[(BR_NPORT - 2):0] = brlite_flit_i;
 
-    logic     brlite_req_snd  [(BR_NPORT - 1):0];
-    logic     brlite_ack_snd  [(BR_NPORT - 1):0];
-    br_data_t brlite_flit_snd [(BR_NPORT - 1):0];
+    logic     [(BR_NPORT - 1):0] brlite_req_snd;
+    logic     [(BR_NPORT - 1):0] brlite_ack_snd;
+    br_data_t [(BR_NPORT - 1):0] brlite_flit_snd;
 
     assign brlite_req_o                     = brlite_req_snd[(BR_NPORT - 2):0];
     assign brlite_ack_snd[(BR_NPORT - 2):0] = brlite_ack_i;
@@ -233,7 +233,10 @@ module PhiversPE
 ////////////////////////////////////////////////////////////////////////////////
 
     logic        ni_en;
+    logic        ni_we;
     logic [31:0] ni_data_read;
+
+    assign ni_we = (| cpu_we);
 
     logic [3:0]  dma_we;
     logic [31:0] dma_addr;
@@ -292,43 +295,43 @@ module PhiversPE
     assign brlite_flit_rcv[(BR_NPORT - 1)].service    = br_svc_t'(brlite_flit_ni.service);
 
     DMNI #(
-        .HERMES_FLIT_SIZE   (32),
-        .HERMES_BUFFER_SIZE (16),
-        .BR_MON_BUFFER_SIZE (8),
-        .BR_SVC_BUFFER_SIZE (4),
-        .N_PE               (N_PE),
+        .HERMES_FLIT_SIZE   (32          ),
+        .HERMES_BUFFER_SIZE (16          ),
+        .BR_MON_BUFFER_SIZE (8           ),
+        .BR_SVC_BUFFER_SIZE (4           ),
+        .N_PE               (N_PE        ),
         .TASKS_PER_PE       (TASKS_PER_PE)
     )
     dmni (
-        .clk_i                (clk_i                             ),
-        .rst_ni               (rst_ni                            ),
-        .irq_o                (dmni_irq                          ),
-        .cfg_en_i             (ni_en                             ),
-        .cfg_we_i             (cpu_we                            ),
-        .cfg_addr_i           (cpu_addr                          ),
-        .cfg_data_i           (cpu_data_write                    ),
-        .cfg_data_o           (ni_data_read                      ),
-        .release_peripheral_o (release_peripheral_o              ),
-        .mem_we_o             (dma_we                            ),
-        .mem_addr_o           (dma_addr                          ),
-        .mem_data_o           (dma_data_o                        ),
-        .mem_data_i           (dma_data_read                     ),
-        .noc_rx_i             (noc_tx[(HERMES_NPORT - 1)]        ),
-        .noc_credit_o         (noc_credit_snd[(HERMES_NPORT - 1)]),
-        .noc_data_i           (noc_data_snd[(HERMES_NPORT - 1)]  ),
-        .noc_tx_o             (noc_rx[(HERMES_NPORT - 1)]        ),
-        .noc_credit_i         (noc_credit_rcv[(HERMES_NPORT - 1)]),
-        .noc_data_o           (noc_data_rcv[(HERMES_NPORT - 1)]  ),
-        .br_req_mon_i         (brlite_mon_req                    ),
-        .br_ack_mon_o         (brlite_mon_ack                    ),
-        .br_mon_data_i        (brlite_mon_flit                   ),
-        .br_req_svc_i         (brlite_svc_req                    ),
-        .br_ack_svc_o         (brlite_svc_ack                    ),
-        .br_svc_data_i        (brlite_svc_flit                   ),
-        .br_local_busy_i      (brlite_local_busy                 ),
-        .br_req_o             (brlite_req_rcv[(BR_NPORT - 1)]    ),
-        .br_ack_i             (brlite_ack_rcv[(BR_NPORT - 1)]    ),
-        .br_data_o            (brlite_flit_ni                    )
+        .clk_i                (clk_i                                  ),
+        .rst_ni               (rst_ni                                 ),
+        .irq_o                (dmni_irq                               ),
+        .cfg_en_i             (ni_en                                  ),
+        .cfg_we_i             (ni_we                                  ),
+        .cfg_addr_i           (cpu_addr[($clog2(DMNI_MMR_SIZE) + 1):2]),
+        .cfg_data_i           (cpu_data_write                         ),
+        .cfg_data_o           (ni_data_read                           ),
+        .release_peripheral_o (release_peripheral_o                   ),
+        .mem_we_o             (dma_we                                 ),
+        .mem_addr_o           (dma_addr                               ),
+        .mem_data_o           (dma_data_o                             ),
+        .mem_data_i           (dma_data_read                          ),
+        .noc_rx_i             (noc_tx[(HERMES_NPORT - 1)]             ),
+        .noc_credit_o         (noc_credit_snd[(HERMES_NPORT - 1)]     ),
+        .noc_data_i           (noc_data_snd[(HERMES_NPORT - 1)]       ),
+        .noc_tx_o             (noc_rx[(HERMES_NPORT - 1)]             ),
+        .noc_credit_i         (noc_credit_rcv[(HERMES_NPORT - 1)]     ),
+        .noc_data_o           (noc_data_rcv[(HERMES_NPORT - 1)]       ),
+        .br_req_mon_i         (brlite_mon_req                         ),
+        .br_ack_mon_o         (brlite_mon_ack                         ),
+        .br_mon_data_i        (brlite_mon_flit                        ),
+        .br_req_svc_i         (brlite_svc_req                         ),
+        .br_ack_svc_o         (brlite_svc_ack                         ),
+        .br_svc_data_i        (brlite_svc_flit                        ),
+        .br_local_busy_i      (brlite_local_busy                      ),
+        .br_req_o             (brlite_req_rcv[(BR_NPORT - 1)]         ),
+        .br_ack_i             (brlite_ack_rcv[(BR_NPORT - 1)]         ),
+        .br_data_o            (brlite_flit_ni                         )
     );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -373,7 +376,7 @@ module PhiversPE
 
     always_comb begin
         if (rtc_en_r)
-            cpu_data_read <= rtc_data_read;
+            cpu_data_read <= rtc_data_read[31:0];
         else if (plic_en_r)
             cpu_data_read <= plic_data_read;
         else if (ni_en_r)
