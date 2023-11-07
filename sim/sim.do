@@ -1,7 +1,7 @@
 vlib work
 vmap work work
 
-vlog ../TaskInjector/TaskInjectorPkg.sv
+vlog ../TaskInjector/rtl/TaskInjectorPkg.sv
 vlog ../TaskInjector/rtl/TaskInjector.sv
 vlog ../RS5/rtl/RS5_pkg.sv
 vlog ../RS5/rtl/mmu.sv
@@ -29,3 +29,9 @@ vlog ../DMNI/rtl/NI.sv
 vlog ../DMNI/rtl/DMNI.sv
 vlog ../rtl/PhiversPE.sv
 vlog ../rtl/PhiversMC.sv
+
+vlog ../RS5/sim/RAM_mem.sv
+vlog ../TaskInjector/sim/MAParser.sv
+vlog ../TaskInjector/sim/AppParser.sv
+vlog PhiversPkg.sv
+vlog PhiversTB.sv
