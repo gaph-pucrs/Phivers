@@ -6,8 +6,11 @@ module PhiversPE
 #(
     parameter logic [15:0]  ADDRESS      = 0,
     parameter logic [15:0]  SEQ_ADDRESS  = 0,
-    parameter               N_PE         = 16,
-    parameter               TASKS_PER_PE = 4,
+    parameter               N_PE_X       = 2,
+    parameter               N_PE_Y       = 2,
+    parameter               TASKS_PER_PE = 1,
+    parameter               IMEM_PAGE_SZ = 32768,
+    parameter               DMEM_PAGE_SZ = 32768,
     parameter environment_e Environment  = ASIC
 )
 (
@@ -33,6 +36,17 @@ module PhiversPE
     input  logic     [31:0]             idma_data_i,
     input  logic     [31:0]             ddma_data_i,
     output logic     [31:0]             dma_data_o,
+
+    /* UART memory interface: write-only */
+    output logic                        uart_en_o,
+    output logic                        uart_we_o,
+    output logic     [7:0]              uart_data_o,
+
+    /* DEBUG memory interface: write-only */
+    output logic                        dbg_en_o,
+    output logic                        dbg_we_o,
+    output logic     [24:0]             dbg_addr_o,
+    output logic     [31:0]             dbg_data_o,
 
     /* NoC input interface */
     output logic                        release_peripheral_o,
@@ -299,8 +313,11 @@ module PhiversPE
         .HERMES_BUFFER_SIZE (16          ),
         .BR_MON_BUFFER_SIZE (8           ),
         .BR_SVC_BUFFER_SIZE (4           ),
-        .N_PE               (N_PE        ),
-        .TASKS_PER_PE       (TASKS_PER_PE)
+        .N_PE_X             (N_PE_X      ),
+        .N_PE_Y             (N_PE_Y      ),
+        .TASKS_PER_PE       (TASKS_PER_PE),
+        .IMEM_PAGE_SZ       (IMEM_PAGE_SZ),
+        .DMEM_PAGE_SZ       (DMEM_PAGE_SZ)
     )
     dmni (
         .clk_i                (clk_i                                  ),
@@ -342,19 +359,21 @@ module PhiversPE
      * Memory map:
      * [0x00000000, 0x01000000[ -> instruction
      * [0x01000000, 0x02000000[ -> data
-     * [0x02000000, 0x03000000[ -> PLIC
-     * [0x04000000, 0x05000000[ -> RTC
+     * [0x02000000, 0x03000000[ -> RTC
+     * [0x04000000, 0x05000000[ -> PLIC
      * [0x08000000, 0x09000000[ -> NI
      * [0x10000000, 0x11000000[ -> Reserved 4
      * [0x20000000, 0x21000000[ -> Reserved 5
-     * [0x40000000, 0x41000000[ -> Reserved 6
-     * [0x80000000, 0x81000000[ -> Reserved 7
+     * [0x40000000, 0x41000000[ -> UART
+     * [0x80000000, 0x81000000[ -> DEBUG
      */
 
-    assign dmem_en_o = cpu_en && cpu_addr[24] && (cpu_addr[31:25] == '0);
-    assign rtc_en    = cpu_en && cpu_addr[25] && ({cpu_addr[31:26], cpu_addr[24]} == '0);
-    assign plic_en   = cpu_en && cpu_addr[26] && ({cpu_addr[31:27], cpu_addr[25:24]} == '0); 
-    assign ni_en     = cpu_en && cpu_addr[27] && ({cpu_addr[31:28], cpu_addr[26:24]} == '0);  
+    assign dmem_en_o = cpu_en && (cpu_addr[31:24] == 8'b00000001);
+    assign rtc_en    = cpu_en && (cpu_addr[31:24] == 8'b00000010);
+    assign plic_en   = cpu_en && (cpu_addr[31:24] == 8'b00000100);
+    assign ni_en     = cpu_en && (cpu_addr[31:24] == 8'b00001000);
+    assign uart_en_o = cpu_en && (cpu_addr[31:24] == 8'b01000000);
+    assign dbg_en_o  = cpu_en && (cpu_addr[31:24] == 8'b10000000);
 
     /* On read, the data is available at the next cycle */
     logic rtc_en_r;
@@ -384,5 +403,16 @@ module PhiversPE
         else
             cpu_data_read <= dmem_data_i;
     end
+
+////////////////////////////////////////////////////////////////////////////////
+// UART and DEBUG connections
+////////////////////////////////////////////////////////////////////////////////
+
+    assign uart_we_o   = cpu_we[0];
+    assign uart_data_o = cpu_data_write[7:0];
+
+    assign dbg_we_o    = (| cpu_we);
+    assign dbg_addr_o  = cpu_addr[23:0];
+    assign dbg_data_o  = cpu_data_write;
 
 endmodule

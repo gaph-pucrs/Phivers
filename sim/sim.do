@@ -33,6 +33,8 @@ vlog ../rtl/PhiversMC.sv -svinputport=relaxed
 vlog ../RS5/sim/RAM_mem.sv -svinputport=relaxed
 vlog ../TaskInjector/sim/MAParser.sv -svinputport=relaxed
 vlog ../TaskInjector/sim/AppParser.sv -svinputport=relaxed
+vlog UART.sv -svinputport=relaxed
+vlog Debug.sv -svinputport=relaxed
 vlog PhiversPkg.sv -svinputport=relaxed
 vlog PhiversTB.sv -svinputport=relaxed
 

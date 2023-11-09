@@ -6,6 +6,8 @@ module PhiversMC
     parameter               N_PE_X       = 4,
     parameter               N_PE_Y       = 4,
     parameter               TASKS_PER_PE = 4,
+    parameter               IMEM_PAGE_SZ = 32768,
+    parameter               DMEM_PAGE_SZ = 32768,
     parameter logic [15:0]  ADDR_MA_INJ  = 16'h0000,
     parameter hermes_port_t PORT_MA_INJ  = HERMES_SOUTH,
     parameter logic [15:0]  ADDR_APP_INJ = 16'h0100,
@@ -44,10 +46,19 @@ module PhiversMC
     output logic [23:0] dma_addr_o        [(N_PE_X - 1):0][(N_PE_Y - 1):0],
     input  logic [31:0] idma_data_i       [(N_PE_X - 1):0][(N_PE_Y - 1):0],
     input  logic [31:0] ddma_data_i       [(N_PE_X - 1):0][(N_PE_Y - 1):0],
-    output logic [31:0] dma_data_o        [(N_PE_X - 1):0][(N_PE_Y - 1):0]
-);
+    output logic [31:0] dma_data_o        [(N_PE_X - 1):0][(N_PE_Y - 1):0],
 
-    localparam n_pe = N_PE_X * N_PE_Y;
+    /* UART memory interface: write-only */
+    output logic        uart_en_o         [(N_PE_X - 1):0][(N_PE_Y - 1):0],
+    output logic        uart_we_o         [(N_PE_X - 1):0][(N_PE_Y - 1):0],
+    output logic [7:0]  uart_data_o       [(N_PE_X - 1):0][(N_PE_Y - 1):0],
+
+    /* DEBUG memory interface: write-only */
+    output logic        dbg_en_o          [(N_PE_X - 1):0][(N_PE_Y - 1):0],
+    output logic        dbg_we_o          [(N_PE_X - 1):0][(N_PE_Y - 1):0],
+    output logic [24:0] dbg_addr_o        [(N_PE_X - 1):0][(N_PE_Y - 1):0],
+    output logic [31:0] dbg_data_o        [(N_PE_X - 1):0][(N_PE_Y - 1):0]
+);
 
     /* Hermes signals */
     logic                           release_peripheral [(N_PE_X - 1):0][(N_PE_Y - 1):0];
@@ -168,8 +179,11 @@ module PhiversMC
                 PhiversPE #(
                     .ADDRESS      (address     ),
                     .SEQ_ADDRESS  (seq_addr    ),
-                    .N_PE         (n_pe        ),
+                    .N_PE_X       (N_PE_X      ),
+                    .N_PE_Y       (N_PE_Y      ),
                     .TASKS_PER_PE (TASKS_PER_PE),
+                    .IMEM_PAGE_SZ (IMEM_PAGE_SZ),
+                    .DMEM_PAGE_SZ (DMEM_PAGE_SZ),
                     .Environment  (Environment )
                 ) 
                 pe (
@@ -189,6 +203,13 @@ module PhiversMC
                     .idma_data_i          (idma_data_i[x][y]       ),
                     .ddma_data_i          (ddma_data_i[x][y]       ),
                     .dma_data_o           (dma_data_o[x][y]        ),
+                    .uart_en_o            (uart_en_o[x][y]         ),
+                    .uart_we_o            (uart_we_o[x][y]         ),
+                    .uart_data_o          (uart_data_o[x][y]       ),
+                    .dbg_en_o             (dbg_en_o[x][y]          ),
+                    .dbg_we_o             (dbg_we_o[x][y]          ),
+                    .dbg_addr_o           (dbg_addr_o[x][y]        ),
+                    .dbg_data_o           (dbg_data_o[x][y]        ),
                     .release_peripheral_o (release_peripheral[x][y]),
                     .noc_rx_i             (rx[x][y]                ),
                     .noc_credit_o         (credit_rx[x][y]         ),
