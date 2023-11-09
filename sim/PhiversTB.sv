@@ -45,15 +45,6 @@ module PhiversTB
     logic [31:0] ddma_data       [(N_PE_X - 1):0][(N_PE_Y - 1):0];
     logic [31:0] dma_data        [(N_PE_X - 1):0][(N_PE_Y - 1):0];
 
-    logic        uart_en         [(N_PE_X - 1):0][(N_PE_Y - 1):0];
-    logic        uart_we         [(N_PE_X - 1):0][(N_PE_Y - 1):0];
-    logic [7:0]  uart_data       [(N_PE_X - 1):0][(N_PE_Y - 1):0];
-
-    logic        dbg_en          [(N_PE_X - 1):0][(N_PE_Y - 1):0];
-    logic        dbg_we          [(N_PE_X - 1):0][(N_PE_Y - 1):0];
-    logic [24:0] dbg_addr        [(N_PE_X - 1):0][(N_PE_Y - 1):0];
-    logic [31:0] dbg_data        [(N_PE_X - 1):0][(N_PE_Y - 1):0];
-
 //////////////////////////////////////////////////////////////////////////////
 // Many Core
 //////////////////////////////////////////////////////////////////////////////
@@ -68,6 +59,7 @@ module PhiversTB
         .PORT_MA_INJ  (PORT_MA_INJ ),
         .ADDR_APP_INJ (ADDR_APP_INJ),
         .PORT_APP_INJ (PORT_APP_INJ),
+        .DEBUG        (1           ),
         .Environment  (ASIC        )
     )
     mc (
@@ -147,39 +139,6 @@ module PhiversTB
                     .addrB_i    (dma_addr[x][y][($clog2(DMEM_SZ) - 1):0] ), 
                     .dataB_i    (dma_data[x][y]                          ), 
                     .dataB_o    (ddma_data[x][y]                         )
-                );
-            end
-        end
-    endgenerate
-
-//////////////////////////////////////////////////////////////////////////////
-// Simulated peripherals
-//////////////////////////////////////////////////////////////////////////////
-
-    generate
-        for (genvar x = 0; x < N_PE_X; x++) begin
-            for (genvar y = 0; y < N_PE_Y; y++) begin
-                UART #(
-                    .FILE ({PATH, "log", x, "x", y, ".txt"})
-                )
-                uart (
-                    .clk_i  (clk_i          ),
-                    .rst_ni (rst_ni         ),
-                    .en_i   (uart_en[x][y]  ),
-                    .we_i   (uart_we[x][y]  ),
-                    .data_i (uart_data[x][y])
-                );
-
-                Debug #(
-                    .PATH ("")
-                )
-                dbg (
-                    .clk_i  (clk_i         ),
-                    .rst_ni (rst_ni        ),
-                    .en_i   (dbg_en[x][y]  ),
-                    .we_i   (dbg_we[x][y]  ),
-                    .addr_i (dbg_addr[x][y]),
-                    .data_i (dbg_data[x][y])
                 );
             end
         end

@@ -1,6 +1,6 @@
 module Debug 
 #(
-    parameter PATH = "./"
+    parameter logic [15:0] ADDRESS
 )
 (
     input  logic        clk_i,
@@ -11,7 +11,19 @@ module Debug
     input  logic [23:0] addr_i,
     input  logic [31:0] data_i
 );
+    int fd;
 
-    /* @todo */
+    initial begin
+        fd = $fopen({"log", ADDRESS[15:8], "x", ADDRESS[7:0], ".txt"}, "w");
+    end
+
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (rst_ni && en_i && we_i) begin
+            case (addr_i)
+                24'h000000: $fwrite(fd, "%c", data_i);
+                default: ;
+            endcase
+        end
+    end
 
 endmodule

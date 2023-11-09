@@ -11,6 +11,7 @@ module PhiversPE
     parameter               TASKS_PER_PE = 1,
     parameter               IMEM_PAGE_SZ = 32768,
     parameter               DMEM_PAGE_SZ = 32768,
+    parameter               DEBUG        = 1,
     parameter environment_e Environment  = ASIC
 )
 (
@@ -36,17 +37,6 @@ module PhiversPE
     input  logic     [31:0]             idma_data_i,
     input  logic     [31:0]             ddma_data_i,
     output logic     [31:0]             dma_data_o,
-
-    /* UART memory interface: write-only */
-    output logic                        uart_en_o,
-    output logic                        uart_we_o,
-    output logic     [7:0]              uart_data_o,
-
-    /* DEBUG memory interface: write-only */
-    output logic                        dbg_en_o,
-    output logic                        dbg_we_o,
-    output logic     [24:0]             dbg_addr_o,
-    output logic     [31:0]             dbg_data_o,
 
     /* NoC input interface */
     output logic                        release_peripheral_o,
@@ -364,7 +354,7 @@ module PhiversPE
      * [0x08000000, 0x09000000[ -> NI
      * [0x10000000, 0x11000000[ -> Reserved 4
      * [0x20000000, 0x21000000[ -> Reserved 5
-     * [0x40000000, 0x41000000[ -> UART
+     * [0x40000000, 0x41000000[ -> Reserved 6
      * [0x80000000, 0x81000000[ -> DEBUG
      */
 
@@ -372,8 +362,6 @@ module PhiversPE
     assign rtc_en    = cpu_en && (cpu_addr[31:24] == 8'b00000010);
     assign plic_en   = cpu_en && (cpu_addr[31:24] == 8'b00000100);
     assign ni_en     = cpu_en && (cpu_addr[31:24] == 8'b00001000);
-    assign uart_en_o = cpu_en && (cpu_addr[31:24] == 8'b01000000);
-    assign dbg_en_o  = cpu_en && (cpu_addr[31:24] == 8'b10000000);
 
     /* On read, the data is available at the next cycle */
     logic rtc_en_r;
@@ -408,11 +396,24 @@ module PhiversPE
 // UART and DEBUG connections
 ////////////////////////////////////////////////////////////////////////////////
 
-    assign uart_we_o   = cpu_we[0];
-    assign uart_data_o = cpu_data_write[7:0];
+    if (DEBUG) begin
+        logic dbg_en;
+        logic dbg_we;
 
-    assign dbg_we_o    = (| cpu_we);
-    assign dbg_addr_o  = cpu_addr[23:0];
-    assign dbg_data_o  = cpu_data_write;
+        assign dbg_en = cpu_en && (cpu_addr[31:24] == 8'b10000000);
+        assign dbg_we = (| cpu_we);
+        
+        Debug #(
+            .ADDRESS (ADDRESS)
+        )
+        dbg (
+            .clk_i  (clk_i         ),
+            .rst_ni (rst_ni        ),
+            .en_i   (dbg_en        ),
+            .we_i   (dbg_we        ),
+            .addr_i (cpu_addr[23:0]),
+            .data_i (cpu_data_write)
+        );
+    end
 
 endmodule
