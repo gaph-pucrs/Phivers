@@ -4,7 +4,7 @@ module PhiversPE
     import BrLitePkg::*;
     import DMNIPkg::*;
 #(
-    parameter logic [15:0]  ADDRESS      = 0,
+    parameter logic [15:0]  ADDRESS      = 16'b0,
     parameter logic [15:0]  SEQ_ADDRESS  = 0,
     parameter               N_PE_X       = 2,
     parameter               N_PE_Y       = 2,
@@ -307,7 +307,8 @@ module PhiversPE
         .N_PE_Y             (N_PE_Y      ),
         .TASKS_PER_PE       (TASKS_PER_PE),
         .IMEM_PAGE_SZ       (IMEM_PAGE_SZ),
-        .DMEM_PAGE_SZ       (DMEM_PAGE_SZ)
+        .DMEM_PAGE_SZ       (DMEM_PAGE_SZ),
+        .ADDRESS            (ADDRESS     )
     )
     dmni (
         .clk_i                (clk_i                                  ),
