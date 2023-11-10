@@ -377,7 +377,7 @@ module PhiversPE
         else begin
             rtc_en_r  <= rtc_en;
             plic_en_r <= plic_en;
-            ni_en_r   <= plic_en;
+            ni_en_r   <= ni_en;
         end;
     end
 
