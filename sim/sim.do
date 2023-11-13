@@ -38,4 +38,7 @@ vlog ../TaskInjector/sim/AppParser.sv -svinputport=relaxed
 vlog PhiversPkg.sv -svinputport=relaxed
 vlog PhiversTB.sv -svinputport=relaxed
 
-vsim work.PhiversTB
+vsim work.PhiversTB -voptargs=+acc
+
+do wave.do 
+
