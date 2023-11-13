@@ -1,3 +1,5 @@
 transcript
 modelsim.ini
 work
+*.txt
+*.bin
