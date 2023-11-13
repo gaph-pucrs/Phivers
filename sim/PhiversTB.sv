@@ -102,8 +102,10 @@ module PhiversTB
         for (genvar x = 0; x < N_PE_X; x++) begin
             for (genvar y = 0; y < N_PE_Y; y++) begin
                 RAM_mem #(
-                    .MEM_WIDTH (IMEM_SZ),
-                    .BIN_FILE  (KERNEL_TEXT)
+                    .MEM_WIDTH  (IMEM_SZ    ),
+                    .BIN_FILE   (KERNEL_TEXT),
+                    .DEBUG      (0          ),
+                    .DEBUG_FILE (""         )
                 ) 
                 I_MEM (
                     .clk        (clk                                     ),
@@ -122,8 +124,10 @@ module PhiversTB
                 );
 
                 RAM_mem #(
-                    .MEM_WIDTH (DMEM_SZ    ),
-                    .BIN_FILE  (KERNEL_DATA)
+                    .MEM_WIDTH  (DMEM_SZ                           ),
+                    .BIN_FILE   (KERNEL_DATA                       ),
+                    .DEBUG      (0                                 ),
+                    .DEBUG_FILE ($sformatf("./debug/%0ux%0u", x, y))
                 ) 
                 D_MEM (
                     .clk        (clk                                     ), 
@@ -161,20 +165,26 @@ module PhiversTB
         .mapper_address_o (mapper_address)
     );
 
-    logic eoa; /* @todo */
+    // logic eoa; /* @todo */
 
-    AppParser #(
-        .PATH      (PATH    ),
-        .SIM_FREQ  (SIM_FREQ),
-        .FLIT_SIZE (32      )
-    )
-    app_src (
-        .clk_i            (clk           ),
-        .rst_ni           (rst_n         ),
-        .eoa_o            (eoa           ),
-        .tx_o             (app_src_rx    ),
-        .credit_i         (app_src_credit),
-        .data_o           (app_src_data  )
-    );
+    // AppParser #(
+    //     .PATH      (PATH    ),
+    //     .SIM_FREQ  (SIM_FREQ),
+    //     .FLIT_SIZE (32      )
+    // )
+    // app_src (
+    //     .clk_i            (clk           ),
+    //     .rst_ni           (rst_n         ),
+    //     .eoa_o            (eoa           ),
+    //     .tx_o             (app_src_rx    ),
+    //     .credit_i         (app_src_credit),
+    //     .data_o           (app_src_data  )
+    // );
+
+    // assign ma_src_rx = 1'b0;
+    // assign ma_src_data = '0;
+    // assign mapper_address_o = '0;
+    assign app_src_rx = 1'b0;
+    assign app_src_data = '0;
 
 endmodule
