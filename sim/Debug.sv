@@ -20,7 +20,7 @@ module Debug
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (rst_ni && en_i && we_i) begin
             case (addr_i)
-                24'h000000: $fwrite(fd, "%c", data_i);
+                24'h000000: $fwrite(fd, "%c", data_i[7:0]);
                 default: ;
             endcase
         end
