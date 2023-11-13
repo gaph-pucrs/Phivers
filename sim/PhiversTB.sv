@@ -102,10 +102,10 @@ module PhiversTB
         for (genvar x = 0; x < N_PE_X; x++) begin
             for (genvar y = 0; y < N_PE_Y; y++) begin
                 RAM_mem #(
-                    .MEM_WIDTH  (IMEM_SZ    ),
-                    .BIN_FILE   (KERNEL_TEXT),
-                    .DEBUG      (0          ),
-                    .DEBUG_FILE (""         )
+                    .MEM_WIDTH  (IMEM_SZ                             ),
+                    .BIN_FILE   (KERNEL_TEXT                         ),
+                    .DEBUG      (1                                   ),
+                    .DEBUG_FILE ($sformatf("./debug/%0ux%0u_I", x, y))
                 ) 
                 I_MEM (
                     .clk        (clk                                     ),
@@ -124,10 +124,10 @@ module PhiversTB
                 );
 
                 RAM_mem #(
-                    .MEM_WIDTH  (DMEM_SZ                           ),
-                    .BIN_FILE   (KERNEL_DATA                       ),
-                    .DEBUG      (0                                 ),
-                    .DEBUG_FILE ($sformatf("./debug/%0ux%0u", x, y))
+                    .MEM_WIDTH  (DMEM_SZ                             ),
+                    .BIN_FILE   (KERNEL_DATA                         ),
+                    .DEBUG      (1                                   ),
+                    .DEBUG_FILE ($sformatf("./debug/%0ux%0u_D", x, y))
                 ) 
                 D_MEM (
                     .clk        (clk                                     ), 
