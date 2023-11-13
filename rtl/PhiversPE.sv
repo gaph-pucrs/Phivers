@@ -246,8 +246,9 @@ module PhiversPE
     logic [31:0] dma_addr;
     logic [31:0] dma_data_read;
 
-    assign idma_en_o  = dma_we && (dma_addr[31:24] == '0);
-    assign ddma_en_o  = dma_we && dma_addr[24] && (dma_addr[31:25] == '0);
+    assign idma_en_o  = (dma_addr[31:24] == 8'b00000000);
+    assign ddma_en_o  = (dma_addr[31:24] == 8'b00000001);
+    assign dma_we_o   = dma_we;
     assign dma_addr_o = dma_addr[23:0];
 
     always_comb begin
