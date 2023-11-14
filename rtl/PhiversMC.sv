@@ -82,10 +82,10 @@ module PhiversMC
     logic [31:0] ma_inj_data_rx;
 
     TaskInjector #(
-        .INJECTOR_ADDRESS ({1'b1, PORT_MA_INJ, 12'b0, ADDR_MA_INJ}),
-        .FLIT_SIZE        (32                                     ),
-        .MAX_PAYLOAD_SIZE (32                                     ),
-        .INJECT_MAPPER    (1                                      )
+        .INJECTOR_ADDRESS ({1'b1, PORT_MA_INJ[1:0], 13'b0, ADDR_MA_INJ}),
+        .FLIT_SIZE        (32                                          ),
+        .MAX_PAYLOAD_SIZE (32                                          ),
+        .INJECT_MAPPER    (1                                           )
     )
     MAInjector (
         .clk_i           (clk_i           ),
@@ -123,10 +123,10 @@ module PhiversMC
     logic [31:0] app_inj_data_rx;
 
     TaskInjector #(
-        .INJECTOR_ADDRESS ({1'b1, PORT_APP_INJ, 13'b0, ADDR_APP_INJ}),
-        .FLIT_SIZE        (32                                       ),
-        .MAX_PAYLOAD_SIZE (32                                       ),
-        .INJECT_MAPPER    (0                                        )
+        .INJECTOR_ADDRESS ({1'b1, PORT_APP_INJ[1:0], 14'b0, ADDR_APP_INJ}),
+        .FLIT_SIZE        (32                                            ),
+        .MAX_PAYLOAD_SIZE (32                                            ),
+        .INJECT_MAPPER    (0                                             )
     )
     AppInjector (
         .clk_i           (clk_i            ),
