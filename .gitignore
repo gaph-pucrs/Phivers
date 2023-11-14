@@ -3,3 +3,4 @@ modelsim.ini
 work
 *.txt
 *.bin
+*.wlf
