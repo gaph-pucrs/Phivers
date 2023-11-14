@@ -47,6 +47,13 @@ add wave -noupdate -radix hexadecimal {/PhiversTB/mc/gen_x[0]/gen_y[0]/pe/dmni/n
 add wave -noupdate -radix hexadecimal {/PhiversTB/mc/gen_x[0]/gen_y[0]/pe/dmni/ni/hermes_size_2_o}
 add wave -noupdate -radix hexadecimal {/PhiversTB/mc/gen_x[0]/gen_y[0]/pe/dmni/ni/hermes_address_o}
 add wave -noupdate -radix hexadecimal {/PhiversTB/mc/gen_x[0]/gen_y[0]/pe/dmni/ni/hermes_address_2_o}
+add wave -noupdate {/PhiversTB/mc/gen_x[0]/gen_y[0]/pe/dmni/irq_o}
+add wave -noupdate -divider -height 50 {New Divider}
+add wave -noupdate {/PhiversTB/mc/gen_x[0]/gen_y[0]/pe/processor/CSRBank1/irq_i}
+add wave -noupdate {/PhiversTB/mc/gen_x[0]/gen_y[0]/pe/processor/CSRBank1/interrupt_ack_i}
+add wave -noupdate {/PhiversTB/mc/gen_x[0]/gen_y[0]/pe/processor/CSRBank1/mip}
+add wave -noupdate {/PhiversTB/mc/gen_x[0]/gen_y[0]/pe/processor/CSRBank1/mie}
+add wave -noupdate -expand {/PhiversTB/mc/gen_x[0]/gen_y[0]/pe/processor/CSRBank1/mstatus}
 add wave -noupdate -divider -height 50 {New Divider}
 add wave -noupdate /PhiversTB/ma_src/tx_o
 add wave -noupdate /PhiversTB/ma_src/credit_i
@@ -70,8 +77,17 @@ add wave -noupdate -radix hexadecimal -childformat {{{/PhiversTB/mc/MAInjector/o
 add wave -noupdate -radix hexadecimal /PhiversTB/mc/MAInjector/out_sent_cnt
 add wave -noupdate -radix hexadecimal /PhiversTB/mc/MAInjector/out_header_idx
 add wave -noupdate -radix hexadecimal /PhiversTB/mc/MAInjector/aux_header_idx
+add wave -noupdate /PhiversTB/mc/MAInjector/task_cnt
+add wave -noupdate /PhiversTB/mc/MAInjector/graph_size
+add wave -noupdate -divider -height 50 {New Divider}
+add wave -noupdate -expand {/PhiversTB/mc/gen_x[0]/gen_y[0]/pe/router/rx_i}
+add wave -noupdate -expand {/PhiversTB/mc/gen_x[0]/gen_y[0]/pe/router/credit_i}
+add wave -noupdate -expand {/PhiversTB/mc/gen_x[0]/gen_y[0]/pe/router/data_i}
+add wave -noupdate -expand {/PhiversTB/mc/gen_x[0]/gen_y[0]/pe/router/tx_o}
+add wave -noupdate {/PhiversTB/mc/gen_x[0]/gen_y[0]/pe/router/credit_o}
+add wave -noupdate -expand {/PhiversTB/mc/gen_x[0]/gen_y[0]/pe/router/data_o}
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {920832 ps} 0}
+WaveRestoreCursors {{Cursor 1} {921707 ns} 0}
 quietly wave cursor active 1
 configure wave -namecolwidth 216
 configure wave -valuecolwidth 100
@@ -87,4 +103,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {920813 ps} {920971 ps}
+WaveRestoreZoom {921662 ns} {921857 ns}
