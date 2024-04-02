@@ -9,7 +9,11 @@ module Debug
     input  logic        en_i,
     input  logic        we_i,
     input  logic [23:0] addr_i,
+
+    /* For now, only the LSB is used */
+    /* verilator lint_off UNUSEDSIGNAL */
     input  logic [31:0] data_i
+    /* verilator lint_on UNUSEDSIGNAL */
 );
     int fd;
 
