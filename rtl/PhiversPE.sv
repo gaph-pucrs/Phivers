@@ -74,13 +74,18 @@ module PhiversPE
 
     assign irq = {20'b0, mei, 3'b0, mti, 7'b0};
 
+    logic        irq_ack;
     logic        cpu_en;
     logic [3:0]  cpu_we;
-    logic [31:0] imem_addr;
     logic [31:0] cpu_addr;
     logic [31:0] cpu_data_write;
     logic [31:0] cpu_data_read;
     logic [63:0] mtime;
+
+    /* The CPU is 32 bits but not all bits are used in memory */
+    /* verilator lint_off UNUSEDSIGNAL */
+    logic [31:0] imem_addr;
+    /* verilator lint_on UNUSEDSIGNAL */
 
     assign imem_addr_o = imem_addr[23:0];
     assign dmem_we_o   = cpu_we;
@@ -115,8 +120,12 @@ module PhiversPE
 
     logic        dmni_irq;
 
-    logic        plic_en;
+    /* Currently there is no need for acking peripherals through PLIC */
+    /* verilator lint_off UNUSEDSIGNAL */
     logic        plic_ack;
+    /* verilator lint_on UNUSEDSIGNAL */
+
+    logic        plic_en;
     logic [31:0] plic_data_read;
 
     plic #(
@@ -141,7 +150,11 @@ module PhiversPE
 ////////////////////////////////////////////////////////////////////////////////
 
     logic        rtc_en;
+    
+    /* The RTC bus is 64 bits, while the CPU bus is 32 bits */
+    /* verilator lint_off UNUSEDSIGNAL */
     logic [63:0] rtc_data_read;
+    /* verilator lint_on UNUSEDSIGNAL */
 
     rtc 
     rtc_m (
@@ -385,20 +398,20 @@ module PhiversPE
 
     always_comb begin
         if (rtc_en_r)
-            cpu_data_read <= rtc_data_read[31:0];
+            cpu_data_read = rtc_data_read[31:0];
         else if (plic_en_r)
-            cpu_data_read <= plic_data_read;
+            cpu_data_read = plic_data_read;
         else if (ni_en_r)
-            cpu_data_read <= ni_data_read;
+            cpu_data_read = ni_data_read;
         else
-            cpu_data_read <= dmem_data_i;
+            cpu_data_read = dmem_data_i;
     end
 
 ////////////////////////////////////////////////////////////////////////////////
 // UART and DEBUG connections
 ////////////////////////////////////////////////////////////////////////////////
 
-    if (DEBUG) begin
+    if (DEBUG) begin : gen_pe_debug
         logic dbg_en;
         logic dbg_we;
 
