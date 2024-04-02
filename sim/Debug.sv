@@ -18,13 +18,18 @@ module Debug
     int fd;
 
     initial begin
-        fd = $fopen($sformatf("log%0ux%0u.txt", ADDRESS[15:8], ADDRESS[7:0]), "w");
+        fd = $fopen($sformatf("log%0dx%0d.txt", ADDRESS[15:8], ADDRESS[7:0]), "w");
     end
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (rst_ni && en_i && we_i) begin
             case (addr_i)
-                24'h000000: $fwrite(fd, "%c", data_i[7:0]);
+                24'h000000: begin
+                    $fwrite(fd, "%c", data_i[7:0]);
+                    if (data_i[7:0] inside {8'h00, 8'h0A}) begin
+                        $fflush(fd);
+                    end
+                end
                 default: ;
             endcase
         end
