@@ -105,9 +105,9 @@ module PhiversMC
     always_comb begin
         localparam logic [7:0] x = ADDR_MA_INJ[15:8];
         localparam logic [7:0] y = ADDR_MA_INJ[7:0];
-        ma_inj_rx        = tx[x][y][PORT_MA_INJ];
-        ma_inj_credit_tx = credit_rx[x][y][PORT_MA_INJ];
-        ma_inj_data_rx   = data_tx[x][y][PORT_MA_INJ];
+        ma_inj_rx        = tx       [$clog2(N_PE_X)'(x)][$clog2(N_PE_Y)'(y)][2'(PORT_MA_INJ)];
+        ma_inj_credit_tx = credit_rx[$clog2(N_PE_X)'(x)][$clog2(N_PE_Y)'(y)][2'(PORT_MA_INJ)];
+        ma_inj_data_rx   = data_tx  [$clog2(N_PE_X)'(x)][$clog2(N_PE_Y)'(y)][2'(PORT_MA_INJ)];
     end
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -123,7 +123,7 @@ module PhiversMC
     logic [31:0] app_inj_data_rx;
 
     TaskInjector #(
-        .INJECTOR_ADDRESS ({1'b1, PORT_APP_INJ[1:0], 14'b0, ADDR_APP_INJ}),
+        .INJECTOR_ADDRESS ({1'b1, PORT_APP_INJ[1:0], 13'b0, ADDR_APP_INJ}),
         .FLIT_SIZE        (32                                            ),
         .MAX_PAYLOAD_SIZE (32                                            ),
         .INJECT_MAPPER    (0                                             )
@@ -146,9 +146,9 @@ module PhiversMC
     always_comb begin
         localparam logic [7:0] x = ADDR_APP_INJ[15:8];
         localparam logic [7:0] y = ADDR_APP_INJ[7:0];
-        app_inj_rx        = tx[x][y][PORT_APP_INJ] && release_peripheral[x][y];
-        app_inj_credit_tx = credit_rx[x][y][PORT_APP_INJ];
-        app_inj_data_rx   = data_tx[x][y][PORT_APP_INJ];
+        app_inj_rx        = tx       [$clog2(N_PE_X)'(x)][$clog2(N_PE_Y)'(y)][2'(PORT_APP_INJ)] && release_peripheral[$clog2(N_PE_X)'(x)][$clog2(N_PE_Y)'(y)];
+        app_inj_credit_tx = credit_rx[$clog2(N_PE_X)'(x)][$clog2(N_PE_Y)'(y)][2'(PORT_APP_INJ)];
+        app_inj_data_rx   = data_tx  [$clog2(N_PE_X)'(x)][$clog2(N_PE_Y)'(y)][2'(PORT_APP_INJ)];
     end
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -225,31 +225,31 @@ module PhiversMC
 
         for (int x = 0; x < N_PE_X; x++) begin
             for (int y = 0; y < N_PE_Y; y++) begin
-                rx       [x][y][HERMES_EAST]  = (x != N_PE_X - 1) ? tx       [x + 1][y][HERMES_WEST]  : '0;
-                credit_tx[x][y][HERMES_EAST]  = (x != N_PE_X - 1) ? credit_rx[x + 1][y][HERMES_WEST]  : '0;
-                data_rx  [x][y][HERMES_EAST]  = (x != N_PE_X - 1) ? data_tx  [x + 1][y][HERMES_WEST]  : '0;
+                rx       [x][y][2'(HERMES_EAST)]  = (x != N_PE_X - 1) ? tx       [x + 1][y][2'(HERMES_WEST)]  : '0;
+                credit_tx[x][y][2'(HERMES_EAST)]  = (x != N_PE_X - 1) ? credit_rx[x + 1][y][2'(HERMES_WEST)]  : '0;
+                data_rx  [x][y][2'(HERMES_EAST)]  = (x != N_PE_X - 1) ? data_tx  [x + 1][y][2'(HERMES_WEST)]  : '0;
 
-                rx       [x][y][HERMES_WEST]  = (x != 0)          ? tx       [x - 1][y][HERMES_EAST]  : '0;
-                credit_tx[x][y][HERMES_WEST]  = (x != 0)          ? credit_rx[x - 1][y][HERMES_EAST]  : '0;
-                data_rx  [x][y][HERMES_WEST]  = (x != 0)          ? data_tx  [x - 1][y][HERMES_EAST]  : '0;
+                rx       [x][y][2'(HERMES_WEST)]  = (x != 0)          ? tx       [x - 1][y][2'(HERMES_EAST)]  : '0;
+                credit_tx[x][y][2'(HERMES_WEST)]  = (x != 0)          ? credit_rx[x - 1][y][2'(HERMES_EAST)]  : '0;
+                data_rx  [x][y][2'(HERMES_WEST)]  = (x != 0)          ? data_tx  [x - 1][y][2'(HERMES_EAST)]  : '0;
 
-                rx       [x][y][HERMES_NORTH] = (y != N_PE_Y - 1) ? tx       [x][y + 1][HERMES_SOUTH] : '0;
-                credit_tx[x][y][HERMES_NORTH] = (y != N_PE_Y - 1) ? credit_rx[x][y + 1][HERMES_SOUTH] : '0;
-                data_rx  [x][y][HERMES_NORTH] = (y != N_PE_Y - 1) ? data_tx  [x][y + 1][HERMES_SOUTH] : '0;
+                rx       [x][y][2'(HERMES_NORTH)] = (y != N_PE_Y - 1) ? tx       [x][y + 1][2'(HERMES_SOUTH)] : '0;
+                credit_tx[x][y][2'(HERMES_NORTH)] = (y != N_PE_Y - 1) ? credit_rx[x][y + 1][2'(HERMES_SOUTH)] : '0;
+                data_rx  [x][y][2'(HERMES_NORTH)] = (y != N_PE_Y - 1) ? data_tx  [x][y + 1][2'(HERMES_SOUTH)] : '0;
 
-                rx       [x][y][HERMES_SOUTH] = (y != 0)          ? tx       [x][y - 1][HERMES_NORTH] : '0;
-                credit_tx[x][y][HERMES_SOUTH] = (y != 0)          ? credit_rx[x][y - 1][HERMES_SOUTH] : '0;
-                data_rx  [x][y][HERMES_SOUTH] = (y != 0)          ? data_tx  [x][y - 1][HERMES_NORTH] : '0;
+                rx       [x][y][2'(HERMES_SOUTH)] = (y != 0)          ? tx       [x][y - 1][2'(HERMES_NORTH)] : '0;
+                credit_tx[x][y][2'(HERMES_SOUTH)] = (y != 0)          ? credit_rx[x][y - 1][2'(HERMES_SOUTH)] : '0;
+                data_rx  [x][y][2'(HERMES_SOUTH)] = (y != 0)          ? data_tx  [x][y - 1][2'(HERMES_NORTH)] : '0;
             end
         end
         
-        rx       [MA_INJ_X][MA_INJ_Y][PORT_MA_INJ] = ma_inj_tx;
-        credit_tx[MA_INJ_X][MA_INJ_Y][PORT_MA_INJ] = ma_inj_credit_rx;
-        data_rx  [MA_INJ_X][MA_INJ_Y][PORT_MA_INJ] = ma_inj_data_tx;
+        rx       [$clog2(N_PE_X)'(MA_INJ_X)][$clog2(N_PE_Y)'(MA_INJ_Y)][2'(PORT_MA_INJ)] = ma_inj_tx;
+        credit_tx[$clog2(N_PE_X)'(MA_INJ_X)][$clog2(N_PE_Y)'(MA_INJ_Y)][2'(PORT_MA_INJ)] = ma_inj_credit_rx;
+        data_rx  [$clog2(N_PE_X)'(MA_INJ_X)][$clog2(N_PE_Y)'(MA_INJ_Y)][2'(PORT_MA_INJ)] = ma_inj_data_tx;
 
-        rx       [APP_INJ_X][APP_INJ_Y][PORT_APP_INJ] = app_inj_tx && release_peripheral[APP_INJ_X][APP_INJ_Y];
-        credit_tx[APP_INJ_X][APP_INJ_Y][PORT_APP_INJ] = app_inj_credit_rx;
-        data_rx  [APP_INJ_X][APP_INJ_Y][PORT_APP_INJ] = app_inj_data_tx;
+        rx       [$clog2(N_PE_X)'(APP_INJ_X)][$clog2(N_PE_Y)'(APP_INJ_Y)][2'(PORT_APP_INJ)] = app_inj_tx && release_peripheral[$clog2(N_PE_X)'(APP_INJ_X)][$clog2(N_PE_Y)'(APP_INJ_Y)];
+        credit_tx[$clog2(N_PE_X)'(APP_INJ_X)][$clog2(N_PE_Y)'(APP_INJ_Y)][2'(PORT_APP_INJ)] = app_inj_credit_rx;
+        data_rx  [$clog2(N_PE_X)'(APP_INJ_X)][$clog2(N_PE_Y)'(APP_INJ_Y)][2'(PORT_APP_INJ)] = app_inj_data_tx;
 
         /* Insert the IO wiring for your component here if it connected to a port */
         
@@ -262,21 +262,21 @@ module PhiversMC
     always_comb begin
         for (int x = 0; x < N_PE_X; x++) begin
             for (int y = 0; y < N_PE_Y; y++) begin
-                req_rx [x][y][BR_EAST]  = (x != N_PE_X - 1) ? req_tx [x + 1][y][BR_WEST]  : '0;
-                ack_tx [x][y][BR_EAST]  = (x != N_PE_X - 1) ? ack_rx [x + 1][y][BR_WEST]  : '0;
-                flit_rx[x][y][BR_EAST]  = (x != N_PE_X - 1) ? flit_tx[x + 1][y][BR_WEST]  : '0;
+                req_rx [x][y][2'(BR_EAST)]  = (x != N_PE_X - 1) ? req_tx [x + 1][y][2'(BR_WEST)]  : '0;
+                ack_tx [x][y][2'(BR_EAST)]  = (x != N_PE_X - 1) ? ack_rx [x + 1][y][2'(BR_WEST)]  : '0;
+                flit_rx[x][y][2'(BR_EAST)]  = (x != N_PE_X - 1) ? flit_tx[x + 1][y][2'(BR_WEST)]  : '0;
 
-                req_rx [x][y][BR_WEST]  = (x != 0)          ? req_tx [x - 1][y][BR_EAST]  : '0;
-                ack_tx [x][y][BR_WEST]  = (x != 0)          ? ack_rx [x - 1][y][BR_EAST]  : '0;
-                flit_rx[x][y][BR_WEST]  = (x != 0)          ? flit_tx[x - 1][y][BR_EAST]  : '0;
+                req_rx [x][y][2'(BR_WEST)]  = (x != 0)          ? req_tx [x - 1][y][2'(BR_EAST)]  : '0;
+                ack_tx [x][y][2'(BR_WEST)]  = (x != 0)          ? ack_rx [x - 1][y][2'(BR_EAST)]  : '0;
+                flit_rx[x][y][2'(BR_WEST)]  = (x != 0)          ? flit_tx[x - 1][y][2'(BR_EAST)]  : '0;
 
-                req_rx [x][y][BR_NORTH] = (y != N_PE_Y - 1) ? req_tx [x][y + 1][BR_SOUTH] : '0;
-                ack_tx [x][y][BR_NORTH] = (y != N_PE_Y - 1) ? ack_rx [x][y + 1][BR_SOUTH] : '0;
-                flit_rx[x][y][BR_NORTH] = (y != N_PE_Y - 1) ? flit_tx[x][y + 1][BR_SOUTH] : '0;
+                req_rx [x][y][2'(BR_NORTH)] = (y != N_PE_Y - 1) ? req_tx [x][y + 1][2'(BR_SOUTH)] : '0;
+                ack_tx [x][y][2'(BR_NORTH)] = (y != N_PE_Y - 1) ? ack_rx [x][y + 1][2'(BR_SOUTH)] : '0;
+                flit_rx[x][y][2'(BR_NORTH)] = (y != N_PE_Y - 1) ? flit_tx[x][y + 1][2'(BR_SOUTH)] : '0;
 
-                req_rx [x][y][BR_SOUTH] = (y != 0)          ? req_tx [x][y - 1][BR_NORTH] : '0;
-                ack_tx [x][y][BR_SOUTH] = (y != 0)          ? ack_rx [x][y - 1][BR_NORTH] : '0;
-                flit_rx[x][y][BR_SOUTH] = (y != 0)          ? flit_tx[x][y - 1][BR_NORTH] : '0;
+                req_rx [x][y][2'(BR_SOUTH)] = (y != 0)          ? req_tx [x][y - 1][2'(BR_NORTH)] : '0;
+                ack_tx [x][y][2'(BR_SOUTH)] = (y != 0)          ? ack_rx [x][y - 1][2'(BR_NORTH)] : '0;
+                flit_rx[x][y][2'(BR_SOUTH)] = (y != 0)          ? flit_tx[x][y - 1][2'(BR_NORTH)] : '0;
             end
         end
     end
