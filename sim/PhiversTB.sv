@@ -1,3 +1,10 @@
+`include "../RS5/rtl/RS5_pkg.sv"
+`include "../Hermes/rtl/HermesPkg.sv"
+`include "PhiversPkg.sv"
+`include "../BrLite/rtl/BrLitePkg.sv"
+`include "../DMNI/rtl/DMNIPkg.sv"
+`include "../TaskInjector/rtl/TaskInjectorPkg.sv"
+
 module PhiversTB
     import RS5_pkg::*;
     import PhiversPkg::*;
@@ -8,8 +15,8 @@ module PhiversTB
     logic rst_n;
 
     always begin
-        #5.0 clk = 0;
-        #5.0 clk = 1;
+        #5.0 clk <= 0;
+        #5.0 clk <= 1;
     end
 
     initial begin
@@ -23,9 +30,13 @@ module PhiversTB
     logic        ma_src_rx;
     logic        ma_src_credit;
     logic [31:0] ma_src_data;
+
+    /* Until app parser is added */
+    /* verilator lint_off UNUSEDSIGNAL */
+    logic        app_src_credit;
+    /* verilator lint_on UNUSEDSIGNAL */
     
     logic        app_src_rx;
-    logic        app_src_credit;
     logic [31:0] app_src_data;
 
     logic [23:0] imem_addr       [(N_PE_X - 1):0][(N_PE_Y - 1):0];
@@ -99,8 +110,8 @@ module PhiversTB
     localparam KERNEL_DATA = {PATH, "dkernel.bin"};
 
     generate
-        for (genvar x = 0; x < N_PE_X; x++) begin
-            for (genvar y = 0; y < N_PE_Y; y++) begin
+        for (genvar x = 0; x < N_PE_X; x++) begin : gen_pe_x
+            for (genvar y = 0; y < N_PE_Y; y++) begin : gen_pe_y
                 RAM_mem #(
                     .MEM_WIDTH  (IMEM_SZ                             ),
                     .BIN_FILE   (KERNEL_TEXT                         ),
@@ -181,9 +192,6 @@ module PhiversTB
     //     .data_o           (app_src_data  )
     // );
 
-    // assign ma_src_rx = 1'b0;
-    // assign ma_src_data = '0;
-    // assign mapper_address_o = '0;
     assign app_src_rx = 1'b0;
     assign app_src_data = '0;
 
