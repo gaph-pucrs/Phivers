@@ -5,4 +5,5 @@ work
 *.bin
 *.wlf
 sim/obj_dir
-
+sim/debug
+sim/phivers
