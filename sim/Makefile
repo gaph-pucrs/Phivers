@@ -60,6 +60,10 @@ $(TARGET): $(OBJ_DIR)/V$(TOP)
 $(OBJ_DIR)/V$(TOP): $(SVSRC)
 	$(VERILATOR) --binary -j 0 -Wall $(TOP).sv $(SVFLAGS)
 
+sim: $(TARGET)
+	mkdir -p debug
+	./$(TARGET)
+
 clean:
 	rm -rf $(OBJ_DIR)
 	rm -f $(TARGET)
