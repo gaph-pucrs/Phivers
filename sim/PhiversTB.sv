@@ -17,9 +17,12 @@ module PhiversTB
     always begin
         #5.0 clk <= 0;
         #5.0 clk <= 1;
+        // $dumpvars;
     end
 
     initial begin
+        // $dumpfile("PhiversTB.vcd");
+
         rst_n = 1'b0;
         
         #100 rst_n = 1'b1;
@@ -116,7 +119,7 @@ module PhiversTB
                     .MEM_WIDTH  (IMEM_SZ                             ),
                     .BIN_FILE   (KERNEL_TEXT                         ),
                     .DEBUG      (1                                   ),
-                    .DEBUG_FILE ($sformatf("./debug/%0ux%0u_I", x, y))
+                    .DEBUG_FILE ($sformatf("./debug/%0dx%0d_I", x, y))
                 ) 
                 I_MEM (
                     .clk        (clk                                     ),
@@ -138,7 +141,7 @@ module PhiversTB
                     .MEM_WIDTH  (DMEM_SZ                             ),
                     .BIN_FILE   (KERNEL_DATA                         ),
                     .DEBUG      (1                                   ),
-                    .DEBUG_FILE ($sformatf("./debug/%0ux%0u_D", x, y))
+                    .DEBUG_FILE ($sformatf("./debug/%0dx%0d_D", x, y))
                 ) 
                 D_MEM (
                     .clk        (clk                                     ), 
