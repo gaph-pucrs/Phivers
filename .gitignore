@@ -4,6 +4,7 @@ work
 *.txt
 *.bin
 *.wlf
-sim/obj_dir
+**/obj_dir
 sim/debug
 sim/phivers
+phivers
