@@ -1,9 +1,5 @@
 `include "../RS5/rtl/RS5_pkg.sv"
-`include "../Hermes/rtl/HermesPkg.sv"
 `include "PhiversPkg.sv"
-`include "../BrLite/rtl/BrLitePkg.sv"
-`include "../DMNI/rtl/DMNIPkg.sv"
-`include "../TaskInjector/rtl/TaskInjectorPkg.sv"
 
 module PhiversTB
     import RS5_pkg::*;

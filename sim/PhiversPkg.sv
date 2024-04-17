@@ -1,3 +1,8 @@
+`ifndef PHIVERS_PKG
+`define PHIVERS_PKG
+
+`include "../Hermes/rtl/HermesPkg.sv"
+
 package PhiversPkg;
 
     import HermesPkg::*;
@@ -19,3 +24,5 @@ package PhiversPkg;
     /* verilator lint_on UNUSEDPARAM */
 
 endpackage
+
+`endif

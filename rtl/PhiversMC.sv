@@ -1,3 +1,7 @@
+`include "../RS5/rtl/RS5_pkg.sv"
+`include "../Hermes/rtl/HermesPkg.sv"
+`include "../BrLite/rtl/BrLitePkg.sv"
+
 module PhiversMC
     import RS5_pkg::*;
     import HermesPkg::*;

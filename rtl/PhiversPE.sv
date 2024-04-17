@@ -1,3 +1,8 @@
+`include "../RS5/rtl/RS5_pkg.sv"
+`include "../Hermes/rtl/HermesPkg.sv"
+`include "../BrLite/rtl/BrLitePkg.sv"
+`include "../DMNI/rtl/DMNIPkg.sv"
+
 module PhiversPE
     import RS5_pkg::*;
     import HermesPkg::*;
