@@ -2,17 +2,13 @@ VERILATOR = verilator
 
 OBJ_DIR = obj_dir
 
-verilator: $(TARGET)
-
-$(TARGET): $(OBJ_DIR)/V$(TOP)
-	cp $(OBJ_DIR)/V$(TOP) $(TARGET)
+sim:
+	@mkdir -p debug
+	@./$(TARGET)
 
 $(OBJ_DIR)/V$(TOP): $(SVSRC)
-	$(VERILATOR) --binary -j 0 -Wall $(TOP).sv $(SVFLAGS)
-
-sim: $(TARGET)
-	mkdir -p debug
-	./$(TARGET)
+	@printf "${COR}Building %s ... ${NC}\n" "$@"
+	@$(VERILATOR) --binary -j 0 -Wall $(SVSRC) $(SVFLAGS)
 
 clean:
 	rm -rf $(OBJ_DIR)

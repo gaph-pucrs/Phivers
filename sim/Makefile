@@ -1,3 +1,6 @@
+COR  =\033[0;32m
+NC   =\033[0m # No Color
+
 TARGET = phivers
 TOP = PhiversTB
 
@@ -45,10 +48,9 @@ SVSRC += \
 	../TaskInjector/sim/MAParser.sv \
 	../TaskInjector/sim/AppParser.sv \
 	Debug.sv \
-	PhiversPkg.sv \
 	PhiversTB.sv
 
 include verilator.mk
 include vsim.mk
 
-default: verilator
+default: $(OBJ_DIR)/V$(TOP)
