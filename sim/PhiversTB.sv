@@ -21,7 +21,7 @@ module PhiversTB
     end
 
     initial begin
-        // $dumpfile("PhiversTB.vcd");
+        // $dumpfile("PhiversTB.fst");
 
         rst_n = 1'b0;
         
@@ -34,12 +34,8 @@ module PhiversTB
     logic        ma_src_credit;
     logic [31:0] ma_src_data;
 
-    /* Until app parser is added */
-    /* verilator lint_off UNUSEDSIGNAL */
-    logic        app_src_credit;
-    /* verilator lint_on UNUSEDSIGNAL */
-    
     logic        app_src_rx;
+    logic        app_src_credit;
     logic [31:0] app_src_data;
 
     logic [23:0] imem_addr       [(N_PE_X - 1):0][(N_PE_Y - 1):0];
@@ -179,23 +175,22 @@ module PhiversTB
         .mapper_address_o (mapper_address)
     );
 
-    // logic eoa; /* @todo */
+    /* Until EOA is implemented */
+    /* verilator lint_off UNUSEDSIGNAL */
+    logic eoa;
+    /* verilator lint_on UNUSEDSIGNAL */
 
-    // AppParser #(
-    //     .PATH      (PATH    ),
-    //     .SIM_FREQ  (SIM_FREQ),
-    //     .FLIT_SIZE (32      )
-    // )
-    // app_src (
-    //     .clk_i            (clk           ),
-    //     .rst_ni           (rst_n         ),
-    //     .eoa_o            (eoa           ),
-    //     .tx_o             (app_src_rx    ),
-    //     .credit_i         (app_src_credit),
-    //     .data_o           (app_src_data  )
-    // );
-
-    assign app_src_rx = 1'b0;
-    assign app_src_data = '0;
+    AppParser #(
+        .PATH      (PATH    ),
+        .FLIT_SIZE (32      )
+    )
+    app_src (
+        .clk_i            (clk           ),
+        .rst_ni           (rst_n         ),
+        .eoa_o            (eoa           ),
+        .tx_o             (app_src_rx    ),
+        .credit_i         (app_src_credit),
+        .data_o           (app_src_data  )
+    );
 
 endmodule
