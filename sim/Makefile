@@ -50,7 +50,13 @@ SVSRC += \
 	Debug.sv \
 	PhiversTB.sv
 
+default: $(TARGET)
+
 include verilator.mk
 include vsim.mk
 
-default: $(OBJ_DIR)/$(TARGET)
+clean: clean-verilator clean-vsim
+	@rm -rf debug
+	@rm -rf log
+
+.PHONY: default clean

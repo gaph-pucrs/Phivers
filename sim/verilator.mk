@@ -6,12 +6,12 @@ verilator:
 	@mkdir -p debug
 	@./$(TARGET)
 
-$(OBJ_DIR)/$(TARGET): $(SVSRC)
+$(TARGET): $(SVSRC)
 	@printf "${COR}Building %s ... ${NC}\n" "$@"
-	@$(VERILATOR) --quiet --binary -j 0 -Wall $(SVSRC) $(SVFLAGS) --autoflush -o phivers
+	@$(VERILATOR) --quiet --binary -j 0 -Wall $(SVSRC) $(SVFLAGS) --autoflush -o ../phivers
 
-clean:
-	rm -rf $(OBJ_DIR)
-	rm -f $(TARGET)
+clean-verilator:
+	@rm -rf $(OBJ_DIR)
+	@rm -f $(TARGET)
 
-.PHONY: clean verilator
+.PHONY: clean-verilator verilator

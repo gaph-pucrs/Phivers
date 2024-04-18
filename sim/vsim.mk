@@ -14,3 +14,8 @@ $(VOPT_TGT): $(VLOG_TGT)
 $(VLOG_TGT): $(SVSRC)
 	@printf "${COR}Building %s ... ${NC}\n" "$@"
 	@vlog $(SVSRC) -svinputport=relaxed -incr -suppress 13389 -quiet
+
+clean-vsim:
+	@rm -rf work
+
+.PHONY: clean-vsim vsim
