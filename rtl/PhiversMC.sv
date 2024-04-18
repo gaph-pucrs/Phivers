@@ -267,19 +267,19 @@ module PhiversMC
         for (int x = 0; x < N_PE_X; x++) begin
             for (int y = 0; y < N_PE_Y; y++) begin
                 req_rx [x][y][2'(BR_EAST)]  = (x != N_PE_X - 1) ? req_tx [x + 1][y][2'(BR_WEST)]  : '0;
-                ack_tx [x][y][2'(BR_EAST)]  = (x != N_PE_X - 1) ? ack_rx [x + 1][y][2'(BR_WEST)]  : '0;
+                ack_tx [x][y][2'(BR_EAST)]  = (x != N_PE_X - 1) ? ack_rx [x + 1][y][2'(BR_WEST)]  : '1;
                 flit_rx[x][y][2'(BR_EAST)]  = (x != N_PE_X - 1) ? flit_tx[x + 1][y][2'(BR_WEST)]  : '0;
 
                 req_rx [x][y][2'(BR_WEST)]  = (x != 0)          ? req_tx [x - 1][y][2'(BR_EAST)]  : '0;
-                ack_tx [x][y][2'(BR_WEST)]  = (x != 0)          ? ack_rx [x - 1][y][2'(BR_EAST)]  : '0;
+                ack_tx [x][y][2'(BR_WEST)]  = (x != 0)          ? ack_rx [x - 1][y][2'(BR_EAST)]  : '1;
                 flit_rx[x][y][2'(BR_WEST)]  = (x != 0)          ? flit_tx[x - 1][y][2'(BR_EAST)]  : '0;
 
                 req_rx [x][y][2'(BR_NORTH)] = (y != N_PE_Y - 1) ? req_tx [x][y + 1][2'(BR_SOUTH)] : '0;
-                ack_tx [x][y][2'(BR_NORTH)] = (y != N_PE_Y - 1) ? ack_rx [x][y + 1][2'(BR_SOUTH)] : '0;
+                ack_tx [x][y][2'(BR_NORTH)] = (y != N_PE_Y - 1) ? ack_rx [x][y + 1][2'(BR_SOUTH)] : '1;
                 flit_rx[x][y][2'(BR_NORTH)] = (y != N_PE_Y - 1) ? flit_tx[x][y + 1][2'(BR_SOUTH)] : '0;
 
                 req_rx [x][y][2'(BR_SOUTH)] = (y != 0)          ? req_tx [x][y - 1][2'(BR_NORTH)] : '0;
-                ack_tx [x][y][2'(BR_SOUTH)] = (y != 0)          ? ack_rx [x][y - 1][2'(BR_NORTH)] : '0;
+                ack_tx [x][y][2'(BR_SOUTH)] = (y != 0)          ? ack_rx [x][y - 1][2'(BR_NORTH)] : '1;
                 flit_rx[x][y][2'(BR_SOUTH)] = (y != 0)          ? flit_tx[x][y - 1][2'(BR_NORTH)] : '0;
             end
         end
