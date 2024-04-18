@@ -1,15 +1,24 @@
 VOPT_TGT = work/$(TARGET)/_lib.qdb
 VLOG_TGT = work/_lib.qdb
 
+ifeq ($(TRACE), 1)
+	VOPT_TRACE = +acc
+	VSIM_WAVE = -do wave.do
+endif
+
+ifeq ($(TRACE), 0)
+	VSIM_CMDLINE = -c
+endif
+
 # -do "run -all; quit"
 vsim:
 	@mkdir -p debug
-	@vsim -c work.$(TARGET) -suppress 3691 -quiet
+	@vsim $(VSIM_CMDLINE) work.$(TARGET) -suppress 3691 -quiet $(VSIM_WAVE)
 
 # add +acc for waveform
 $(VOPT_TGT): $(VLOG_TGT)
 	@printf "${COR}Optimizing %s ... ${NC}\n" "$@"
-	@vopt work.$(TOP) -o phivers -suppress 10587 -quiet
+	@vopt work.$(TOP) -o phivers -suppress 10587 -quiet $(VOPT_TRACE)
 
 $(VLOG_TGT): $(SVSRC)
 	@printf "${COR}Building %s ... ${NC}\n" "$@"
