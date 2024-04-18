@@ -16,12 +16,6 @@ package PhiversPkg;
     parameter hermes_port_t PORT_APP_INJ = HERMES_NORTH;
     parameter IMEM_PAGE_SZ = 32768;
     parameter DMEM_PAGE_SZ = 32768;
-    parameter PATH = "./";
-
-    /* Until app parser is added */
-    /* verilator lint_off UNUSEDPARAM */
-    parameter SIM_FREQ = 100_000_000;
-    /* verilator lint_on UNUSEDPARAM */
 
 endpackage
 

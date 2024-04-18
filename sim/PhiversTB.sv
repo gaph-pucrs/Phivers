@@ -99,10 +99,10 @@ module PhiversTB
 //////////////////////////////////////////////////////////////////////////////
 
     localparam IMEM_SZ = IMEM_PAGE_SZ * (TASKS_PER_PE + 1);
-    localparam KERNEL_TEXT = {PATH, "ikernel.bin"};
+    localparam KERNEL_TEXT = "ikernel.bin";
 
     localparam DMEM_SZ = DMEM_PAGE_SZ * (TASKS_PER_PE + 1);
-    localparam KERNEL_DATA = {PATH, "dkernel.bin"};
+    localparam KERNEL_DATA = "dkernel.bin";
 
     generate
         for (genvar x = 0; x < N_PE_X; x++) begin : gen_pe_x
@@ -159,7 +159,6 @@ module PhiversTB
 //////////////////////////////////////////////////////////////////////////////
 
     MAParser #(
-        .PATH      (PATH),
         .FLIT_SIZE (32  )
     )
     ma_src (
@@ -177,7 +176,6 @@ module PhiversTB
     /* verilator lint_on UNUSEDSIGNAL */
 
     AppParser #(
-        .PATH      (PATH    ),
         .FLIT_SIZE (32      )
     )
     app_src (
