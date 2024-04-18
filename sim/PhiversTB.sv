@@ -13,11 +13,15 @@ module PhiversTB
     always begin
         #5.0 clk <= 0;
         #5.0 clk <= 1;
-        // $dumpvars;
+        `ifdef TRACE_VERILATOR
+            $dumpvars;
+        `endif
     end
 
     initial begin
-        // $dumpfile("PhiversTB.fst");
+        `ifdef TRACE_VERILATOR
+            $dumpfile("trace.fst");
+        `endif
 
         rst_n = 1'b0;
         

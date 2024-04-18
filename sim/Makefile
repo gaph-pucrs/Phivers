@@ -4,6 +4,7 @@ NC   =\033[0m # No Color
 TARGET = phivers
 TOP = PhiversTB
 
+TRACE ?= 0
 SVFLAGS =
 SVSRC =
 
