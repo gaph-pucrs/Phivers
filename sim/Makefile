@@ -53,4 +53,4 @@ SVSRC += \
 include verilator.mk
 include vsim.mk
 
-default: $(OBJ_DIR)/V$(TOP)
+default: $(OBJ_DIR)/$(TARGET)

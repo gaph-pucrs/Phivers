@@ -2,17 +2,16 @@ VERILATOR = verilator
 
 OBJ_DIR = obj_dir
 
-sim:
+verilator:
 	@mkdir -p debug
 	@./$(TARGET)
 
-$(OBJ_DIR)/V$(TOP): $(SVSRC)
+$(OBJ_DIR)/$(TARGET): $(SVSRC)
 	@printf "${COR}Building %s ... ${NC}\n" "$@"
-	@$(VERILATOR) --binary -j 0 -Wall $(SVSRC) $(SVFLAGS)
+	@$(VERILATOR) --quiet --binary -j 0 -Wall $(SVSRC) $(SVFLAGS) --autoflush -o phivers
 
 clean:
 	rm -rf $(OBJ_DIR)
 	rm -f $(TARGET)
 
-.PHONY: clean verilator vsim
-.PHONY: $(OBJ_DIR)/V$(TOP)
+.PHONY: clean verilator
