@@ -18,7 +18,7 @@ module Debug
     int fd;
 
     initial begin
-        fd = $fopen($sformatf("log%0dx%0d.txt", ADDRESS[15:8], ADDRESS[7:0]), "w");
+        fd = $fopen($sformatf("log/log%0dx%0d.txt", ADDRESS[15:8], ADDRESS[7:0]), "w");
     end
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
