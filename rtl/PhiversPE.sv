@@ -69,10 +69,6 @@ module PhiversPE
 // Core
 ////////////////////////////////////////////////////////////////////////////////
 
-    logic rst;
-
-    assign rst = ~rst_ni;
-
     logic        mei;
     logic        mti;
     logic [31:0] irq;
@@ -105,7 +101,7 @@ module PhiversPE
     )
     processor (
         .clk                    (clk_i         ),
-        .reset                  (rst           ),
+        .reset_n                (rst_ni        ),
         .stall                  (1'b0          ),
         .instruction_i          (imem_data_i   ),
         .mem_data_i             (cpu_data_read ),
@@ -138,7 +134,7 @@ module PhiversPE
     )
     plic_m (
         .clk    (clk_i         ),
-        .reset  (rst           ),
+        .reset_n(rst_ni        ),
         .en_i   (plic_en       ),
         .we_i   (cpu_we        ),
         .addr_i (cpu_addr[23:0]),
@@ -164,7 +160,7 @@ module PhiversPE
     rtc 
     rtc_m (
         .clk     (clk_i                  ),
-        .reset   (rst                    ),
+        .reset_n (rst_ni                 ),
         .en_i    (rtc_en                 ),
         .addr_i  (cpu_addr[3:0]          ),
         .we_i    ({4'h0, cpu_we}         ),
