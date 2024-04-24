@@ -154,7 +154,7 @@ module PhiversMC
         localparam logic [7:0] x = ADDR_APP_INJ[15:8];
         localparam logic [7:0] y = ADDR_APP_INJ[7:0];
         app_inj_rx        = tx       [$clog2(N_PE_X)'(x)][$clog2(N_PE_Y)'(y)][2'(PORT_APP_INJ)] && release_peripheral[$clog2(N_PE_X)'(x)][$clog2(N_PE_Y)'(y)];
-        app_inj_credit_tx = credit_rx[$clog2(N_PE_X)'(x)][$clog2(N_PE_Y)'(y)][2'(PORT_APP_INJ)];
+        app_inj_credit_tx = credit_rx[$clog2(N_PE_X)'(x)][$clog2(N_PE_Y)'(y)][2'(PORT_APP_INJ)] && release_peripheral[$clog2(N_PE_X)'(x)][$clog2(N_PE_Y)'(y)];
         app_inj_data_rx   = data_tx  [$clog2(N_PE_X)'(x)][$clog2(N_PE_Y)'(y)][2'(PORT_APP_INJ)];
     end
 
@@ -255,7 +255,7 @@ module PhiversMC
         data_rx  [$clog2(N_PE_X)'(MA_INJ_X)][$clog2(N_PE_Y)'(MA_INJ_Y)][2'(PORT_MA_INJ)] = ma_inj_data_tx;
 
         rx       [$clog2(N_PE_X)'(APP_INJ_X)][$clog2(N_PE_Y)'(APP_INJ_Y)][2'(PORT_APP_INJ)] = app_inj_tx && release_peripheral[$clog2(N_PE_X)'(APP_INJ_X)][$clog2(N_PE_Y)'(APP_INJ_Y)];
-        credit_tx[$clog2(N_PE_X)'(APP_INJ_X)][$clog2(N_PE_Y)'(APP_INJ_Y)][2'(PORT_APP_INJ)] = app_inj_credit_rx;
+        credit_tx[$clog2(N_PE_X)'(APP_INJ_X)][$clog2(N_PE_Y)'(APP_INJ_Y)][2'(PORT_APP_INJ)] = app_inj_credit_rx && release_peripheral[$clog2(N_PE_X)'(APP_INJ_X)][$clog2(N_PE_Y)'(APP_INJ_Y)];
         data_rx  [$clog2(N_PE_X)'(APP_INJ_X)][$clog2(N_PE_Y)'(APP_INJ_Y)][2'(PORT_APP_INJ)] = app_inj_data_tx;
 
         /* Insert the IO wiring for your component here if it connected to a port */
