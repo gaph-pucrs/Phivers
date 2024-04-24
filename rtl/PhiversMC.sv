@@ -29,6 +29,7 @@ module PhiversMC
     output logic        ma_src_credit_o,
     input  logic [31:0] ma_src_data_i,
 
+    input  logic        app_src_eoa_i,
     input  logic        app_src_rx_i,
     output logic        app_src_credit_o,
     input  logic [31:0] app_src_data_i,
@@ -94,6 +95,7 @@ module PhiversMC
     MAInjector (
         .clk_i           (clk_i           ),
         .rst_ni          (rst_ni          ),
+        .src_eoa_i       ('0              ),
         .src_rx_i        (ma_src_rx_i     ),
         .src_credit_o    (ma_src_credit_o ),
         .src_data_i      (ma_src_data_i   ),
@@ -135,6 +137,7 @@ module PhiversMC
     AppInjector (
         .clk_i           (clk_i            ),
         .rst_ni          (rst_ni           ),
+        .src_eoa_i       (app_src_eoa_i    ),
         .src_rx_i        (app_src_rx_i     ),
         .src_credit_o    (app_src_credit_o ),
         .src_data_i      (app_src_data_i   ),

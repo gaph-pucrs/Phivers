@@ -34,6 +34,7 @@ module PhiversTB
     logic        ma_src_credit;
     logic [31:0] ma_src_data;
 
+    logic        eoa;
     logic        app_src_rx;
     logic        app_src_credit;
     logic [31:0] app_src_data;
@@ -79,6 +80,7 @@ module PhiversTB
         .ma_src_rx_i      (ma_src_rx      ),
         .ma_src_credit_o  (ma_src_credit  ),
         .ma_src_data_i    (ma_src_data    ),
+        .app_src_eoa_i    (eoa            ),
         .app_src_rx_i     (app_src_rx     ),
         .app_src_credit_o (app_src_credit ),
         .app_src_data_i   (app_src_data   ),
@@ -173,11 +175,6 @@ module PhiversTB
         .data_o           (ma_src_data   ),
         .mapper_address_o (mapper_address)
     );
-
-    /* Until EOA is implemented */
-    /* verilator lint_off UNUSEDSIGNAL */
-    logic eoa;
-    /* verilator lint_on UNUSEDSIGNAL */
 
     AppParser #(
         .FLIT_SIZE (32      )
