@@ -30,6 +30,10 @@ module Debug
                         $fflush(fd);
                     end
                 end
+                24'h000004: begin
+                    $display("[%7.3f] [ PE %02xx%02x] Simulation halted", $time()/1_000_000.0, ADDRESS[15:8], ADDRESS[7:0]);
+                    $finish();
+                end
                 default: ;
             endcase
         end
