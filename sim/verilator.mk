@@ -13,7 +13,7 @@ verilator:
 
 $(TARGET): $(SVSRC)
 	@printf "${COR}Building %s ... ${NC}\n" "$@"
-	@$(VERILATOR) --quiet --binary -j 0 -Wall $(SVSRC) $(SVFLAGS) --autoflush -o ../phivers $(TRACE_VERILATOR) $(DEF_TRACE)
+	@$(VERILATOR) --quiet --binary -j 0 -Wall $(SVSRC) $(SVFLAGS) --autoflush -o ../phivers $(TRACE_VERILATOR) $(DEF_TRACE) --timescale 1ns/1ns
 
 clean-verilator:
 	@rm -rf $(OBJ_DIR)
