@@ -8,12 +8,13 @@ endif
 
 ifeq ($(TRACE), 0)
 	VSIM_CMDLINE = -c
+	RUN_CMDLINE = -do "run -all; quit"
 endif
 
 # -do "run -all; quit"
 vsim:
 	@mkdir -p debug
-	@vsim $(VSIM_CMDLINE) work.$(TARGET) -suppress 3691 -quiet $(VSIM_WAVE)
+	@vsim $(VSIM_CMDLINE) work.$(TARGET) -suppress 3691 -quiet $(RUN_CMDLINE) $(VSIM_WAVE)
 
 # add +acc for waveform
 $(VOPT_TGT): $(VLOG_TGT)
