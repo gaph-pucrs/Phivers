@@ -245,7 +245,7 @@ module PhiversMC
                 data_rx  [x][y][2'(HERMES_NORTH)] = (y != N_PE_Y - 1) ? data_tx  [x][y + 1][2'(HERMES_SOUTH)] : '0;
 
                 rx       [x][y][2'(HERMES_SOUTH)] = (y != 0)          ? tx       [x][y - 1][2'(HERMES_NORTH)] : '0;
-                credit_tx[x][y][2'(HERMES_SOUTH)] = (y != 0)          ? credit_rx[x][y - 1][2'(HERMES_SOUTH)] : '0;
+                credit_tx[x][y][2'(HERMES_SOUTH)] = (y != 0)          ? credit_rx[x][y - 1][2'(HERMES_NORTH)] : '0;
                 data_rx  [x][y][2'(HERMES_SOUTH)] = (y != 0)          ? data_tx  [x][y - 1][2'(HERMES_NORTH)] : '0;
             end
         end
