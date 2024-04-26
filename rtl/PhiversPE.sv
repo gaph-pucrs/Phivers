@@ -95,7 +95,7 @@ module PhiversPE
 
     RS5 #(
         .Environment(Environment),
-        .RV32(RV32ZMMUL),
+        .RV32(RV32I),
         .XOSVMEnable(1),
         .ZIHPMEnable(1)
     )
