@@ -10,7 +10,6 @@ module PhiversPE
     import DMNIPkg::*;
 #(
     parameter logic [15:0]  ADDRESS      = 16'b0,
-    parameter logic [15:0]  SEQ_ADDRESS  = 0,
     parameter               N_PE_X       = 2,
     parameter               N_PE_Y       = 2,
     parameter               TASKS_PER_PE = 1,
@@ -228,10 +227,11 @@ module PhiversPE
     assign brlite_ack_snd[(BR_NPORT - 2):0] = brlite_ack_i;
     assign brlite_flit_o                    = brlite_flit_snd[(BR_NPORT - 2):0];
 
+    localparam logic [15:0] seq_addr = ADDRESS[7:0] * N_PE_X + {8'h00, ADDRESS[15:8]};
     BrLiteRouter #(
-        .SEQ_ADDRESS (SEQ_ADDRESS),
-        .CAM_SIZE    (8          ),
-        .CLEAR_TICKS (150        )
+        .SEQ_ADDRESS (seq_addr                ),
+        .CAM_SIZE    ($clog2(N_PE_X*N_PE_Y)**2), /* At least 1 entry per PE or deadlock may occur */
+        .CLEAR_TICKS (150                     )
     )
     br_router (
         .clk_i        (clk_i            ),
@@ -307,23 +307,23 @@ module PhiversPE
 
     assign brlite_flit_rcv[(BR_NPORT - 1)].payload    = brlite_flit_ni.payload;
     assign brlite_flit_rcv[(BR_NPORT - 1)].seq_target = brlite_flit_ni.seq_target;
-    assign brlite_flit_rcv[(BR_NPORT - 1)].seq_source = SEQ_ADDRESS;
+    assign brlite_flit_rcv[(BR_NPORT - 1)].seq_source = seq_addr;
     assign brlite_flit_rcv[(BR_NPORT - 1)].producer   = brlite_flit_ni.producer;
     assign brlite_flit_rcv[(BR_NPORT - 1)].ksvc       = brlite_flit_ni.ksvc;
     assign brlite_flit_rcv[(BR_NPORT - 1)].id         = brlite_id;
     assign brlite_flit_rcv[(BR_NPORT - 1)].service    = br_svc_t'(brlite_flit_ni.service);
 
     DMNI #(
-        .HERMES_FLIT_SIZE   (32          ),
-        .HERMES_BUFFER_SIZE (16          ),
-        .BR_MON_BUFFER_SIZE (8           ),
-        .BR_SVC_BUFFER_SIZE (4           ),
-        .N_PE_X             (N_PE_X      ),
-        .N_PE_Y             (N_PE_Y      ),
-        .TASKS_PER_PE       (TASKS_PER_PE),
-        .IMEM_PAGE_SZ       (IMEM_PAGE_SZ),
-        .DMEM_PAGE_SZ       (DMEM_PAGE_SZ),
-        .ADDRESS            (ADDRESS     )
+        .HERMES_FLIT_SIZE   (32                      ),
+        .HERMES_BUFFER_SIZE (16                      ),
+        .BR_MON_BUFFER_SIZE (8                       ),
+        .BR_SVC_BUFFER_SIZE ($clog2(N_PE_X*N_PE_Y)**2), /* At least 1 entry per PE or data loss may occur */
+        .N_PE_X             (N_PE_X                  ),
+        .N_PE_Y             (N_PE_Y                  ),
+        .TASKS_PER_PE       (TASKS_PER_PE            ),
+        .IMEM_PAGE_SZ       (IMEM_PAGE_SZ            ),
+        .DMEM_PAGE_SZ       (DMEM_PAGE_SZ            ),
+        .ADDRESS            (ADDRESS                 )
     )
     dmni (
         .clk_i                (clk_i                                  ),
