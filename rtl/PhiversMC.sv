@@ -233,19 +233,19 @@ module PhiversMC
         for (int x = 0; x < N_PE_X; x++) begin
             for (int y = 0; y < N_PE_Y; y++) begin
                 rx       [x][y][2'(HERMES_EAST)]  = (x != N_PE_X - 1) ? tx       [x + 1][y][2'(HERMES_WEST)]  : '0;
-                credit_tx[x][y][2'(HERMES_EAST)]  = (x != N_PE_X - 1) ? credit_rx[x + 1][y][2'(HERMES_WEST)]  : '0;
+                credit_tx[x][y][2'(HERMES_EAST)]  = (x != N_PE_X - 1) ? credit_rx[x + 1][y][2'(HERMES_WEST)]  : '1;
                 data_rx  [x][y][2'(HERMES_EAST)]  = (x != N_PE_X - 1) ? data_tx  [x + 1][y][2'(HERMES_WEST)]  : '0;
 
                 rx       [x][y][2'(HERMES_WEST)]  = (x != 0)          ? tx       [x - 1][y][2'(HERMES_EAST)]  : '0;
-                credit_tx[x][y][2'(HERMES_WEST)]  = (x != 0)          ? credit_rx[x - 1][y][2'(HERMES_EAST)]  : '0;
+                credit_tx[x][y][2'(HERMES_WEST)]  = (x != 0)          ? credit_rx[x - 1][y][2'(HERMES_EAST)]  : '1;
                 data_rx  [x][y][2'(HERMES_WEST)]  = (x != 0)          ? data_tx  [x - 1][y][2'(HERMES_EAST)]  : '0;
 
                 rx       [x][y][2'(HERMES_NORTH)] = (y != N_PE_Y - 1) ? tx       [x][y + 1][2'(HERMES_SOUTH)] : '0;
-                credit_tx[x][y][2'(HERMES_NORTH)] = (y != N_PE_Y - 1) ? credit_rx[x][y + 1][2'(HERMES_SOUTH)] : '0;
+                credit_tx[x][y][2'(HERMES_NORTH)] = (y != N_PE_Y - 1) ? credit_rx[x][y + 1][2'(HERMES_SOUTH)] : '1;
                 data_rx  [x][y][2'(HERMES_NORTH)] = (y != N_PE_Y - 1) ? data_tx  [x][y + 1][2'(HERMES_SOUTH)] : '0;
 
                 rx       [x][y][2'(HERMES_SOUTH)] = (y != 0)          ? tx       [x][y - 1][2'(HERMES_NORTH)] : '0;
-                credit_tx[x][y][2'(HERMES_SOUTH)] = (y != 0)          ? credit_rx[x][y - 1][2'(HERMES_NORTH)] : '0;
+                credit_tx[x][y][2'(HERMES_SOUTH)] = (y != 0)          ? credit_rx[x][y - 1][2'(HERMES_NORTH)] : '1;
                 data_rx  [x][y][2'(HERMES_SOUTH)] = (y != 0)          ? data_tx  [x][y - 1][2'(HERMES_NORTH)] : '0;
             end
         end
