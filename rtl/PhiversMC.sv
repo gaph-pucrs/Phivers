@@ -171,11 +171,9 @@ module PhiversMC
         for (genvar x = 0; x < N_PE_X; x++) begin : gen_x
             for (genvar y = 0; y < N_PE_Y; y++) begin : gen_y
                 localparam logic [15:0] address  = {x[7:0], y[7:0]};
-                localparam logic [15:0] seq_addr = x * N_PE_Y + y;
 
                 PhiversPE #(
                     .ADDRESS      (address     ),
-                    .SEQ_ADDRESS  (seq_addr    ),
                     .N_PE_X       (N_PE_X      ),
                     .N_PE_Y       (N_PE_Y      ),
                     .TASKS_PER_PE (TASKS_PER_PE),
