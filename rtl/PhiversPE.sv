@@ -423,15 +423,18 @@ module PhiversPE
         assign dbg_we = (| cpu_we);
         
         Debug #(
-            .ADDRESS (ADDRESS)
+            .ADDRESS       (ADDRESS                        ),
+            .SEQ_ADDR      (seq_addr                       ),
+            .DBG_SCHED_FILE("./debug/scheduling_report.txt")
         )
         dbg (
-            .clk_i  (clk_i         ),
-            .rst_ni (rst_ni        ),
-            .en_i   (dbg_en        ),
-            .we_i   (dbg_we        ),
-            .addr_i (cpu_addr[23:0]),
-            .data_i (cpu_data_write)
+            .clk_i      (clk_i         ),
+            .rst_ni     (rst_ni        ),
+            .en_i       (dbg_en        ),
+            .we_i       (dbg_we        ),
+            .addr_i     (cpu_addr[23:0]),
+            .data_i     (cpu_data_write),
+            .tick_cntr_i(mtime         )
         );
 
         for (genvar p = 0; p < HERMES_NPORT; p++) begin : gen_traffic_router
