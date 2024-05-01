@@ -412,7 +412,7 @@ module PhiversPE
     end
 
 ////////////////////////////////////////////////////////////////////////////////
-// UART and DEBUG connections
+// DEBUG connections
 ////////////////////////////////////////////////////////////////////////////////
 
     if (DEBUG) begin : gen_pe_debug
@@ -433,6 +433,23 @@ module PhiversPE
             .addr_i (cpu_addr[23:0]),
             .data_i (cpu_data_write)
         );
+
+        for (genvar p = 0; p < HERMES_NPORT; p++) begin : gen_traffic_router
+            TrafficRouter #(
+                .FLIT_SIZE(32                          ),
+                .ADDRESS  (ADDRESS                     ),
+                .PORT     (hermes_port_t'(p)           ),
+                .FILE_NAME("./debug/traffic_router.txt")
+            )
+            traffic_router (
+                .clk_i      (clk_i            ),
+                .rst_ni     (rst_ni           ),
+                .rx_i       (noc_rx[p]        ),
+                .credit_i   (noc_credit_rcv[p]),
+                .data_i     (noc_data_rcv[p]  ),
+                .tick_cntr_i(mtime            )
+            );
+        end
     end
 
 endmodule
