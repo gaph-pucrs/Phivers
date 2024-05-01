@@ -452,6 +452,21 @@ module PhiversPE
                 .data_i     (noc_data_rcv[p]  ),
                 .tick_cntr_i(mtime            )
             );
+
+            TrafficBroadcast #(
+                .ADDRESS  (ADDRESS                     ),
+                .PORT     (br_port_t'(p)               ),
+                .FILE_NAME("./debug/traffic_router.txt"),
+                .N_PE_X   (N_PE_X                      )
+            )
+            traffic_broadcast (
+                .clk_i      (clk_i             ),
+                .rst_ni     (rst_ni            ),
+                .rx_i       (brlite_req_rcv[p] ),
+                .ack_rx_i   (brlite_ack_rcv[p] ),
+                .data_i     (brlite_flit_rcv[p]),
+                .tick_cntr_i(mtime             )
+            );
         end
     end
 
