@@ -19,6 +19,9 @@ module Debug
 
     initial begin
         fd = $fopen($sformatf("log/log%0dx%0d.txt", ADDRESS[15:8], ADDRESS[7:0]), "w");
+        if (fd == '0) begin
+            $display("[Debug] Could not open log file");
+        end
     end
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
@@ -26,7 +29,7 @@ module Debug
             case (addr_i)
                 24'h000000: begin
                     $fwrite(fd, "%c", data_i[7:0]);
-                    if (data_i[7:0] inside {8'h00, 8'h0A}) begin
+                    if (data_i[7:0] == 8'h0A) begin
                         $fflush(fd);
                     end
                 end
@@ -37,6 +40,10 @@ module Debug
                 default: ;
             endcase
         end
+    end
+
+    final begin
+        $fclose(fd);
     end
 
 endmodule

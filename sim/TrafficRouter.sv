@@ -273,6 +273,7 @@ module TrafficRouter
                         );
                     end
 
+                    $fflush(fd);
                     $fclose(fd);
                 end
             end
