@@ -47,8 +47,10 @@ SVFLAGS += -I$(PHIVERS)
 SVSRC += \
 	../RS5/sim/RAM_mem.sv \
 	../TaskInjector/sim/MAParser.sv \
-	../TaskInjector/sim/AppParser.sv \
+	../TaskInjector/sim/TaskParser.sv \
 	Debug.sv \
+	TrafficRouter.sv \
+	TrafficBroadcast.sv \
 	PhiversTB.sv
 
 default: $(TARGET)

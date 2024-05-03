@@ -176,8 +176,9 @@ module PhiversTB
         .mapper_address_o (mapper_address)
     );
 
-    AppParser #(
-        .FLIT_SIZE (32      )
+    TaskParser #(
+        .FLIT_SIZE (32             ),
+        .START_FILE("app_start.txt")
     )
     app_src (
         .clk_i            (clk           ),
