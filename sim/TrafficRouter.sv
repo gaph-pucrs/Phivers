@@ -24,6 +24,8 @@ module TrafficRouter
     logic flit_received;
     assign flit_received = (rx_i && credit_i);
 
+    logic [31:0] flit_cntr;
+
 ////////////////////////////////////////////////////////////////////////////////
 // Monitor control
 ////////////////////////////////////////////////////////////////////////////////
@@ -84,7 +86,7 @@ module TrafficRouter
 
     /* 1 */
     logic [31:0] size;
-    logic [31:0] flit_cntr;
+    // flit_cntr too
     logic [31:0] flit_idx;
 
     /* 2 */
