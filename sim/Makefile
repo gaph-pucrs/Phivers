@@ -3,6 +3,7 @@ NC   =\033[0m # No Color
 
 TARGET = phivers
 TOP = PhiversTB
+CPPTOP = TopTB.cpp
 
 TRACE ?= 0
 SVFLAGS =
