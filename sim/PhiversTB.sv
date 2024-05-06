@@ -164,8 +164,11 @@ module PhiversTB
 // INJECTORS
 //////////////////////////////////////////////////////////////////////////////
 
-    MAParser #(
-        .FLIT_SIZE (32  )
+    TaskParser #(
+        .FLIT_SIZE    (32            ),
+        .INJECT_MAPPER(1             ),
+        .START_FILE   ("ma_start.txt"),
+        .APP_PATH     ("management"  )
     )
     ma_src (
         .clk_i            (clk           ),
@@ -177,8 +180,10 @@ module PhiversTB
     );
 
     TaskParser #(
-        .FLIT_SIZE (32             ),
-        .START_FILE("app_start.txt")
+        .FLIT_SIZE    (32             ),
+        .INJECT_MAPPER(0              ),
+        .START_FILE   ("app_start.txt"),
+        .APP_PATH     ("applications" )
     )
     app_src (
         .clk_i            (clk           ),
