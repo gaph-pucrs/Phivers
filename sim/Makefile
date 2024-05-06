@@ -46,7 +46,6 @@ SVFLAGS += -I$(PHIVERS)
 # Add simulation sources
 SVSRC += \
 	../RS5/sim/RAM_mem.sv \
-	../TaskInjector/sim/MAParser.sv \
 	../TaskInjector/sim/TaskParser.sv \
 	Debug.sv \
 	TrafficRouter.sv \
