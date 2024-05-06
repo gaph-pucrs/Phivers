@@ -5,29 +5,9 @@ module PhiversTB
     import RS5_pkg::*;
     import PhiversPkg::*;
 (
+    input logic clk,
+    input logic rst_n
 );
-
-    logic clk = 1'b1;
-    logic rst_n;
-
-    always begin
-        #5.0 clk <= 0;
-        #5.0 clk <= 1;
-        `ifdef TRACE_VERILATOR
-            $dumpvars;
-        `endif
-    end
-
-    initial begin
-        `ifdef TRACE_VERILATOR
-            $dumpfile("trace.fst");
-        `endif
-
-        rst_n = 1'b0;
-        
-        #100 rst_n = 1'b1;
-    end
-
     logic [15:0] mapper_address;
     
     logic        ma_src_rx;
@@ -164,6 +144,11 @@ module PhiversTB
 // INJECTORS
 //////////////////////////////////////////////////////////////////////////////
 
+    /* verilator lint_off UNUSEDSIGNAL */
+    logic           ma_eoa;
+    logic [15:0]    app_mapper_address;
+    /* verilator lint_on UNUSEDSIGNAL */
+
     TaskParser #(
         .FLIT_SIZE    (32            ),
         .INJECT_MAPPER(1             ),
@@ -173,6 +158,7 @@ module PhiversTB
     ma_src (
         .clk_i            (clk           ),
         .rst_ni           (rst_n         ),
+        .eoa_o            (ma_eoa        ),
         .tx_o             (ma_src_rx     ),
         .credit_i         (ma_src_credit ),
         .data_o           (ma_src_data   ),
@@ -186,12 +172,13 @@ module PhiversTB
         .APP_PATH     ("applications" )
     )
     app_src (
-        .clk_i            (clk           ),
-        .rst_ni           (rst_n         ),
-        .eoa_o            (eoa           ),
-        .tx_o             (app_src_rx    ),
-        .credit_i         (app_src_credit),
-        .data_o           (app_src_data  )
+        .clk_i            (clk               ),
+        .rst_ni           (rst_n             ),
+        .eoa_o            (eoa               ),
+        .tx_o             (app_src_rx        ),
+        .credit_i         (app_src_credit    ),
+        .data_o           (app_src_data      ),
+        .mapper_address_o (app_mapper_address)
     );
 
 endmodule
