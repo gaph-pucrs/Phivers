@@ -239,7 +239,6 @@ module PhiversPE
     br_router (
         .clk_i        (clk_i            ),
         .rst_ni       (rst_ni           ),
-        .tick_cnt_i   (mtime            ),
         .local_busy_o (brlite_local_busy),
         .flit_i       (brlite_flit_rcv  ),
         .req_i        (brlite_req_rcv   ),
