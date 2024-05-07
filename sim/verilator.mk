@@ -1,11 +1,11 @@
 VERILATOR = verilator
 
 OBJ_DIR = obj_dir
-
 OBJ = $(patsubst %.cpp, $(OBJ_DIR)/%.o, $(CPPTOP))
-OPT = -march=native -flto
+
+OPT      = -fdata-sections -ffunction-sections -flto
 OPT_FAST = -O3
-SVOPT   = --x-initial fast --noassert
+SVOPT    = --x-initial fast --noassert
 
 ifeq ($(TRACE), 1)
 	TRACE_VERILATOR = --trace-fst
@@ -14,8 +14,8 @@ ifeq ($(TRACE), 1)
 endif
 
 CPPFLAGS = $(OPT) $(OPT_FAST) `pkgconf --cflags verilator` $(DEF_TRACE)
-LDFLAGS = -lpthread -Wl,-flto $(LD_TRACE)
-VERILATE_FLAGS = -Wall --quiet --autoflush --cc --timescale 1ns/1ps $(SVOPT) $(TRACE_VERILATOR)
+LDFLAGS = -lpthread -Wl,--gc-sections,-flto $(LD_TRACE)
+VERILATE_FLAGS = -Wall --quiet --autoflush --cc --timescale 1ns/1ns $(SVOPT) $(TRACE_VERILATOR)
 
 verilator:
 	@mkdir -p debug
@@ -34,7 +34,7 @@ $(OBJ_DIR)/V$(TOP).cpp: $(SVSRC)
 	@$(VERILATOR) --top $(TOP) $(SVSRC) $(SVFLAGS) $(VERILATE_FLAGS)
 
 $(OBJ_DIR)/V$(TOP)__ALL.a: $(OBJ_DIR)/V$(TOP).cpp
-	@printf "${COR}Archiving %s ... ${NC}\n" "$@"
+	@printf "${COR}Compiling %s ... ${NC}\n" "$@"
 	@+make AR=gcc-ar OPT_FAST="$(OPT_FAST)" OPT="$(OPT)" -C $(OBJ_DIR) -f V$(TOP).mk -s
 
 clean-verilator:
