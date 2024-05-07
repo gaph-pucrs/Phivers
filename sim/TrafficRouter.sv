@@ -200,6 +200,27 @@ module TrafficRouter
 // Logging control
 ////////////////////////////////////////////////////////////////////////////////
 
+    logic write_task_id;
+    assign write_task_id = service inside {
+        MESSAGE_REQUEST, 
+        MESSAGE_DELIVERY, 
+        DATA_AV, 
+        MIGRATION_DATA_BSS, 
+        TASK_ALLOCATION
+    };
+
+    logic write_cons_id;
+    assign write_cons_id = service inside {
+        MESSAGE_REQUEST, 
+        MESSAGE_DELIVERY, 
+        DATA_AV
+    };
+
+    logic write_fake_service;
+    assign write_fake_service = service == MESSAGE_DELIVERY
+        && cons_id == '0 /* To mapper task */
+        && dlvr_service == TASK_TERMINATED;
+
     /**
      * This is ugly
      * The reason why we need to use open -> write -> close is because all other
@@ -207,78 +228,52 @@ module TrafficRouter
      * The only way to change it is to also change the graphical debugger to
      * read from different files for each router
      */
-
     int fd;
 
-    always_ff @(posedge clk_i or negedge rst_ni) begin
-        if (rst_ni) begin
-            if (message_received) begin
-                /* verilator lint_off BLKSEQ */
-                fd = $fopen(FILE_NAME, "a");
-                /* verilator lint_on BLKSEQ */
-
-                if (fd == '0) begin
-                    $display("[TrafficRouter] Could not open log file");
-                end
-                else begin
-                    $fwrite(
-                        fd, "%0d\t%0d\t%0x\t%0d\t%0d\t%0d\t%0d", 
-                        header_time,
-                        ADDRESS, 
-                        service, 
-                        size, 
-                        bandwidth_allocation, 
-                        (PORT*2), 
-                        target
-                    );
-
-                    if (
-                        service inside {
-                            MESSAGE_REQUEST, 
-                            MESSAGE_DELIVERY, 
-                            DATA_AV, 
-                            MIGRATION_DATA_BSS, 
-                            TASK_ALLOCATION
-                        }
-                    ) begin
-                        $fwrite(fd, "\t%0d", task_id);
-                    end
-
-                    if (
-                        service inside {
-                            MESSAGE_REQUEST, 
-                            MESSAGE_DELIVERY, 
-                            DATA_AV
-                        }
-                    ) begin
-                        $fwrite(fd, "\t%0d", cons_id);
-                    end
-
-                    $fwrite(fd, "\n");
-
-                    /* If it is a DELIVERY containing a service message, we may need to log it */
-                    if (
-                        service == MESSAGE_DELIVERY
-                        && cons_id == '0 /* To mapper task */
-                        && dlvr_service == TASK_TERMINATED
-                    ) begin
-                        $fwrite(
-                            fd, "%0d\t%0d\t%0x\t%0d\t%0d\t%0d\t%0d\t%0d\n", 
-                            header_time,
-                            ADDRESS, 
-                            dlvr_service, 
-                            '0, 
-                            '0, 
-                            (PORT*2), 
-                            target, 
-                            dlvr_task_id
-                        );
-                    end
-
-                    $fflush(fd);
-                    $fclose(fd);
-                end
+    always_latch begin
+        if (message_received) begin
+            fd = $fopen(FILE_NAME, "w");
+            if (fd == '0) begin
+                $display("[TrafficRouter] Could not open log file");
+                $finish();
             end
+
+            $fwrite(
+                fd, "%0d\t%0d\t%0x\t%0d\t%0d\t%0d\t%0d", 
+                header_time,
+                ADDRESS, 
+                service, 
+                size, 
+                bandwidth_allocation, 
+                (PORT*2), 
+                target
+            );
+
+            if (write_task_id)
+                $fwrite(fd, "\t%0d", task_id);
+
+            if (write_cons_id)
+                $fwrite(fd, "\t%0d", cons_id);
+
+            $fwrite(fd, "\n");
+
+            /* If it is a DELIVERY containing a service message, we may need to log it */
+            if (write_fake_service) begin
+                $fwrite(
+                    fd, "%0d\t%0d\t%0x\t%0d\t%0d\t%0d\t%0d\t%0d\n", 
+                    header_time,
+                    ADDRESS, 
+                    dlvr_service, 
+                    '0, 
+                    '0, 
+                    (PORT*2), 
+                    target, 
+                    dlvr_task_id
+                );
+            end
+
+            $fflush(fd);
+            $fclose(fd);
         end
     end
 
