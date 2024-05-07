@@ -52,32 +52,30 @@ module TrafficBroadcast
 
     int fd;
 
-    always_ff @(posedge clk_i or negedge rst_ni) begin
-        if (rst_ni) begin
-            if (rx_i && ack_rx_i && data_i.service != BR_SVC_CLEAR) begin
-                /* verilator lint_off BLKSEQ */
-                fd = $fopen(FILE_NAME, "a");
-                /* verilator lint_on BLKSEQ */
+    always_ff @(posedge ack_rx_i) begin
+        if (data_i.service != BR_SVC_CLEAR) begin
+            /* verilator lint_off BLKSEQ */
+            fd = $fopen(FILE_NAME, "a");
+            /* verilator lint_on BLKSEQ */
 
-                if (fd == '0) begin
-                    $display("[TrafficBroadcast] Could not open log file");
-                end
-                else begin
-                    $fwrite(
-                        fd, "%0d\t%0d\t%0x\t%0d\t%0d\t%0d\t%0d\n", 
-                        tick_cntr_i,
-                        ADDRESS, 
-                        data_i.ksvc, 
-                        1'b1, 
-                        bandwidth_allocation, 
-                        (PORT*2 + 1), 
-                        {8'(32'(data_i.seq_target) % N_PE_X), 8'(32'(data_i.seq_target) / N_PE_X)}
-                    );
-
-                    $fflush(fd);
-                    $fclose(fd);
-                end
+            if (fd == '0) begin
+                $display("[TrafficBroadcast] Could not open log file");
+                $finish();
             end
+
+            $fwrite(
+                fd, "%0d\t%0d\t%0x\t%0d\t%0d\t%0d\t%0d\n", 
+                tick_cntr_i,
+                ADDRESS, 
+                data_i.ksvc, 
+                1'b1, 
+                bandwidth_allocation, 
+                (PORT*2 + 1), 
+                {8'(32'(data_i.seq_target) % N_PE_X), 8'(32'(data_i.seq_target) / N_PE_X)}
+            );
+
+            $fflush(fd);
+            $fclose(fd);
         end
     end
 
