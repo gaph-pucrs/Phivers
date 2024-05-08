@@ -94,10 +94,10 @@ module PhiversPE
 
     RS5 #(
         .Environment (Environment   ),
-        .RV32        (RV32I         ),
+        .RV32        (RV32M         ),
         .XOSVMEnable (1             ),
-        .ZIHPMEnable (1             ),
-        .DEBUG       (DEBUG         ),
+        .ZIHPMEnable (0             ),
+        .DEBUG       (0             ),
         .DBG_REG_FILE($sformatf("./debug/cpu/%0dx%0d_regBank.txt", ADDRESS[15:8], ADDRESS[7:0])),
         .DBG_CSR_FILE($sformatf("./debug/cpu/%0dx%0d_Report.txt",  ADDRESS[15:8], ADDRESS[7:0]))
     )
