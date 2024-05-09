@@ -70,7 +70,7 @@ module PhiversTB
         .PORT_MA_INJ   (PORT_MA_INJ  ),
         .ADDR_APP_INJ  (ADDR_APP_INJ ),
         .PORT_APP_INJ  (PORT_APP_INJ ),
-        .DEBUG         (1            ),
+        .RS5_DEBUG     (RS5_DEBUG    ),
         .Environment   (ASIC         ),
         .UART_DEBUG    (UART_DEBUG   ),
         .SCHED_DEBUG   (SCHED_DEBUG  ),
@@ -120,7 +120,7 @@ module PhiversTB
                 RAM_mem #(
                     .MEM_WIDTH  (IMEM_SZ                                 ),
                     .BIN_FILE   (KERNEL_TEXT                             ),
-                    .DEBUG      (0                                       ),
+                    .DEBUG      (RAM_DEBUG                               ),
                     .DEBUG_FILE ($sformatf("./debug/ram/%0dx%0d_I", x, y))
                 ) 
                 I_MEM (
@@ -142,7 +142,7 @@ module PhiversTB
                 RAM_mem #(
                     .MEM_WIDTH  (DMEM_SZ                                 ),
                     .BIN_FILE   (KERNEL_DATA                             ),
-                    .DEBUG      (0                                       ),
+                    .DEBUG      (RAM_DEBUG                               ),
                     .DEBUG_FILE ($sformatf("./debug/ram/%0dx%0d_D", x, y))
                 ) 
                 D_MEM (

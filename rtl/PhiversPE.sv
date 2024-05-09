@@ -15,7 +15,7 @@ module PhiversPE
     parameter               TASKS_PER_PE  = 1,
     parameter               IMEM_PAGE_SZ  = 32768,
     parameter               DMEM_PAGE_SZ  = 32768,
-    parameter               DEBUG         = 1,
+    parameter               RS5_DEBUG     = 1,
     parameter environment_e Environment   = ASIC,
     parameter bit           UART_DEBUG    = 1,
     parameter bit           SCHED_DEBUG   = 1,
@@ -101,7 +101,7 @@ module PhiversPE
         .RV32        (RV32M         ),
         .XOSVMEnable (1             ),
         .ZIHPMEnable (0             ),
-        .DEBUG       (0             ),
+        .DEBUG       (RS5_DEBUG     ),
         .DBG_REG_FILE($sformatf("./debug/cpu/%0dx%0d_regBank.txt", ADDRESS[15:8], ADDRESS[7:0])),
         .DBG_CSR_FILE($sformatf("./debug/cpu/%0dx%0d_Report.txt",  ADDRESS[15:8], ADDRESS[7:0]))
     )
@@ -418,63 +418,61 @@ module PhiversPE
 // DEBUG connections
 ////////////////////////////////////////////////////////////////////////////////
 
-    if (DEBUG) begin : gen_pe_debug
-        logic dbg_en;
-        logic dbg_we;
+    logic dbg_en;
+    logic dbg_we;
 
-        assign dbg_en = cpu_en && (cpu_addr[31:24] == 8'b10000000);
-        assign dbg_we = (| cpu_we);
-        
-        Debug #(
-            .ADDRESS       (ADDRESS                        ),
-            .SEQ_ADDR      (seq_addr                       ),
-            .UART_DEBUG    (UART_DEBUG                     ),
-            .SCHED_DEBUG   (SCHED_DEBUG                    ),
-            .PIPE_DEBUG    (PIPE_DEBUG                     ),
-            .DBG_SCHED_FILE("./debug/scheduling_report.txt")
-        )
-        dbg (
-            .clk_i      (clk_i         ),
-            .rst_ni     (rst_ni        ),
-            .en_i       (dbg_en        ),
-            .we_i       (dbg_we        ),
-            .addr_i     (cpu_addr[23:0]),
-            .data_i     (cpu_data_write),
-            .tick_cntr_i(mtime         )
-        );
+    assign dbg_en = cpu_en && (cpu_addr[31:24] == 8'b10000000);
+    assign dbg_we = (| cpu_we);
+    
+    Debug #(
+        .ADDRESS       (ADDRESS                        ),
+        .SEQ_ADDR      (seq_addr                       ),
+        .UART_DEBUG    (UART_DEBUG                     ),
+        .SCHED_DEBUG   (SCHED_DEBUG                    ),
+        .PIPE_DEBUG    (PIPE_DEBUG                     ),
+        .DBG_SCHED_FILE("./debug/scheduling_report.txt")
+    )
+    dbg (
+        .clk_i      (clk_i         ),
+        .rst_ni     (rst_ni        ),
+        .en_i       (dbg_en        ),
+        .we_i       (dbg_we        ),
+        .addr_i     (cpu_addr[23:0]),
+        .data_i     (cpu_data_write),
+        .tick_cntr_i(mtime         )
+    );
 
-        if (TRAFFIC_DEBUG) begin : gen_traffic_dbg
-            for (genvar p = 0; p < HERMES_NPORT; p++) begin : gen_traffic_router
-                TrafficRouter #(
-                    .FLIT_SIZE(32                          ),
-                    .ADDRESS  (ADDRESS                     ),
-                    .PORT     (hermes_port_t'(p)           ),
-                    .FILE_NAME("./debug/traffic_router.txt")
-                )
-                traffic_router (
-                    .clk_i      (clk_i            ),
-                    .rst_ni     (rst_ni           ),
-                    .rx_i       (noc_rx[p]        ),
-                    .credit_i   (noc_credit_rcv[p]),
-                    .data_i     (noc_data_rcv[p]  ),
-                    .tick_cntr_i(mtime            )
-                );
+    if (TRAFFIC_DEBUG) begin : gen_traffic_dbg
+        for (genvar p = 0; p < HERMES_NPORT; p++) begin : gen_traffic_router
+            TrafficRouter #(
+                .FLIT_SIZE(32                          ),
+                .ADDRESS  (ADDRESS                     ),
+                .PORT     (hermes_port_t'(p)           ),
+                .FILE_NAME("./debug/traffic_router.txt")
+            )
+            traffic_router (
+                .clk_i      (clk_i            ),
+                .rst_ni     (rst_ni           ),
+                .rx_i       (noc_rx[p]        ),
+                .credit_i   (noc_credit_rcv[p]),
+                .data_i     (noc_data_rcv[p]  ),
+                .tick_cntr_i(mtime            )
+            );
 
-                TrafficBroadcast #(
-                    .ADDRESS  (ADDRESS                     ),
-                    .PORT     (br_port_t'(p)               ),
-                    .FILE_NAME("./debug/traffic_router.txt"),
-                    .N_PE_X   (N_PE_X                      )
-                )
-                traffic_broadcast (
-                    .clk_i      (clk_i             ),
-                    .rst_ni     (rst_ni            ),
-                    .rx_i       (brlite_req_rcv[p] ),
-                    .ack_rx_i   (brlite_ack_rcv[p] ),
-                    .data_i     (brlite_flit_rcv[p]),
-                    .tick_cntr_i(mtime             )
-                );
-            end
+            TrafficBroadcast #(
+                .ADDRESS  (ADDRESS                     ),
+                .PORT     (br_port_t'(p)               ),
+                .FILE_NAME("./debug/traffic_router.txt"),
+                .N_PE_X   (N_PE_X                      )
+            )
+            traffic_broadcast (
+                .clk_i      (clk_i             ),
+                .rst_ni     (rst_ni            ),
+                .rx_i       (brlite_req_rcv[p] ),
+                .ack_rx_i   (brlite_ack_rcv[p] ),
+                .data_i     (brlite_flit_rcv[p]),
+                .tick_cntr_i(mtime             )
+            );
         end
     end
 
