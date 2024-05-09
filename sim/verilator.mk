@@ -14,10 +14,6 @@ endif
 
 VERILATE_FLAGS = -Wall --quiet --autoflush --timescale 1ns/1ns -CFLAGS "$(CFLAGS)" -LDFLAGS "$(LDFLAGS)" $(SVOPT) $(TRACE_VERILATOR)
 
-verilator:
-	@mkdir -p debug
-	@./$(TARGET)
-
 $(TARGET): $(SVSRC)
 	@printf "${COR}Building %s ... ${NC}\n" "$@"
 	@+verilator --binary $(SVSRC) --top $(TOP) $(SVFLAGS) $(VERILATE_FLAGS) -MAKEFLAGS -s -o ../$@
@@ -27,4 +23,4 @@ clean-verilator:
 	@rm -f $(TARGET)
 	@rm -f trace.fst
 
-.PHONY: clean-verilator verilator
+.PHONY: clean-verilator

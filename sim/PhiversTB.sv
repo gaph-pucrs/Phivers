@@ -109,10 +109,10 @@ module PhiversTB
 //////////////////////////////////////////////////////////////////////////////
 
     localparam IMEM_SZ = IMEM_PAGE_SZ * (TASKS_PER_PE + 1);
-    localparam KERNEL_TEXT = "ikernel.bin";
+    localparam KERNEL_TEXT = "../MAestro/ikernel.bin";
 
     localparam DMEM_SZ = DMEM_PAGE_SZ * (TASKS_PER_PE + 1);
-    localparam KERNEL_DATA = "dkernel.bin";
+    localparam KERNEL_DATA = "../MAestro/dkernel.bin";
 
     generate
         for (genvar x = 0; x < N_PE_X; x++) begin : gen_pe_x
