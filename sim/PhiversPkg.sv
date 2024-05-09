@@ -16,6 +16,10 @@ package PhiversPkg;
     parameter hermes_port_t PORT_APP_INJ = HERMES_NORTH;
     parameter IMEM_PAGE_SZ = 32768;
     parameter DMEM_PAGE_SZ = 32768;
+    parameter UART_DEBUG = 1;
+    parameter SCHED_DEBUG = 1;
+    parameter PIPE_DEBUG = 1;
+    parameter TRAFFIC_DEBUG = 1;
 
 endpackage
 

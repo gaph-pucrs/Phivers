@@ -7,17 +7,21 @@ module PhiversMC
     import HermesPkg::*;
     import BrLitePkg::*;
 #(
-    parameter               N_PE_X       = 4,
-    parameter               N_PE_Y       = 4,
-    parameter               TASKS_PER_PE = 4,
-    parameter               IMEM_PAGE_SZ = 32768,
-    parameter               DMEM_PAGE_SZ = 32768,
-    parameter               DEBUG        = 1,
-    parameter logic [15:0]  ADDR_MA_INJ  = 16'h0000,
-    parameter hermes_port_t PORT_MA_INJ  = HERMES_SOUTH,
-    parameter logic [15:0]  ADDR_APP_INJ = 16'h0100,
-    parameter hermes_port_t PORT_APP_INJ = HERMES_SOUTH,
-    parameter environment_e Environment  = ASIC
+    parameter               N_PE_X        = 4,
+    parameter               N_PE_Y        = 4,
+    parameter               TASKS_PER_PE  = 4,
+    parameter               IMEM_PAGE_SZ  = 32768,
+    parameter               DMEM_PAGE_SZ  = 32768,
+    parameter               DEBUG         = 1,
+    parameter logic [15:0]  ADDR_MA_INJ   = 16'h0000,
+    parameter hermes_port_t PORT_MA_INJ   = HERMES_SOUTH,
+    parameter logic [15:0]  ADDR_APP_INJ  = 16'h0100,
+    parameter hermes_port_t PORT_APP_INJ  = HERMES_SOUTH,
+    parameter environment_e Environment   = ASIC,
+    parameter bit           UART_DEBUG    = 1,
+    parameter bit           SCHED_DEBUG   = 1,
+    parameter bit           PIPE_DEBUG    = 1,
+    parameter bit           TRAFFIC_DEBUG = 1
 )
 (
     input  logic        clk_i,
@@ -173,14 +177,18 @@ module PhiversMC
                 localparam logic [15:0] address  = {x[7:0], y[7:0]};
 
                 PhiversPE #(
-                    .ADDRESS      (address     ),
-                    .N_PE_X       (N_PE_X      ),
-                    .N_PE_Y       (N_PE_Y      ),
-                    .TASKS_PER_PE (TASKS_PER_PE),
-                    .IMEM_PAGE_SZ (IMEM_PAGE_SZ),
-                    .DMEM_PAGE_SZ (DMEM_PAGE_SZ),
-                    .DEBUG        (DEBUG       ),
-                    .Environment  (Environment )
+                    .ADDRESS       (address      ),
+                    .N_PE_X        (N_PE_X       ),
+                    .N_PE_Y        (N_PE_Y       ),
+                    .TASKS_PER_PE  (TASKS_PER_PE ),
+                    .IMEM_PAGE_SZ  (IMEM_PAGE_SZ ),
+                    .DMEM_PAGE_SZ  (DMEM_PAGE_SZ ),
+                    .DEBUG         (DEBUG        ),
+                    .Environment   (Environment  ),
+                    .UART_DEBUG    (UART_DEBUG   ),
+                    .SCHED_DEBUG   (SCHED_DEBUG  ),
+                    .PIPE_DEBUG    (PIPE_DEBUG   ),
+                    .TRAFFIC_DEBUG (TRAFFIC_DEBUG)
                 ) 
                 pe (
                     .clk_i                (clk_i                   ),

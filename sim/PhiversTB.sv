@@ -61,17 +61,21 @@ module PhiversTB
 //////////////////////////////////////////////////////////////////////////////
 
     PhiversMC #(
-        .N_PE_X       (N_PE_X      ),
-        .N_PE_Y       (N_PE_Y      ),
-        .TASKS_PER_PE (TASKS_PER_PE),
-        .IMEM_PAGE_SZ (IMEM_PAGE_SZ),
-        .DMEM_PAGE_SZ (DMEM_PAGE_SZ),
-        .ADDR_MA_INJ  (ADDR_MA_INJ ),
-        .PORT_MA_INJ  (PORT_MA_INJ ),
-        .ADDR_APP_INJ (ADDR_APP_INJ),
-        .PORT_APP_INJ (PORT_APP_INJ),
-        .DEBUG        (1           ),
-        .Environment  (ASIC        )
+        .N_PE_X        (N_PE_X       ),
+        .N_PE_Y        (N_PE_Y       ),
+        .TASKS_PER_PE  (TASKS_PER_PE ),
+        .IMEM_PAGE_SZ  (IMEM_PAGE_SZ ),
+        .DMEM_PAGE_SZ  (DMEM_PAGE_SZ ),
+        .ADDR_MA_INJ   (ADDR_MA_INJ  ),
+        .PORT_MA_INJ   (PORT_MA_INJ  ),
+        .ADDR_APP_INJ  (ADDR_APP_INJ ),
+        .PORT_APP_INJ  (PORT_APP_INJ ),
+        .DEBUG         (1            ),
+        .Environment   (ASIC         ),
+        .UART_DEBUG    (UART_DEBUG   ),
+        .SCHED_DEBUG   (SCHED_DEBUG  ),
+        .PIPE_DEBUG    (PIPE_DEBUG   ),
+        .TRAFFIC_DEBUG (TRAFFIC_DEBUG)
     )
     mc (
         .clk_i            (clk            ),
