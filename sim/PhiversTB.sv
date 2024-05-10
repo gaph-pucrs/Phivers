@@ -190,10 +190,10 @@ module PhiversTB
     );
 
     TaskParser #(
-        .FLIT_SIZE    (32             ),
-        .INJECT_MAPPER(0              ),
-        .START_FILE   ("app_start.txt"),
-        .APP_PATH     ("applications" )
+        .FLIT_SIZE    (32               ),
+        .INJECT_MAPPER(0                ),
+        .START_FILE   ("app_start.txt"  ),
+        .APP_PATH     ("../applications")
     )
     app_src (
         .clk_i            (clk               ),
