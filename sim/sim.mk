@@ -9,7 +9,7 @@ endif
 
 verilator:
 	@mkdir -p debug
-	@../Phivers/sim/$(TARGET)
+	@../Phivers/sim/$(TARGET) $(SIM_TIMEOUT)
 
 vsim:
 	@mkdir -p debug

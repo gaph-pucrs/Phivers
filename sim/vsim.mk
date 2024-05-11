@@ -8,7 +8,7 @@ endif
 
 ifeq ($(TRACE), 0)
 	VSIM_CMDLINE = -c
-	RUN_CMDLINE = -do "run -all; quit"
+	RUN_CMDLINE = -do "$(SIM_TIMEOUT); quit"
 endif
 
 vsim:

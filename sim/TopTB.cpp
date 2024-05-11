@@ -18,6 +18,14 @@ int main(int argc, char** argv, char** env) {
     contextp->debug(0);
     contextp->commandArgs(argc, argv);
 
+    const char *flag_to = contextp->commandArgsPlusMatch("timeout=");
+    unsigned long int timeout = 0;
+    if (flag_to != nullptr) 
+        timeout = std::stoul(&flag_to[9])*1'000'000;
+
+    if (timeout)
+        std::cout << "Simulating until " << timeout/1'000'000 << "ms" << std::endl;
+
     const auto top = std::make_unique<VPhiversTB>(contextp.get());
 
     #if TRACE
@@ -41,7 +49,7 @@ int main(int argc, char** argv, char** env) {
         // this only on a negedge of clk, because we know
         // reset is not sampled there.
         if(!top->clk){
-            if (contextp->time() > 100)
+            if (contextp->time() >= 100)
                 top->rst_n = 1;
         }
 
@@ -51,6 +59,11 @@ int main(int argc, char** argv, char** env) {
         #if TRACE
             tfp->dump(contextp->time());
         #endif
+
+        if (timeout && (contextp->time() >= timeout)) {
+            std::cerr << std::endl << "Simulation ending due to timeout" << std::endl;
+            break;
+        }
     }
 
     #if TRACE
@@ -59,7 +72,7 @@ int main(int argc, char** argv, char** env) {
 
     auto now = std::chrono::high_resolution_clock::now();
 	auto diff = now - then;
-	std::cout << std::endl << "Simulation time: " << (contextp->time() / 1000.0 / 1000.0) << "ms" << std::endl;
+	std::cout << std::endl << "Simulation time: " << (contextp->time() / 1'000'000.0) << "ms" << std::endl;
 	std::cout << "Wall time: " << std::chrono::duration_cast<std::chrono::duration<double>>(diff).count() << "s" << std::endl;
 
     return 0;
