@@ -174,10 +174,10 @@ module PhiversTB
     /* verilator lint_on UNUSEDSIGNAL */
 
     TaskParser #(
-        .FLIT_SIZE    (32            ),
-        .INJECT_MAPPER(1             ),
-        .START_FILE   ("ma_start.txt"),
-        .APP_PATH     ("management"  )
+        .FLIT_SIZE    (32             ),
+        .INJECT_MAPPER(1              ),
+        .START_FILE   ("ma_start.txt" ),
+        .APP_PATH     ("../management")
     )
     ma_src (
         .clk_i            (clk           ),
