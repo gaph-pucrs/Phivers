@@ -3,6 +3,7 @@ NC   =\033[0m # No Color
 
 TARGET = phivers
 TOP = PhiversTB
+SIMTOP = TopTB
 
 TRACE ?= 0
 SVFLAGS =

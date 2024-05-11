@@ -4,30 +4,10 @@
 module PhiversTB
     import RS5_pkg::*;
     import PhiversPkg::*;
-(    
+(
+    input logic clk,
+    input logic rst_n
 );
-
-    logic clk = 1'b1;
-    logic rst_n;
-
-    always begin
-        #5.0 clk <= 0;
-        #5.0 clk <= 1;
-        `ifdef TRACE_VERILATOR
-            $dumpvars;
-        `endif
-    end
-
-    initial begin
-        `ifdef TRACE_VERILATOR
-            $dumpfile("trace.fst");
-        `endif
-
-        rst_n = 1'b0;
-
-        #100 rst_n = 1'b1;
-    end
-
     logic [15:0] mapper_address;
     
     logic        ma_src_rx;

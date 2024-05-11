@@ -17,11 +17,11 @@ vsim:
 
 $(VOPT_TGT): $(VLOG_TGT)
 	@printf "${COR}Optimizing %s ... ${NC}\n" "$@"
-	@vopt work.$(TOP) -o $(TARGET) -suppress 10587 -quiet $(VOPT_TRACE)
+	@vopt work.$(SIMTOP) -o $(TARGET) -suppress 10587 -quiet $(VOPT_TRACE)
 
 $(VLOG_TGT): $(SVSRC)
 	@printf "${COR}Building %s ... ${NC}\n" "$@"
-	@vlog $(SVSRC) -svinputport=relaxed -incr -suppress 13389 -quiet
+	@vlog $(SIMTOP).sv $(SVSRC) -svinputport=relaxed -incr -suppress 13389 -quiet
 
 clean-vsim:
 	@rm -rf work
