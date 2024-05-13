@@ -3,17 +3,14 @@ VLOG_TGT = work/_lib.qdb
 
 ifeq ($(TRACE), 1)
 	VOPT_TRACE = +acc
-	VSIM_WAVE = -do wave.do
-endif
-
-ifeq ($(TRACE), 0)
+else
 	VSIM_CMDLINE = -c
 	RUN_CMDLINE = -do "$(SIM_TIMEOUT); quit"
 endif
 
 vsim:
 	@mkdir -p debug
-	@vsim $(VSIM_CMDLINE) work.$(TARGET) -suppress 3691 -quiet $(RUN_CMDLINE) $(VSIM_WAVE)
+	@vsim $(VSIM_CMDLINE) work.$(TARGET) -suppress 3691 -quiet $(RUN_CMDLINE)
 
 $(VOPT_TGT): $(VLOG_TGT)
 	@printf "${COR}Optimizing %s ... ${NC}\n" "$@"
