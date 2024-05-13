@@ -1,18 +1,24 @@
 [submodule "RS5"]
 	path = RS5
 	url = https://github.com/gaph-pucrs/RS5
+	branch = master
 [submodule "Hermes"]
 	path = Hermes
 	url = https://github.com/gaph-pucrs/Hermes
+	branch = master
 [submodule "BrLite"]
 	path = BrLite
 	url = https://github.com/gaph-pucrs/BrLite
+	branch = master
 [submodule "DMNI"]
 	path = DMNI
 	url = https://github.com/gaph-pucrs/DMNI
+	branch = master
 [submodule "TaskInjector"]
 	path = TaskInjector
 	url = https://github.com/gaph-pucrs/TaskInjector
+	branch = master
 [submodule "RingBuffer"]
 	path = RingBuffer
 	url = https://github.com/gaph-pucrs/RingBuffer
+	branch = master
