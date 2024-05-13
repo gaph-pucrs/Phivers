@@ -42,7 +42,11 @@ module Debug
         always_ff @(posedge clk_i or negedge rst_ni) begin
             if (rst_ni) begin
                 if(en_i && we_i && addr_i == 24'h000000) begin
+                    if (data_i[7:0] == 8'h0A)
+                        $fwrite(log_fd, "__$$__%0d", $time());
+
                     $fwrite(log_fd, "%c", data_i[7:0]);
+
                     if (data_i[7:0] == 8'h0A)
                         $fflush(log_fd);
                 end
