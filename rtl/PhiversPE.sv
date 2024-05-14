@@ -425,12 +425,14 @@ module PhiversPE
     assign dbg_we = (| cpu_we);
     
     Debug #(
-        .ADDRESS       (ADDRESS                        ),
-        .SEQ_ADDR      (seq_addr                       ),
-        .UART_DEBUG    (UART_DEBUG                     ),
-        .SCHED_DEBUG   (SCHED_DEBUG                    ),
-        .PIPE_DEBUG    (PIPE_DEBUG                     ),
-        .DBG_SCHED_FILE("./debug/scheduling_report.txt")
+        .ADDRESS         (ADDRESS                        ),
+        .SEQ_ADDR        (seq_addr                       ),
+        .UART_DEBUG      (UART_DEBUG                     ),
+        .SCHED_DEBUG     (SCHED_DEBUG                    ),
+        .PIPE_DEBUG      (PIPE_DEBUG                     ),
+        .TRAFFIC_DEBUG   (TRAFFIC_DEBUG                  ),
+        .DBG_SCHED_FILE  ("./debug/scheduling_report.txt"),
+        .DBG_TRAFFIC_FILE("./debug/traffic_router.txt"   )
     )
     dbg (
         .clk_i      (clk_i         ),

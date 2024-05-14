@@ -1,11 +1,16 @@
+`include "../TaskInjector/rtl/TaskInjectorPkg.sv"
+
 module Debug 
+    import TaskInjectorPkg::*;
 #(
-    parameter logic [15:0] ADDRESS        = 16'h0000,
-    parameter logic [15:0] SEQ_ADDR       = 16'h0000,
-    parameter bit          UART_DEBUG     = 1,
-    parameter bit          SCHED_DEBUG    = 1,
-    parameter bit          PIPE_DEBUG     = 1,
-    parameter string       DBG_SCHED_FILE = "./debug/scheduling_report.txt"
+    parameter logic [15:0] ADDRESS          = 16'h0000,
+    parameter logic [15:0] SEQ_ADDR         = 16'h0000,
+    parameter bit          UART_DEBUG       = 1,
+    parameter bit          SCHED_DEBUG      = 1,
+    parameter bit          PIPE_DEBUG       = 1,
+    parameter bit          TRAFFIC_DEBUG    = 1,
+    parameter string       DBG_SCHED_FILE   = "./debug/scheduling_report.txt",
+    parameter string       DBG_TRAFFIC_FILE = "./debug/traffic_router.txt"
 )
 (
     input  logic        clk_i,
@@ -145,6 +150,41 @@ module Debug
             $fclose(av_fd);
             $fclose(req_fd);
             $fclose(pipe_fd);
+        end
+    end
+
+    if (TRAFFIC_DEBUG) begin : gen_traffic_dbg
+        int traffic_fd;
+        
+        always_ff @(posedge clk_i or negedge rst_ni) begin
+            if (rst_ni) begin
+                if (en_i && we_i && addr_i == 24'h000008) begin
+                    /* Ugly, but it is how the graphical debugger is implemented */
+                    /* verilator lint_off BLKSEQ */
+                    traffic_fd = $fopen(DBG_TRAFFIC_FILE, "a");
+                    /* verilator lint_on BLKSEQ */
+                    if (traffic_fd == '0) begin
+                        $display("[Debug] Could not open traffic log file");
+                        $finish();
+                    end
+                    else begin
+                        $fwrite(
+                            traffic_fd, 
+                            "%0d\t%0d\t%0x\t%0d\t%0d\t%0d\t%0d\t%0d\n", 
+                            tick_cntr_i,
+                            ADDRESS, 
+                            TASK_TERMINATED, 
+                            0, 
+                            0, 
+                            8, 
+                            -1,
+                            data_i[15:0]
+                        );
+                    end
+                    $fflush(traffic_fd);
+                    $fclose(traffic_fd);
+                end                    
+            end
         end
     end
 

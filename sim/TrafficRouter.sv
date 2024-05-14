@@ -98,12 +98,6 @@ module TrafficRouter
     /* 4 */
     logic [15:0] cons_id;
 
-    /* 13 */
-    logic [31:0] dlvr_service;
-
-    /* 14 */
-    logic [15:0] dlvr_task_id;
-
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni)
             target <= '0;
@@ -182,20 +176,6 @@ module TrafficRouter
             cons_id <= data_i[15:0];
     end
 
-    always_ff @(posedge clk_i or negedge rst_ni) begin
-        if (!rst_ni)
-            dlvr_service <= '0;
-        else if (flit_idx == 32'd13)
-            dlvr_service <= data_i;
-    end
-
-    always_ff @(posedge clk_i or negedge rst_ni) begin
-        if (!rst_ni)
-            dlvr_task_id <= '0;
-        else if (flit_idx == 32'd14)
-            dlvr_task_id <= data_i[15:0];
-    end
-
 ////////////////////////////////////////////////////////////////////////////////
 // Logging control
 ////////////////////////////////////////////////////////////////////////////////
@@ -215,11 +195,6 @@ module TrafficRouter
         MESSAGE_DELIVERY, 
         DATA_AV
     };
-
-    logic write_fake_svc;
-    assign write_fake_svc = service == MESSAGE_DELIVERY
-        && cons_id == '0 /* To mapper task */
-        && dlvr_service == TASK_TERMINATED;
 
     /**
      * This is ugly
@@ -257,21 +232,6 @@ module TrafficRouter
                 $fwrite(fd, "\t%0d", cons_id);
 
             $fwrite(fd, "\n");
-
-            /* If it is a DELIVERY containing a service message, we may need to log it */
-            if (write_fake_svc) begin
-                $fwrite(
-                    fd, "%0d\t%0d\t%0x\t%0d\t%0d\t%0d\t%0d\t%0d\n", 
-                    header_time,
-                    ADDRESS, 
-                    dlvr_service, 
-                    '0, 
-                    '0, 
-                    (PORT*2), 
-                    target, 
-                    dlvr_task_id
-                );
-            end
 
             $fflush(fd);
             $fclose(fd);
