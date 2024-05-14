@@ -113,11 +113,11 @@ module PhiversMC
     );
 
     always_comb begin
-        localparam logic [7:0] x = ADDR_MA_INJ[15:8];
-        localparam logic [7:0] y = ADDR_MA_INJ[7:0];
-        ma_inj_rx        = tx       [$clog2(N_PE_X)'(x)][$clog2(N_PE_Y)'(y)][2'(PORT_MA_INJ)];
-        ma_inj_credit_tx = credit_rx[$clog2(N_PE_X)'(x)][$clog2(N_PE_Y)'(y)][2'(PORT_MA_INJ)];
-        ma_inj_data_rx   = data_tx  [$clog2(N_PE_X)'(x)][$clog2(N_PE_Y)'(y)][2'(PORT_MA_INJ)];
+        localparam logic [($clog2(N_PE_X)-1):0] x = ADDR_MA_INJ[($clog2(N_PE_X) + 7):8];
+        localparam logic [($clog2(N_PE_X)-1):0] y = ADDR_MA_INJ[($clog2(N_PE_X) - 1):0];
+        ma_inj_rx        = tx       [x][y][2'(PORT_MA_INJ)];
+        ma_inj_credit_tx = credit_rx[x][y][2'(PORT_MA_INJ)];
+        ma_inj_data_rx   = data_tx  [x][y][2'(PORT_MA_INJ)];
     end
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -155,11 +155,11 @@ module PhiversMC
     );
 
     always_comb begin
-        localparam logic [7:0] x = ADDR_APP_INJ[15:8];
-        localparam logic [7:0] y = ADDR_APP_INJ[7:0];
-        app_inj_rx        = tx       [$clog2(N_PE_X)'(x)][$clog2(N_PE_Y)'(y)][2'(PORT_APP_INJ)] && release_peripheral[$clog2(N_PE_X)'(x)][$clog2(N_PE_Y)'(y)];
-        app_inj_credit_tx = credit_rx[$clog2(N_PE_X)'(x)][$clog2(N_PE_Y)'(y)][2'(PORT_APP_INJ)] && release_peripheral[$clog2(N_PE_X)'(x)][$clog2(N_PE_Y)'(y)];
-        app_inj_data_rx   = data_tx  [$clog2(N_PE_X)'(x)][$clog2(N_PE_Y)'(y)][2'(PORT_APP_INJ)];
+        localparam logic [($clog2(N_PE_X)-1):0] x = ADDR_APP_INJ[($clog2(N_PE_X) + 7):8];
+        localparam logic [($clog2(N_PE_X)-1):0] y = ADDR_APP_INJ[($clog2(N_PE_X) - 1):0];
+        app_inj_rx        = tx       [x][y][2'(PORT_APP_INJ)] && release_peripheral[x][y];
+        app_inj_credit_tx = credit_rx[x][y][2'(PORT_APP_INJ)] && release_peripheral[x][y];
+        app_inj_data_rx   = data_tx  [x][y][2'(PORT_APP_INJ)];
     end
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -230,11 +230,11 @@ module PhiversMC
 ////////////////////////////////////////////////////////////////////////////////
 
     always_comb begin
-        localparam logic [7:0] MA_INJ_X = ADDR_MA_INJ[15:8];
-        localparam logic [7:0] MA_INJ_Y = ADDR_MA_INJ[7:0];
+        localparam logic [($clog2(N_PE_X)-1):0] MA_INJ_X = ADDR_MA_INJ[($clog2(N_PE_X) + 7):8];
+        localparam logic [($clog2(N_PE_X)-1):0] MA_INJ_Y = ADDR_MA_INJ[($clog2(N_PE_X) - 1):0];
 
-        localparam logic [7:0] APP_INJ_X = ADDR_APP_INJ[15:8];
-        localparam logic [7:0] APP_INJ_Y = ADDR_APP_INJ[7:0];
+        localparam logic [($clog2(N_PE_X)-1):0] APP_INJ_X = ADDR_APP_INJ[($clog2(N_PE_X) + 7):8];
+        localparam logic [($clog2(N_PE_X)-1):0] APP_INJ_Y = ADDR_APP_INJ[($clog2(N_PE_X) - 1):0];
 
         for (int x = 0; x < N_PE_X; x++) begin
             for (int y = 0; y < N_PE_Y; y++) begin
@@ -256,13 +256,13 @@ module PhiversMC
             end
         end
         
-        rx       [$clog2(N_PE_X)'(MA_INJ_X)][$clog2(N_PE_Y)'(MA_INJ_Y)][2'(PORT_MA_INJ)] = ma_inj_tx;
-        credit_tx[$clog2(N_PE_X)'(MA_INJ_X)][$clog2(N_PE_Y)'(MA_INJ_Y)][2'(PORT_MA_INJ)] = ma_inj_credit_rx;
-        data_rx  [$clog2(N_PE_X)'(MA_INJ_X)][$clog2(N_PE_Y)'(MA_INJ_Y)][2'(PORT_MA_INJ)] = ma_inj_data_tx;
+        rx       [MA_INJ_X][MA_INJ_Y][2'(PORT_MA_INJ)] = ma_inj_tx;
+        credit_tx[MA_INJ_X][MA_INJ_Y][2'(PORT_MA_INJ)] = ma_inj_credit_rx;
+        data_rx  [MA_INJ_X][MA_INJ_Y][2'(PORT_MA_INJ)] = ma_inj_data_tx;
 
-        rx       [$clog2(N_PE_X)'(APP_INJ_X)][$clog2(N_PE_Y)'(APP_INJ_Y)][2'(PORT_APP_INJ)] = app_inj_tx && release_peripheral[$clog2(N_PE_X)'(APP_INJ_X)][$clog2(N_PE_Y)'(APP_INJ_Y)];
-        credit_tx[$clog2(N_PE_X)'(APP_INJ_X)][$clog2(N_PE_Y)'(APP_INJ_Y)][2'(PORT_APP_INJ)] = app_inj_credit_rx && release_peripheral[$clog2(N_PE_X)'(APP_INJ_X)][$clog2(N_PE_Y)'(APP_INJ_Y)];
-        data_rx  [$clog2(N_PE_X)'(APP_INJ_X)][$clog2(N_PE_Y)'(APP_INJ_Y)][2'(PORT_APP_INJ)] = app_inj_data_tx;
+        rx       [APP_INJ_X][APP_INJ_Y][2'(PORT_APP_INJ)] = app_inj_tx        && release_peripheral[APP_INJ_X][APP_INJ_Y];
+        credit_tx[APP_INJ_X][APP_INJ_Y][2'(PORT_APP_INJ)] = app_inj_credit_rx && release_peripheral[APP_INJ_X][APP_INJ_Y];
+        data_rx  [APP_INJ_X][APP_INJ_Y][2'(PORT_APP_INJ)] = app_inj_data_tx;
 
         /* Insert the IO wiring for your component here if it connected to a port */
         
@@ -293,6 +293,5 @@ module PhiversMC
             end
         end
     end
-
 
 endmodule
