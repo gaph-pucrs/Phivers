@@ -49,6 +49,7 @@ SVSRC += \
 	../RS5/sim/RAM_mem.sv \
 	../TaskInjector/sim/TaskParser.sv \
 	Debug.sv \
+	DMNILog.sv \
 	TrafficRouter.sv \
 	TrafficBroadcast.sv \
 	PhiversTB.sv

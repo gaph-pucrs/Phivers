@@ -55,7 +55,8 @@ module PhiversTB
         .UART_DEBUG    (UART_DEBUG   ),
         .SCHED_DEBUG   (SCHED_DEBUG  ),
         .PIPE_DEBUG    (PIPE_DEBUG   ),
-        .TRAFFIC_DEBUG (TRAFFIC_DEBUG)
+        .TRAFFIC_DEBUG (TRAFFIC_DEBUG),
+        .DMNI_DEBUG    (DMNI_DEBUG   )
     )
     mc (
         .clk_i            (clk            ),

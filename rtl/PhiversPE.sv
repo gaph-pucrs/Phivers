@@ -15,12 +15,13 @@ module PhiversPE
     parameter               TASKS_PER_PE  = 1,
     parameter               IMEM_PAGE_SZ  = 32768,
     parameter               DMEM_PAGE_SZ  = 32768,
-    parameter               RS5_DEBUG     = 1,
+    parameter               RS5_DEBUG     = 0,
     parameter environment_e Environment   = ASIC,
     parameter bit           UART_DEBUG    = 1,
     parameter bit           SCHED_DEBUG   = 1,
     parameter bit           PIPE_DEBUG    = 1,
-    parameter bit           TRAFFIC_DEBUG = 1
+    parameter bit           TRAFFIC_DEBUG = 1,
+    parameter bit           DMNI_DEBUG    = 0
 )
 (
     input  logic                        clk_i,
@@ -489,6 +490,23 @@ module PhiversPE
                 .tick_cntr_i(mtime             )
             );
         end
+    end
+
+    if (DMNI_DEBUG) begin : gen_dmni_dbg
+        DMNILog #(
+            .FLIT_SIZE(32            ),
+            .ADDRESS  (ADDRESS       ),
+            .LOG_PATH ("./debug/dmni")
+        )
+        dmni_log (
+            .clk_i      (         clk_i                    ),
+            .rst_ni     (        rst_ni                    ),
+            .tx_i       (        noc_tx[(HERMES_NPORT - 1)]),
+            .eop_i      (   noc_eop_snd[(HERMES_NPORT - 1)]),
+            .credit_i   (noc_credit_snd[(HERMES_NPORT - 1)]),
+            .data_i     (  noc_data_snd[(HERMES_NPORT - 1)]),
+            .tick_cntr_i(         mtime                    )
+        );
     end
 
 endmodule

@@ -27,7 +27,7 @@ module Debug
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (rst_ni) begin
             if (en_i && we_i && addr_i == 24'h000004) begin
-                $display("[%7.3f] [ PE %02xx%02x] Simulation halted", $time()/1_000_000.0, ADDRESS[15:8], ADDRESS[7:0]);
+                $display("[%7.3f] [  PE %02dx%02d] Simulation halted", $time()/1_000_000.0, ADDRESS[15:8], ADDRESS[7:0]);
                 $finish();
             end
         end

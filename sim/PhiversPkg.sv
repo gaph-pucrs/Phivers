@@ -22,6 +22,7 @@ package PhiversPkg;
     parameter SCHED_DEBUG = 1;
     parameter PIPE_DEBUG = 1;
     parameter TRAFFIC_DEBUG = 1;
+    parameter DMNI_DEBUG = 0;
 
 endpackage
 
