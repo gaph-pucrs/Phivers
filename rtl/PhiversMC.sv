@@ -62,10 +62,12 @@ module PhiversMC
     /* Hermes signals */
     logic                           release_peripheral [(N_PE_X - 1):0][(N_PE_Y - 1):0];
     logic                           rx                 [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
+    logic                           eop_rx             [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
     logic                           credit_rx          [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
     logic        [31:0]             data_rx            [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
 
     logic                           tx                 [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
+    logic                           eop_tx             [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
     logic                           credit_tx          [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
     logic        [31:0]             data_tx            [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
 
@@ -83,10 +85,12 @@ module PhiversMC
 ////////////////////////////////////////////////////////////////////////////////
 
     logic        ma_inj_tx;
+    logic        ma_inj_eop_tx;
     logic        ma_inj_credit_tx;
     logic [31:0] ma_inj_data_tx;
 
     logic        ma_inj_rx;
+    logic        ma_inj_eop_rx;
     logic        ma_inj_credit_rx;
     logic [31:0] ma_inj_data_rx;
 
@@ -105,9 +109,11 @@ module PhiversMC
         .src_data_i      (ma_src_data_i   ),
         .mapper_address_i(mapper_address_i),
         .noc_tx_o        (ma_inj_tx       ),
+        .noc_eop_o       (ma_inj_eop_tx   ),
         .noc_credit_i    (ma_inj_credit_tx),
         .noc_data_o      (ma_inj_data_tx  ),
         .noc_rx_i        (ma_inj_rx       ),
+        .noc_eop_i       (ma_inj_eop_rx   ),
         .noc_credit_o    (ma_inj_credit_rx),
         .noc_data_i      (ma_inj_data_rx  )
     );
@@ -116,6 +122,7 @@ module PhiversMC
         localparam logic [($clog2(N_PE_X)-1):0] x = ADDR_MA_INJ[($clog2(N_PE_X) + 7):8];
         localparam logic [($clog2(N_PE_X)-1):0] y = ADDR_MA_INJ[($clog2(N_PE_X) - 1):0];
         ma_inj_rx        = tx       [x][y][2'(PORT_MA_INJ)];
+        ma_inj_eop_rx    = eop_tx   [x][y][2'(PORT_MA_INJ)];
         ma_inj_credit_tx = credit_rx[x][y][2'(PORT_MA_INJ)];
         ma_inj_data_rx   = data_tx  [x][y][2'(PORT_MA_INJ)];
     end
@@ -125,10 +132,12 @@ module PhiversMC
 ////////////////////////////////////////////////////////////////////////////////
 
     logic        app_inj_tx;
+    logic        app_inj_eop_tx;
     logic        app_inj_credit_tx;
     logic [31:0] app_inj_data_tx;
 
     logic        app_inj_rx;
+    logic        app_inj_eop_rx;
     logic        app_inj_credit_rx;
     logic [31:0] app_inj_data_rx;
 
@@ -147,9 +156,11 @@ module PhiversMC
         .src_data_i      (app_src_data_i   ),
         .mapper_address_i(mapper_address_i ),
         .noc_tx_o        (app_inj_tx       ),
+        .noc_eop_o       (app_inj_eop_tx   ),
         .noc_credit_i    (app_inj_credit_tx),
         .noc_data_o      (app_inj_data_tx  ),
         .noc_rx_i        (app_inj_rx       ),
+        .noc_eop_i       (app_inj_eop_rx   ),
         .noc_credit_o    (app_inj_credit_rx),
         .noc_data_i      (app_inj_data_rx  )
     );
@@ -158,6 +169,7 @@ module PhiversMC
         localparam logic [($clog2(N_PE_X)-1):0] x = ADDR_APP_INJ[($clog2(N_PE_X) + 7):8];
         localparam logic [($clog2(N_PE_X)-1):0] y = ADDR_APP_INJ[($clog2(N_PE_X) - 1):0];
         app_inj_rx        = tx       [x][y][2'(PORT_APP_INJ)] && release_peripheral[x][y];
+        app_inj_eop_rx    = eop_tx   [x][y][2'(PORT_APP_INJ)] && release_peripheral[x][y];
         app_inj_credit_tx = credit_rx[x][y][2'(PORT_APP_INJ)] && release_peripheral[x][y];
         app_inj_data_rx   = data_tx  [x][y][2'(PORT_APP_INJ)];
     end
@@ -209,9 +221,11 @@ module PhiversMC
                     .dma_data_o           (dma_data_o[x][y]        ),
                     .release_peripheral_o (release_peripheral[x][y]),
                     .noc_rx_i             (rx[x][y]                ),
+                    .noc_eop_i            (eop_rx[x][y]            ),
                     .noc_credit_o         (credit_rx[x][y]         ),
                     .noc_data_i           (data_rx[x][y]           ),
                     .noc_tx_o             (tx[x][y]                ),
+                    .noc_eop_o            (eop_tx[x][y]            ),
                     .noc_credit_i         (credit_tx[x][y]         ),
                     .noc_data_o           (data_tx[x][y]           ),
                     .brlite_req_i         (req_rx[x][y]            ),
@@ -239,28 +253,34 @@ module PhiversMC
         for (int x = 0; x < N_PE_X; x++) begin
             for (int y = 0; y < N_PE_Y; y++) begin
                 rx       [x][y][2'(HERMES_EAST)]  = (x != N_PE_X - 1) ? tx       [x + 1][y][2'(HERMES_WEST)]  : '0;
+                eop_rx   [x][y][2'(HERMES_EAST)]  = (x != N_PE_X - 1) ? eop_tx   [x + 1][y][2'(HERMES_WEST)]  : '0;
                 credit_tx[x][y][2'(HERMES_EAST)]  = (x != N_PE_X - 1) ? credit_rx[x + 1][y][2'(HERMES_WEST)]  : '1;
                 data_rx  [x][y][2'(HERMES_EAST)]  = (x != N_PE_X - 1) ? data_tx  [x + 1][y][2'(HERMES_WEST)]  : '0;
 
                 rx       [x][y][2'(HERMES_WEST)]  = (x != 0)          ? tx       [x - 1][y][2'(HERMES_EAST)]  : '0;
+                eop_rx   [x][y][2'(HERMES_WEST)]  = (x != 0)          ? eop_tx   [x - 1][y][2'(HERMES_EAST)]  : '0;
                 credit_tx[x][y][2'(HERMES_WEST)]  = (x != 0)          ? credit_rx[x - 1][y][2'(HERMES_EAST)]  : '1;
                 data_rx  [x][y][2'(HERMES_WEST)]  = (x != 0)          ? data_tx  [x - 1][y][2'(HERMES_EAST)]  : '0;
 
                 rx       [x][y][2'(HERMES_NORTH)] = (y != N_PE_Y - 1) ? tx       [x][y + 1][2'(HERMES_SOUTH)] : '0;
+                eop_rx   [x][y][2'(HERMES_NORTH)] = (y != N_PE_Y - 1) ? eop_tx   [x][y + 1][2'(HERMES_SOUTH)] : '0;
                 credit_tx[x][y][2'(HERMES_NORTH)] = (y != N_PE_Y - 1) ? credit_rx[x][y + 1][2'(HERMES_SOUTH)] : '1;
                 data_rx  [x][y][2'(HERMES_NORTH)] = (y != N_PE_Y - 1) ? data_tx  [x][y + 1][2'(HERMES_SOUTH)] : '0;
 
                 rx       [x][y][2'(HERMES_SOUTH)] = (y != 0)          ? tx       [x][y - 1][2'(HERMES_NORTH)] : '0;
+                eop_rx   [x][y][2'(HERMES_SOUTH)] = (y != 0)          ? eop_tx   [x][y - 1][2'(HERMES_NORTH)] : '0;
                 credit_tx[x][y][2'(HERMES_SOUTH)] = (y != 0)          ? credit_rx[x][y - 1][2'(HERMES_NORTH)] : '1;
                 data_rx  [x][y][2'(HERMES_SOUTH)] = (y != 0)          ? data_tx  [x][y - 1][2'(HERMES_NORTH)] : '0;
             end
         end
         
         rx       [MA_INJ_X][MA_INJ_Y][2'(PORT_MA_INJ)] = ma_inj_tx;
+        eop_rx   [MA_INJ_X][MA_INJ_Y][2'(PORT_MA_INJ)] = ma_inj_eop_tx;
         credit_tx[MA_INJ_X][MA_INJ_Y][2'(PORT_MA_INJ)] = ma_inj_credit_rx;
         data_rx  [MA_INJ_X][MA_INJ_Y][2'(PORT_MA_INJ)] = ma_inj_data_tx;
 
         rx       [APP_INJ_X][APP_INJ_Y][2'(PORT_APP_INJ)] = app_inj_tx        && release_peripheral[APP_INJ_X][APP_INJ_Y];
+        eop_rx   [APP_INJ_X][APP_INJ_Y][2'(PORT_APP_INJ)] = app_inj_eop_tx    && release_peripheral[APP_INJ_X][APP_INJ_Y];
         credit_tx[APP_INJ_X][APP_INJ_Y][2'(PORT_APP_INJ)] = app_inj_credit_rx && release_peripheral[APP_INJ_X][APP_INJ_Y];
         data_rx  [APP_INJ_X][APP_INJ_Y][2'(PORT_APP_INJ)] = app_inj_data_tx;
 

@@ -49,11 +49,13 @@ module PhiversPE
     /* NoC input interface */
     output logic                        release_peripheral_o,
     input  logic                        noc_rx_i              [(HERMES_NPORT - 2):0],
+    input  logic                        noc_eop_i             [(HERMES_NPORT - 2):0],
     output logic                        noc_credit_o          [(HERMES_NPORT - 2):0],
     input  logic     [31:0]             noc_data_i            [(HERMES_NPORT - 2):0],
 
     /* NoC output interface */
     output logic                        noc_tx_o              [(HERMES_NPORT - 2):0],
+    output logic                        noc_eop_o             [(HERMES_NPORT - 2):0],
     input  logic                        noc_credit_i          [(HERMES_NPORT - 2):0],
     output logic     [31:0]             noc_data_o            [(HERMES_NPORT - 2):0],
 
@@ -181,18 +183,22 @@ module PhiversPE
 ////////////////////////////////////////////////////////////////////////////////
 
     logic        noc_rx         [(HERMES_NPORT - 1):0];
+    logic        noc_eop_rcv    [(HERMES_NPORT - 1):0];
     logic        noc_credit_rcv [(HERMES_NPORT - 1):0];
     logic [31:0] noc_data_rcv   [(HERMES_NPORT - 1):0];
 
     assign noc_rx[(HERMES_NPORT - 2):0]       = noc_rx_i;
+    assign noc_eop_rcv[(HERMES_NPORT - 2):0]  = noc_eop_i;
     assign noc_credit_o                       = noc_credit_rcv[(HERMES_NPORT - 2):0];
     assign noc_data_rcv[(HERMES_NPORT - 2):0] = noc_data_i;
 
     logic        noc_tx         [(HERMES_NPORT - 1):0];
+    logic        noc_eop_snd    [(HERMES_NPORT - 1):0];
     logic        noc_credit_snd [(HERMES_NPORT - 1):0];
     logic [31:0] noc_data_snd   [(HERMES_NPORT - 1):0];
 
     assign noc_tx_o                             = noc_tx[(HERMES_NPORT - 2):0];
+    assign noc_eop_o                            = noc_eop_snd[(HERMES_NPORT - 2):0];
     assign noc_credit_snd[(HERMES_NPORT - 2):0] = noc_credit_i;
     assign noc_data_o                           = noc_data_snd[(HERMES_NPORT - 2):0];
 
@@ -205,10 +211,12 @@ module PhiversPE
         .clk_i    (clk_i         ),
         .rst_ni   (rst_ni        ),
         .rx_i     (noc_rx        ),
-        .credit_i (noc_credit_snd),
+        .eop_i    (noc_eop_rcv   ),
+        .credit_o (noc_credit_rcv),
         .data_i   (noc_data_rcv  ),
         .tx_o     (noc_tx        ),
-        .credit_o (noc_credit_rcv),
+        .eop_o    (noc_eop_snd   ),
+        .credit_i (noc_credit_snd),
         .data_o   (noc_data_snd  )
     );
 
@@ -346,9 +354,11 @@ module PhiversPE
         .mem_data_o           (dma_data_o                             ),
         .mem_data_i           (dma_data_read                          ),
         .noc_rx_i             (noc_tx[(HERMES_NPORT - 1)]             ),
+        .noc_eop_i            (noc_eop_snd[(HERMES_NPORT - 1)]        ),
         .noc_credit_o         (noc_credit_snd[(HERMES_NPORT - 1)]     ),
         .noc_data_i           (noc_data_snd[(HERMES_NPORT - 1)]       ),
         .noc_tx_o             (noc_rx[(HERMES_NPORT - 1)]             ),
+        .noc_eop_o            (noc_eop_rcv[(HERMES_NPORT - 1)]        ),
         .noc_credit_i         (noc_credit_rcv[(HERMES_NPORT - 1)]     ),
         .noc_data_o           (noc_data_rcv[(HERMES_NPORT - 1)]       ),
         .br_req_mon_i         (brlite_mon_req                         ),
@@ -456,6 +466,7 @@ module PhiversPE
                 .clk_i      (clk_i            ),
                 .rst_ni     (rst_ni           ),
                 .rx_i       (noc_rx[p]        ),
+                .eop_i      (noc_eop_rcv[p]   ),
                 .credit_i   (noc_credit_rcv[p]),
                 .data_i     (noc_data_rcv[p]  ),
                 .tick_cntr_i(mtime            )

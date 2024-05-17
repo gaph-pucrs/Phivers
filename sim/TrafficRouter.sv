@@ -15,6 +15,7 @@ module TrafficRouter
     input logic rst_ni,
 
     input logic                   rx_i,
+    input logic                   eop_i,
     input logic                   credit_i,
     input logic [(FLIT_SIZE-1):0] data_i,
 
@@ -24,15 +25,12 @@ module TrafficRouter
     logic flit_received;
     assign flit_received = (rx_i && credit_i);
 
-    logic [31:0] flit_cntr;
-
 ////////////////////////////////////////////////////////////////////////////////
 // Monitor control
 ////////////////////////////////////////////////////////////////////////////////
 
     typedef enum logic [4:0] {
         MON_RCV_HEADER,
-        MON_RCV_SIZE,
         MON_RCV_PAYLOAD
     } fsm_t;
 
@@ -42,11 +40,9 @@ module TrafficRouter
     always_comb begin
         case (mon_state)
             MON_RCV_HEADER: 
-                mon_next_state = flit_received ? MON_RCV_SIZE : MON_RCV_HEADER;
-            MON_RCV_SIZE:
-                mon_next_state = flit_received ? MON_RCV_PAYLOAD : MON_RCV_SIZE;
+                mon_next_state = flit_received ? MON_RCV_PAYLOAD : MON_RCV_HEADER;
             MON_RCV_PAYLOAD:
-                mon_next_state = (flit_received && flit_cntr == 32'd1)
+                mon_next_state = (flit_received && eop_i)
                     ? MON_RCV_HEADER
                     : MON_RCV_PAYLOAD;
             default:
@@ -62,17 +58,7 @@ module TrafficRouter
     end
 
     logic message_received;
-    always_ff @(posedge clk_i or negedge rst_ni) begin
-        if (!rst_ni) begin
-            message_received <= 1'b0;
-        end
-        else begin
-            if (mon_state == MON_RCV_PAYLOAD && flit_received && flit_cntr == 32'd1)
-                message_received <= 1'b1;
-            else
-                message_received <= 1'b0;
-        end
-    end
+    assign message_received = (mon_state == MON_RCV_PAYLOAD && flit_received && eop_i);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Monitored variables
@@ -126,23 +112,11 @@ module TrafficRouter
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni) begin
-            flit_cntr <= '0;
-        end
-        else begin
-            if (mon_state == MON_RCV_SIZE)
-                flit_cntr <= data_i;
-            else if (flit_received)
-                flit_cntr <= flit_cntr - 1'b1;
-        end
-    end
-
-    always_ff @(posedge clk_i or negedge rst_ni) begin
-        if (!rst_ni) begin
             flit_idx <= '0;
         end
         else begin
-            if (mon_state == MON_RCV_SIZE)
-                flit_idx <= 32'd2;
+            if (mon_state == MON_RCV_HEADER)
+                flit_idx <= 32'h01;
             else if (flit_received)
                 flit_idx <= flit_idx + 1'b1;
         end
@@ -151,7 +125,7 @@ module TrafficRouter
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni)
             size <= '0;
-        else if (mon_state == MON_RCV_SIZE)
+        else if (flit_idx == 32'd1)
             size <= data_i;
     end
 
