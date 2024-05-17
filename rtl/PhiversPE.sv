@@ -270,12 +270,13 @@ module PhiversPE
 
     assign ni_we = (| cpu_we);
 
+    logic        dma_en;
     logic [3:0]  dma_we;
     logic [31:0] dma_addr;
     logic [31:0] dma_data_read;
 
-    assign idma_en_o  = (dma_addr[31:24] == 8'b00000000);
-    assign ddma_en_o  = (dma_addr[31:24] == 8'b00000001);
+    assign idma_en_o  = (dma_addr[31:24] == 8'b00000000) && dma_en;
+    assign ddma_en_o  = (dma_addr[31:24] == 8'b00000001) && dma_en;
     assign dma_we_o   = dma_we;
     assign dma_addr_o = dma_addr[23:0];
 
@@ -349,6 +350,7 @@ module PhiversPE
         .cfg_data_i           (cpu_data_write                         ),
         .cfg_data_o           (ni_data_read                           ),
         .release_peripheral_o (release_peripheral_o                   ),
+        .mem_en_o             (dma_en                                 ),
         .mem_we_o             (dma_we                                 ),
         .mem_addr_o           (dma_addr                               ),
         .mem_data_o           (dma_data_o                             ),
