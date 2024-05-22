@@ -14,12 +14,12 @@ ifeq ($(TRACE), 1)
 endif
 
 CPPFLAGS = $(OPT) $(OPT_FAST) `pkgconf --cflags verilator` $(DEF_TRACE)
-LDFLAGS = -lpthread -Wl,--gc-sections,-flto $(LD_TRACE)
+LDFLAGS = -L$(OBJ_DIR) -lpthread -lverilated -lV$(TOP) -flto=auto -Wl,--gc-sections $(LD_TRACE)
 VERILATE_FLAGS = -Wall --quiet --autoflush --cc --timescale 1ns/1ns $(SVOPT) $(TRACE_VERILATOR)
 
 $(TARGET): $(OBJ) $(OBJ_DIR)/V$(TOP)__ALL.a
 	@printf "${COR}Linking %s ... ${NC}\n" "$@"
-	@g++ $(OBJ) $(OBJ_DIR)/*.a -o $@ $(LDFLAGS)
+	g++ $< -o $@ $(LDFLAGS)
 
 $(OBJ_DIR)/%.o: %.cpp $(OBJ_DIR)/V$(TOP).cpp
 	@printf "${COR}Compiling %s ... ${NC}\n" "$<"
