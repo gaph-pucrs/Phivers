@@ -112,6 +112,7 @@ module PhiversPE
         .clk                    (clk_i         ),
         .reset_n                (rst_ni        ),
         .stall                  (1'b0          ),
+        .sys_reset_i            (1'b0          ),
         .instruction_i          (imem_data_i   ),
         .mem_data_i             (cpu_data_read ),
         .mtime_i                (mtime         ),
