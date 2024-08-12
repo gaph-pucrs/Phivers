@@ -100,13 +100,18 @@ module PhiversPE
     assign dmem_data_o = cpu_data_write;
 
     RS5 #(
-        .Environment (Environment   ),
-        .RV32        (RV32M         ),
-        .XOSVMEnable (1             ),
-        .ZIHPMEnable (0             ),
-        .DEBUG       (RS5_DEBUG     ),
-        .DBG_REG_FILE($sformatf("./debug/cpu/%0dx%0d_regBank.txt", ADDRESS[15:8], ADDRESS[7:0])),
-        .DBG_CSR_FILE($sformatf("./debug/cpu/%0dx%0d_Report.txt",  ADDRESS[15:8], ADDRESS[7:0]))
+        .Environment   (Environment   ),
+        .RV32          (RV32M         ),
+        .COMPRESSED    (0             ),
+        .VEnable       (0             ),
+        /* VLEN: Don't Care */
+        .XOSVMEnable   (1             ),
+        .ZIHPMEnable   (0             ),
+        .ZKNEEnable    (0             ),
+        .DEBUG         (RS5_DEBUG     ),
+        .DBG_REG_FILE  ($sformatf("./debug/cpu/%0dx%0d_regBank.txt", ADDRESS[15:8], ADDRESS[7:0])),
+        .PROFILING     (RS5_DEBUG     ),
+        .PROFILING_FILE($sformatf("./debug/cpu/%0dx%0d_Report.txt",  ADDRESS[15:8], ADDRESS[7:0]))
     )
     processor (
         .clk                    (clk_i         ),
