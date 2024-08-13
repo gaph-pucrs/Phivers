@@ -102,7 +102,7 @@ module PhiversTB
                     .MEM_WIDTH  (IMEM_SZ                                 ),
                     .BIN_FILE   (KERNEL_TEXT                             ),
                     .DEBUG      (RAM_DEBUG                               ),
-                    .DEBUG_FILE ($sformatf("./debug/ram/%0dx%0d_I", x, y))
+                    .DEBUG_PATH ($sformatf("./debug/ram/%0dx%0d_I", x, y))
                 ) 
                 I_MEM (
                     .clk        (clk                                     ),
@@ -124,7 +124,7 @@ module PhiversTB
                     .MEM_WIDTH  (DMEM_SZ                                 ),
                     .BIN_FILE   (KERNEL_DATA                             ),
                     .DEBUG      (RAM_DEBUG                               ),
-                    .DEBUG_FILE ($sformatf("./debug/ram/%0dx%0d_D", x, y))
+                    .DEBUG_PATH ($sformatf("./debug/ram/%0dx%0d_D", x, y))
                 ) 
                 D_MEM (
                     .clk        (clk                                     ), 
