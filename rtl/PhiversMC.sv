@@ -254,25 +254,57 @@ module PhiversMC
 
         for (int x = 0; x < N_PE_X; x++) begin
             for (int y = 0; y < N_PE_Y; y++) begin
-                rx       [x][y][2'(HERMES_EAST)]  = (x != N_PE_X - 1) ? tx       [x + 1][y][2'(HERMES_WEST)]  : '0;
-                eop_rx   [x][y][2'(HERMES_EAST)]  = (x != N_PE_X - 1) ? eop_tx   [x + 1][y][2'(HERMES_WEST)]  : '0;
-                credit_tx[x][y][2'(HERMES_EAST)]  = (x != N_PE_X - 1) ? credit_rx[x + 1][y][2'(HERMES_WEST)]  : '1;
-                data_rx  [x][y][2'(HERMES_EAST)]  = (x != N_PE_X - 1) ? data_tx  [x + 1][y][2'(HERMES_WEST)]  : '0;
+                if (x != N_PE_X - 1) begin
+                    rx       [x][y][2'(HERMES_EAST)]  = tx       [x + 1][y][2'(HERMES_WEST)];
+                    eop_rx   [x][y][2'(HERMES_EAST)]  = eop_tx   [x + 1][y][2'(HERMES_WEST)];
+                    credit_tx[x][y][2'(HERMES_EAST)]  = credit_rx[x + 1][y][2'(HERMES_WEST)];
+                    data_rx  [x][y][2'(HERMES_EAST)]  = data_tx  [x + 1][y][2'(HERMES_WEST)];
+                end
+                else begin
+                    rx       [x][y][2'(HERMES_EAST)]  = '0;
+                    eop_rx   [x][y][2'(HERMES_EAST)]  = '0;
+                    credit_tx[x][y][2'(HERMES_EAST)]  = '1;
+                    data_rx  [x][y][2'(HERMES_EAST)]  = '0;
+                end
 
-                rx       [x][y][2'(HERMES_WEST)]  = (x != 0)          ? tx       [x - 1][y][2'(HERMES_EAST)]  : '0;
-                eop_rx   [x][y][2'(HERMES_WEST)]  = (x != 0)          ? eop_tx   [x - 1][y][2'(HERMES_EAST)]  : '0;
-                credit_tx[x][y][2'(HERMES_WEST)]  = (x != 0)          ? credit_rx[x - 1][y][2'(HERMES_EAST)]  : '1;
-                data_rx  [x][y][2'(HERMES_WEST)]  = (x != 0)          ? data_tx  [x - 1][y][2'(HERMES_EAST)]  : '0;
+                if (x != 0) begin
+                    rx       [x][y][2'(HERMES_WEST)]  = tx       [x - 1][y][2'(HERMES_EAST)];
+                    eop_rx   [x][y][2'(HERMES_WEST)]  = eop_tx   [x - 1][y][2'(HERMES_EAST)];
+                    credit_tx[x][y][2'(HERMES_WEST)]  = credit_rx[x - 1][y][2'(HERMES_EAST)];
+                    data_rx  [x][y][2'(HERMES_WEST)]  = data_tx  [x - 1][y][2'(HERMES_EAST)];
+                end
+                else begin
+                    rx       [x][y][2'(HERMES_WEST)]  = '0;
+                    eop_rx   [x][y][2'(HERMES_WEST)]  = '0;
+                    credit_tx[x][y][2'(HERMES_WEST)]  = '1;
+                    data_rx  [x][y][2'(HERMES_WEST)]  = '0;
+                end
 
-                rx       [x][y][2'(HERMES_NORTH)] = (y != N_PE_Y - 1) ? tx       [x][y + 1][2'(HERMES_SOUTH)] : '0;
-                eop_rx   [x][y][2'(HERMES_NORTH)] = (y != N_PE_Y - 1) ? eop_tx   [x][y + 1][2'(HERMES_SOUTH)] : '0;
-                credit_tx[x][y][2'(HERMES_NORTH)] = (y != N_PE_Y - 1) ? credit_rx[x][y + 1][2'(HERMES_SOUTH)] : '1;
-                data_rx  [x][y][2'(HERMES_NORTH)] = (y != N_PE_Y - 1) ? data_tx  [x][y + 1][2'(HERMES_SOUTH)] : '0;
+                if (y != N_PE_Y - 1) begin
+                    rx       [x][y][2'(HERMES_NORTH)] = tx       [x][y + 1][2'(HERMES_SOUTH)];
+                    eop_rx   [x][y][2'(HERMES_NORTH)] = eop_tx   [x][y + 1][2'(HERMES_SOUTH)];
+                    credit_tx[x][y][2'(HERMES_NORTH)] = credit_rx[x][y + 1][2'(HERMES_SOUTH)];
+                    data_rx  [x][y][2'(HERMES_NORTH)] = data_tx  [x][y + 1][2'(HERMES_SOUTH)];
+                end
+                else begin
+                    rx       [x][y][2'(HERMES_NORTH)] = '0;
+                    eop_rx   [x][y][2'(HERMES_NORTH)] = '0;
+                    credit_tx[x][y][2'(HERMES_NORTH)] = '1;
+                    data_rx  [x][y][2'(HERMES_NORTH)] = '0;
+                end
 
-                rx       [x][y][2'(HERMES_SOUTH)] = (y != 0)          ? tx       [x][y - 1][2'(HERMES_NORTH)] : '0;
-                eop_rx   [x][y][2'(HERMES_SOUTH)] = (y != 0)          ? eop_tx   [x][y - 1][2'(HERMES_NORTH)] : '0;
-                credit_tx[x][y][2'(HERMES_SOUTH)] = (y != 0)          ? credit_rx[x][y - 1][2'(HERMES_NORTH)] : '1;
-                data_rx  [x][y][2'(HERMES_SOUTH)] = (y != 0)          ? data_tx  [x][y - 1][2'(HERMES_NORTH)] : '0;
+                if (y != 0) begin
+                    rx       [x][y][2'(HERMES_SOUTH)] = tx       [x][y - 1][2'(HERMES_NORTH)];
+                    eop_rx   [x][y][2'(HERMES_SOUTH)] = eop_tx   [x][y - 1][2'(HERMES_NORTH)];
+                    credit_tx[x][y][2'(HERMES_SOUTH)] = credit_rx[x][y - 1][2'(HERMES_NORTH)];
+                    data_rx  [x][y][2'(HERMES_SOUTH)] = data_tx  [x][y - 1][2'(HERMES_NORTH)];
+                end
+                else begin
+                    rx       [x][y][2'(HERMES_SOUTH)] = '0;
+                    eop_rx   [x][y][2'(HERMES_SOUTH)] = '0;
+                    credit_tx[x][y][2'(HERMES_SOUTH)] = '1;
+                    data_rx  [x][y][2'(HERMES_SOUTH)] = '0;
+                end
             end
         end
         
