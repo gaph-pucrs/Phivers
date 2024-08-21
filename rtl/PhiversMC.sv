@@ -185,8 +185,8 @@ module PhiversMC
 ////////////////////////////////////////////////////////////////////////////////
 
     generate
-        for (genvar x = 0; x < N_PE_X; x++) begin : gen_x
-            for (genvar y = 0; y < N_PE_Y; y++) begin : gen_y
+        for (genvar x = 0; x < N_PE_X; x++) begin : gen_x_pe
+            for (genvar y = 0; y < N_PE_Y; y++) begin : gen_y_pe
                 localparam logic [15:0] address  = {x[7:0], y[7:0]};
 
                 PhiversPE #(
@@ -242,84 +242,127 @@ module PhiversMC
     endgenerate
 
 ////////////////////////////////////////////////////////////////////////////////
-// NoC connection (+ peripherals)
+// NoC connection
 ////////////////////////////////////////////////////////////////////////////////
 
-    always_comb begin
-        localparam logic [($clog2(N_PE_X)-1):0] MA_INJ_X = ADDR_MA_INJ[($clog2(N_PE_X) + 7):8];
-        localparam logic [($clog2(N_PE_Y)-1):0] MA_INJ_Y = ADDR_MA_INJ[($clog2(N_PE_Y) - 1):0];
-
-        localparam logic [($clog2(N_PE_X)-1):0] APP_INJ_X = ADDR_APP_INJ[($clog2(N_PE_X) + 7):8];
-        localparam logic [($clog2(N_PE_Y)-1):0] APP_INJ_Y = ADDR_APP_INJ[($clog2(N_PE_Y) - 1):0];
-
-        for (int x = 0; x < N_PE_X; x++) begin
-            for (int y = 0; y < N_PE_Y; y++) begin
-                if (x != N_PE_X - 1) begin
-                    rx       [x][y][2'(HERMES_EAST)]  = tx       [x + 1][y][2'(HERMES_WEST)];
-                    eop_rx   [x][y][2'(HERMES_EAST)]  = eop_tx   [x + 1][y][2'(HERMES_WEST)];
-                    credit_tx[x][y][2'(HERMES_EAST)]  = credit_rx[x + 1][y][2'(HERMES_WEST)];
-                    data_rx  [x][y][2'(HERMES_EAST)]  = data_tx  [x + 1][y][2'(HERMES_WEST)];
-                end
-                else begin
-                    rx       [x][y][2'(HERMES_EAST)]  = '0;
-                    eop_rx   [x][y][2'(HERMES_EAST)]  = '0;
-                    credit_tx[x][y][2'(HERMES_EAST)]  = '1;
-                    data_rx  [x][y][2'(HERMES_EAST)]  = '0;
+    generate
+        for (genvar x = 0; x < N_PE_X; x++) begin : gen_link_x
+            for (genvar y = 0; y < N_PE_Y; y++) begin : gen_link_y
+                if (x != N_PE_X - 1) begin : gen_link_west
+                    PhiversLink link (
+                        // .clk_i      (clk_i                               ),
+                        // .rst_ni     (rst_ni                              ),
+                        .tx_i       (tx       [x + 1][y][2'(HERMES_WEST)]),
+                        .cr_tx_o    (credit_tx[x    ][y][2'(HERMES_EAST)]),
+                        .eop_tx_i   (eop_tx   [x + 1][y][2'(HERMES_WEST)]),
+                        .data_tx_i  (data_tx  [x + 1][y][2'(HERMES_WEST)]),
+                        .rx_o       (rx       [x    ][y][2'(HERMES_EAST)]),
+                        .cr_rx_i    (credit_rx[x + 1][y][2'(HERMES_WEST)]),
+                        .eop_rx_o   (eop_rx   [x    ][y][2'(HERMES_EAST)]),
+                        .data_rx_o  (data_rx  [x    ][y][2'(HERMES_EAST)])
+                    );
                 end
 
-                if (x != 0) begin
-                    rx       [x][y][2'(HERMES_WEST)]  = tx       [x - 1][y][2'(HERMES_EAST)];
-                    eop_rx   [x][y][2'(HERMES_WEST)]  = eop_tx   [x - 1][y][2'(HERMES_EAST)];
-                    credit_tx[x][y][2'(HERMES_WEST)]  = credit_rx[x - 1][y][2'(HERMES_EAST)];
-                    data_rx  [x][y][2'(HERMES_WEST)]  = data_tx  [x - 1][y][2'(HERMES_EAST)];
-                end
-                else begin
-                    rx       [x][y][2'(HERMES_WEST)]  = '0;
-                    eop_rx   [x][y][2'(HERMES_WEST)]  = '0;
-                    credit_tx[x][y][2'(HERMES_WEST)]  = '1;
-                    data_rx  [x][y][2'(HERMES_WEST)]  = '0;
-                end
-
-                if (y != N_PE_Y - 1) begin
-                    rx       [x][y][2'(HERMES_NORTH)] = tx       [x][y + 1][2'(HERMES_SOUTH)];
-                    eop_rx   [x][y][2'(HERMES_NORTH)] = eop_tx   [x][y + 1][2'(HERMES_SOUTH)];
-                    credit_tx[x][y][2'(HERMES_NORTH)] = credit_rx[x][y + 1][2'(HERMES_SOUTH)];
-                    data_rx  [x][y][2'(HERMES_NORTH)] = data_tx  [x][y + 1][2'(HERMES_SOUTH)];
-                end
-                else begin
-                    rx       [x][y][2'(HERMES_NORTH)] = '0;
-                    eop_rx   [x][y][2'(HERMES_NORTH)] = '0;
-                    credit_tx[x][y][2'(HERMES_NORTH)] = '1;
-                    data_rx  [x][y][2'(HERMES_NORTH)] = '0;
+                if (x != 0) begin : gen_link_east
+                    PhiversLink link (
+                        // .clk_i      (clk_i                               ),
+                        // .rst_ni     (rst_ni                              ),
+                        .tx_i       (tx       [x - 1][y][2'(HERMES_EAST)]),
+                        .cr_tx_o    (credit_tx[x    ][y][2'(HERMES_WEST)]),
+                        .eop_tx_i   (eop_tx   [x - 1][y][2'(HERMES_EAST)]),
+                        .data_tx_i  (data_tx  [x - 1][y][2'(HERMES_EAST)]),
+                        .rx_o       (rx       [x    ][y][2'(HERMES_WEST)]),
+                        .cr_rx_i    (credit_rx[x - 1][y][2'(HERMES_EAST)]),
+                        .eop_rx_o   (eop_rx   [x    ][y][2'(HERMES_WEST)]),
+                        .data_rx_o  (data_rx  [x    ][y][2'(HERMES_WEST)])
+                    );
                 end
 
-                if (y != 0) begin
-                    rx       [x][y][2'(HERMES_SOUTH)] = tx       [x][y - 1][2'(HERMES_NORTH)];
-                    eop_rx   [x][y][2'(HERMES_SOUTH)] = eop_tx   [x][y - 1][2'(HERMES_NORTH)];
-                    credit_tx[x][y][2'(HERMES_SOUTH)] = credit_rx[x][y - 1][2'(HERMES_NORTH)];
-                    data_rx  [x][y][2'(HERMES_SOUTH)] = data_tx  [x][y - 1][2'(HERMES_NORTH)];
+                if (y != N_PE_Y - 1) begin : gen_link_south
+                    PhiversLink link (
+                        // .clk_i      (clk_i                               ),
+                        // .rst_ni     (rst_ni                              ),
+                        .tx_i       (tx       [x][y + 1][2'(HERMES_SOUTH)]),
+                        .cr_tx_o    (credit_tx[x][y    ][2'(HERMES_NORTH)]),
+                        .eop_tx_i   (eop_tx   [x][y + 1][2'(HERMES_SOUTH)]),
+                        .data_tx_i  (data_tx  [x][y + 1][2'(HERMES_SOUTH)]),
+                        .rx_o       (rx       [x][y    ][2'(HERMES_NORTH)]),
+                        .cr_rx_i    (credit_rx[x][y + 1][2'(HERMES_SOUTH)]),
+                        .eop_rx_o   (eop_rx   [x][y    ][2'(HERMES_NORTH)]),
+                        .data_rx_o  (data_rx  [x][y    ][2'(HERMES_NORTH)])
+                    );
                 end
-                else begin
-                    rx       [x][y][2'(HERMES_SOUTH)] = '0;
-                    eop_rx   [x][y][2'(HERMES_SOUTH)] = '0;
-                    credit_tx[x][y][2'(HERMES_SOUTH)] = '1;
-                    data_rx  [x][y][2'(HERMES_SOUTH)] = '0;
+
+                if (y != 0) begin : gen_link_north
+                    PhiversLink link (
+                        // .clk_i      (clk_i                               ),
+                        // .rst_ni     (rst_ni                              ),
+                        .tx_i       (tx       [x][y - 1][2'(HERMES_NORTH)]),
+                        .cr_tx_o    (credit_tx[x][y    ][2'(HERMES_SOUTH)]),
+                        .eop_tx_i   (eop_tx   [x][y - 1][2'(HERMES_NORTH)]),
+                        .data_tx_i  (data_tx  [x][y - 1][2'(HERMES_NORTH)]),
+                        .rx_o       (rx       [x][y    ][2'(HERMES_SOUTH)]),
+                        .cr_rx_i    (credit_rx[x][y - 1][2'(HERMES_NORTH)]),
+                        .eop_rx_o   (eop_rx   [x][y    ][2'(HERMES_SOUTH)]),
+                        .data_rx_o  (data_rx  [x][y    ][2'(HERMES_SOUTH)])
+                    );
                 end
             end
         end
+    endgenerate
+
+////////////////////////////////////////////////////////////////////////////////
+// NoC border grounding and peripheral connection
+////////////////////////////////////////////////////////////////////////////////
+
+    always_comb begin
+        /* MA Injector address */
+        localparam logic [($clog2(N_PE_X)-1):0] MA_INJ_X = ADDR_MA_INJ[($clog2(N_PE_X) + 7):8];
+        localparam logic [($clog2(N_PE_Y)-1):0] MA_INJ_Y = ADDR_MA_INJ[($clog2(N_PE_Y) - 1):0];
+
+        /* App Injector address */
+        localparam logic [($clog2(N_PE_X)-1):0] APP_INJ_X = ADDR_APP_INJ[($clog2(N_PE_X) + 7):8];
+        localparam logic [($clog2(N_PE_Y)-1):0] APP_INJ_Y = ADDR_APP_INJ[($clog2(N_PE_Y) - 1):0];
         
+        /* North and south ground */
+        for (int x = 0; x < N_PE_X; x++) begin
+            rx       [x][N_PE_Y - 1][2'(HERMES_NORTH)] = '0;
+            eop_rx   [x][N_PE_Y - 1][2'(HERMES_NORTH)] = '0;
+            credit_tx[x][N_PE_Y - 1][2'(HERMES_NORTH)] = '1;
+            data_rx  [x][N_PE_Y - 1][2'(HERMES_NORTH)] = '0;
+
+            rx       [x][0         ][2'(HERMES_SOUTH)] = '0;
+            eop_rx   [x][0         ][2'(HERMES_SOUTH)] = '0;
+            credit_tx[x][0         ][2'(HERMES_SOUTH)] = '1;
+            data_rx  [x][0         ][2'(HERMES_SOUTH)] = '0;
+        end
+
+        /* East and west ground */
+        for (int y = 0; y < N_PE_Y; y++) begin
+            rx       [N_PE_X - 1][y][2'(HERMES_EAST)]  = '0;
+            eop_rx   [N_PE_X - 1][y][2'(HERMES_EAST)]  = '0;
+            credit_tx[N_PE_X - 1][y][2'(HERMES_EAST)]  = '1;
+            data_rx  [N_PE_X - 1][y][2'(HERMES_EAST)]  = '0;
+
+            rx       [0         ][y][2'(HERMES_WEST)]  = '0;
+            eop_rx   [0         ][y][2'(HERMES_WEST)]  = '0;
+            credit_tx[0         ][y][2'(HERMES_WEST)]  = '1;
+            data_rx  [0         ][y][2'(HERMES_WEST)]  = '0;
+        end
+
+        /* MA Injector connection */
         rx       [MA_INJ_X][MA_INJ_Y][2'(PORT_MA_INJ)] = ma_inj_tx;
         eop_rx   [MA_INJ_X][MA_INJ_Y][2'(PORT_MA_INJ)] = ma_inj_eop_tx;
         credit_tx[MA_INJ_X][MA_INJ_Y][2'(PORT_MA_INJ)] = ma_inj_credit_rx;
         data_rx  [MA_INJ_X][MA_INJ_Y][2'(PORT_MA_INJ)] = ma_inj_data_tx;
 
+        /* App Injector connection */
         rx       [APP_INJ_X][APP_INJ_Y][2'(PORT_APP_INJ)] = app_inj_tx        && release_peripheral[APP_INJ_X][APP_INJ_Y];
         eop_rx   [APP_INJ_X][APP_INJ_Y][2'(PORT_APP_INJ)] = app_inj_eop_tx    && release_peripheral[APP_INJ_X][APP_INJ_Y];
         credit_tx[APP_INJ_X][APP_INJ_Y][2'(PORT_APP_INJ)] = app_inj_credit_rx && release_peripheral[APP_INJ_X][APP_INJ_Y];
         data_rx  [APP_INJ_X][APP_INJ_Y][2'(PORT_APP_INJ)] = app_inj_data_tx;
 
         /* Insert the IO wiring for your component here if it connected to a port */
-        
     end
 
 ////////////////////////////////////////////////////////////////////////////////
