@@ -7,22 +7,23 @@ module PhiversMC
     import HermesPkg::*;
     import BrLitePkg::*;
 #(
-    parameter               N_PE_X        = 4,
-    parameter               N_PE_Y        = 4,
-    parameter               TASKS_PER_PE  = 4,
-    parameter               IMEM_PAGE_SZ  = 32768,
-    parameter               DMEM_PAGE_SZ  = 32768,
-    parameter               RS5_DEBUG     = 0,
-    parameter logic [15:0]  ADDR_MA_INJ   = 16'h0000,
-    parameter hermes_port_t PORT_MA_INJ   = HERMES_SOUTH,
-    parameter logic [15:0]  ADDR_APP_INJ  = 16'h0100,
-    parameter hermes_port_t PORT_APP_INJ  = HERMES_SOUTH,
-    parameter environment_e Environment   = ASIC,
-    parameter bit           UART_DEBUG    = 1,
-    parameter bit           SCHED_DEBUG   = 1,
-    parameter bit           PIPE_DEBUG    = 1,
-    parameter bit           TRAFFIC_DEBUG = 1,
-    parameter bit           DMNI_DEBUG    = 0
+    parameter               N_PE_X                                    = 4,
+    parameter               N_PE_Y                                    = 4,
+    parameter               TASKS_PER_PE                              = 4,
+    parameter               IMEM_PAGE_SZ                              = 32768,
+    parameter               DMEM_PAGE_SZ                              = 32768,
+    parameter               RS5_DEBUG                                 = 0,
+    parameter logic [15:0]  ADDR_MA_INJ                               = 16'h0000,
+    parameter hermes_port_t PORT_MA_INJ                               = HERMES_SOUTH,
+    parameter logic [15:0]  ADDR_APP_INJ                              = 16'h0100,
+    parameter hermes_port_t PORT_APP_INJ                              = HERMES_SOUTH,
+    parameter environment_e Environment                               = ASIC,
+    parameter bit           UART_DEBUG                                = 1,
+    parameter bit           SCHED_DEBUG                               = 1,
+    parameter bit           PIPE_DEBUG                                = 1,
+    parameter bit           TRAFFIC_DEBUG                             = 1,
+    parameter bit           DMNI_DEBUG                                = 0,
+    parameter string        LINK_CFG     [N_PE_X*N_PE_Y*HERMES_NPORT] = '{default: ""}
 )
 (
     input  logic        clk_i,
@@ -248,63 +249,81 @@ module PhiversMC
     generate
         for (genvar x = 0; x < N_PE_X; x++) begin : gen_link_x
             for (genvar y = 0; y < N_PE_Y; y++) begin : gen_link_y
-                if (x != N_PE_X - 1) begin : gen_link_west
-                    PhiversLink link (
-                        // .clk_i      (clk_i                               ),
-                        // .rst_ni     (rst_ni                              ),
-                        .tx_i       (tx       [x + 1][y][2'(HERMES_WEST)]),
-                        .cr_tx_o    (credit_tx[x    ][y][2'(HERMES_EAST)]),
-                        .eop_tx_i   (eop_tx   [x + 1][y][2'(HERMES_WEST)]),
-                        .data_tx_i  (data_tx  [x + 1][y][2'(HERMES_WEST)]),
-                        .rx_o       (rx       [x    ][y][2'(HERMES_EAST)]),
-                        .cr_rx_i    (credit_rx[x + 1][y][2'(HERMES_WEST)]),
-                        .eop_rx_o   (eop_rx   [x    ][y][2'(HERMES_EAST)]),
-                        .data_rx_o  (data_rx  [x    ][y][2'(HERMES_EAST)])
-                    );
-                end
-
-                if (x != 0) begin : gen_link_east
-                    PhiversLink link (
-                        // .clk_i      (clk_i                               ),
-                        // .rst_ni     (rst_ni                              ),
-                        .tx_i       (tx       [x - 1][y][2'(HERMES_EAST)]),
+                localparam logic [15:0] address  = {x[7:0], y[7:0]};
+                localparam IDX = (y * N_PE_X + x) * HERMES_NPORT;
+                if (x != 0) begin : gen_link_west
+                    PhiversLink #(
+                        .ADDRESS (address                    ),
+                        .PORT    ("W"                        ),
+                        .LINK_CFG(LINK_CFG[IDX + HERMES_WEST])
+                    ) link (
+                        .clk_i      (clk_i                               ),
+                        .rst_ni     (rst_ni                              ),
+                        .tx_i       (tx       [x    ][y][2'(HERMES_WEST)]),
                         .cr_tx_o    (credit_tx[x    ][y][2'(HERMES_WEST)]),
-                        .eop_tx_i   (eop_tx   [x - 1][y][2'(HERMES_EAST)]),
-                        .data_tx_i  (data_tx  [x - 1][y][2'(HERMES_EAST)]),
-                        .rx_o       (rx       [x    ][y][2'(HERMES_WEST)]),
+                        .eop_tx_i   (eop_tx   [x    ][y][2'(HERMES_WEST)]),
+                        .data_tx_i  (data_tx  [x    ][y][2'(HERMES_WEST)]),
+                        .rx_o       (rx       [x - 1][y][2'(HERMES_EAST)]),
                         .cr_rx_i    (credit_rx[x - 1][y][2'(HERMES_EAST)]),
-                        .eop_rx_o   (eop_rx   [x    ][y][2'(HERMES_WEST)]),
-                        .data_rx_o  (data_rx  [x    ][y][2'(HERMES_WEST)])
+                        .eop_rx_o   (eop_rx   [x - 1][y][2'(HERMES_EAST)]),
+                        .data_rx_o  (data_rx  [x - 1][y][2'(HERMES_EAST)])
                     );
                 end
 
-                if (y != N_PE_Y - 1) begin : gen_link_south
-                    PhiversLink link (
-                        // .clk_i      (clk_i                               ),
-                        // .rst_ni     (rst_ni                              ),
-                        .tx_i       (tx       [x][y + 1][2'(HERMES_SOUTH)]),
-                        .cr_tx_o    (credit_tx[x][y    ][2'(HERMES_NORTH)]),
-                        .eop_tx_i   (eop_tx   [x][y + 1][2'(HERMES_SOUTH)]),
-                        .data_tx_i  (data_tx  [x][y + 1][2'(HERMES_SOUTH)]),
-                        .rx_o       (rx       [x][y    ][2'(HERMES_NORTH)]),
-                        .cr_rx_i    (credit_rx[x][y + 1][2'(HERMES_SOUTH)]),
-                        .eop_rx_o   (eop_rx   [x][y    ][2'(HERMES_NORTH)]),
-                        .data_rx_o  (data_rx  [x][y    ][2'(HERMES_NORTH)])
+                if (x != N_PE_X - 1) begin : gen_link_east
+                    PhiversLink #(
+                        .ADDRESS (address                    ),
+                        .PORT    ("E"                        ),
+                        .LINK_CFG(LINK_CFG[IDX + HERMES_EAST])
+                    ) link (
+                        .clk_i      (clk_i                               ),
+                        .rst_ni     (rst_ni                              ),
+                        .tx_i       (tx       [x    ][y][2'(HERMES_EAST)]),
+                        .cr_tx_o    (credit_tx[x    ][y][2'(HERMES_EAST)]),
+                        .eop_tx_i   (eop_tx   [x    ][y][2'(HERMES_EAST)]),
+                        .data_tx_i  (data_tx  [x    ][y][2'(HERMES_EAST)]),
+                        .rx_o       (rx       [x + 1][y][2'(HERMES_WEST)]),
+                        .cr_rx_i    (credit_rx[x + 1][y][2'(HERMES_WEST)]),
+                        .eop_rx_o   (eop_rx   [x + 1][y][2'(HERMES_WEST)]),
+                        .data_rx_o  (data_rx  [x + 1][y][2'(HERMES_WEST)])
                     );
                 end
 
-                if (y != 0) begin : gen_link_north
-                    PhiversLink link (
-                        // .clk_i      (clk_i                               ),
-                        // .rst_ni     (rst_ni                              ),
-                        .tx_i       (tx       [x][y - 1][2'(HERMES_NORTH)]),
+                if (y != 0) begin : gen_link_south
+                    PhiversLink #(
+                        .ADDRESS (address                     ),
+                        .PORT    ("S"                         ),
+                        .LINK_CFG(LINK_CFG[IDX + HERMES_SOUTH])
+                    ) link (
+                        .clk_i      (clk_i                                ),
+                        .rst_ni     (rst_ni                               ),
+                        .tx_i       (tx       [x][y    ][2'(HERMES_SOUTH)]),
                         .cr_tx_o    (credit_tx[x][y    ][2'(HERMES_SOUTH)]),
-                        .eop_tx_i   (eop_tx   [x][y - 1][2'(HERMES_NORTH)]),
-                        .data_tx_i  (data_tx  [x][y - 1][2'(HERMES_NORTH)]),
-                        .rx_o       (rx       [x][y    ][2'(HERMES_SOUTH)]),
+                        .eop_tx_i   (eop_tx   [x][y    ][2'(HERMES_SOUTH)]),
+                        .data_tx_i  (data_tx  [x][y    ][2'(HERMES_SOUTH)]),
+                        .rx_o       (rx       [x][y - 1][2'(HERMES_NORTH)]),
                         .cr_rx_i    (credit_rx[x][y - 1][2'(HERMES_NORTH)]),
-                        .eop_rx_o   (eop_rx   [x][y    ][2'(HERMES_SOUTH)]),
-                        .data_rx_o  (data_rx  [x][y    ][2'(HERMES_SOUTH)])
+                        .eop_rx_o   (eop_rx   [x][y - 1][2'(HERMES_NORTH)]),
+                        .data_rx_o  (data_rx  [x][y - 1][2'(HERMES_NORTH)])
+                    );
+                end
+
+                if (y != N_PE_Y - 1) begin : gen_link_north
+                    PhiversLink #(
+                        .ADDRESS (address                     ),
+                        .PORT    ("N"                         ),
+                        .LINK_CFG(LINK_CFG[IDX + HERMES_NORTH])
+                    ) link (
+                        .clk_i      (clk_i                                ),
+                        .rst_ni     (rst_ni                               ),
+                        .tx_i       (tx       [x][y    ][2'(HERMES_NORTH)]),
+                        .cr_tx_o    (credit_tx[x][y    ][2'(HERMES_NORTH)]),
+                        .eop_tx_i   (eop_tx   [x][y    ][2'(HERMES_NORTH)]),
+                        .data_tx_i  (data_tx  [x][y    ][2'(HERMES_NORTH)]),
+                        .rx_o       (rx       [x][y + 1][2'(HERMES_SOUTH)]),
+                        .cr_rx_i    (credit_rx[x][y + 1][2'(HERMES_SOUTH)]),
+                        .eop_rx_o   (eop_rx   [x][y + 1][2'(HERMES_SOUTH)]),
+                        .data_rx_o  (data_rx  [x][y + 1][2'(HERMES_SOUTH)])
                     );
                 end
             end
