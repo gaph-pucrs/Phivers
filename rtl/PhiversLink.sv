@@ -23,18 +23,18 @@ module PhiversLink
 );
 
     generate
-        if (LINK_CFG.substr(0, 1) == "rs") begin : gen_ht_rs
+        if (LINK_CFG == "rs") begin : gen_ht_rs
             RedSignal #(
-                .ADDRESS(ADDRESS),
-                .PORT   (PORT   )
+                .ADDRESS(ADDRESS  ),
+                .PORT   (PORT     )
             ) rs (
-                .clk_i(clk_i),
-                .rst_ni(rst_ni),
-                .tx_i(tx_i),
-                .cr_tx_o(cr_tx_o),
+                .clk_i   (clk_i   ),
+                .rst_ni  (rst_ni  ),
+                .tx_i    (tx_i    ),
+                .cr_tx_o (cr_tx_o ),
                 .eop_tx_i(eop_tx_i),
-                .rx_o(rx_o),
-                .cr_rx_i(cr_rx_i)
+                .rx_o    (rx_o    ),
+                .cr_rx_i (cr_rx_i )
             );
             assign eop_rx_o  = eop_tx_i;
             assign data_rx_o = data_tx_i;

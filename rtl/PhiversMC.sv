@@ -18,12 +18,12 @@ module PhiversMC
     parameter logic [15:0]  ADDR_APP_INJ                              = 16'h0100,
     parameter hermes_port_t PORT_APP_INJ                              = HERMES_SOUTH,
     parameter environment_e Environment                               = ASIC,
+    parameter string        LINK_CFG     [N_PE_X*N_PE_Y*HERMES_NPORT] = '{default: ""},
     parameter bit           UART_DEBUG                                = 1,
     parameter bit           SCHED_DEBUG                               = 1,
     parameter bit           PIPE_DEBUG                                = 1,
     parameter bit           TRAFFIC_DEBUG                             = 1,
-    parameter bit           DMNI_DEBUG                                = 0,
-    parameter string        LINK_CFG     [N_PE_X*N_PE_Y*HERMES_NPORT] = '{default: ""}
+    parameter bit           DMNI_DEBUG                                = 0
 )
 (
     input  logic        clk_i,

@@ -15,6 +15,44 @@ module RedSignal
     input  logic cr_rx_i
 );
 
+    int unsigned interval_min;
+    int unsigned interval_max;
+    int unsigned cycles_min;
+    int unsigned cycles_max;
+
+    int cfg;
+    initial begin
+        cfg = $fopen($sformatf("../link/rs%0dx%0d-%s.cfg", ADDRESS[15:8], ADDRESS[7:0], PORT), "r");
+        if (cfg == '0) begin
+            $display(
+                "[%7.3f] [RS %02dx%02d-%s] Could not open configuration file", 
+                $time()/1_000_000.0, 
+                ADDRESS[15:8], 
+                ADDRESS[7:0], 
+                PORT
+            );
+            $finish();
+        end
+        else begin
+            $fscanf(cfg, "%d", interval_min);
+            $fscanf(cfg, "%d", interval_max);
+            $fscanf(cfg, "%d", cycles_min  );
+            $fscanf(cfg, "%d", cycles_max  );
+
+            $display(
+                "[%7.3f] [RS %02dx%02d-%s] Will hang for %0d to %0d cycles every %0d to %0d packets", 
+                $time()/1_000_000.0, 
+                ADDRESS[15:8], 
+                ADDRESS[7:0], 
+                PORT,
+                cycles_min,
+                cycles_max,
+                interval_min,
+                interval_max
+            );
+        end
+    end
+
     typedef enum {
         IDLE,
         EOP,
@@ -31,11 +69,11 @@ module RedSignal
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni) begin
-            next_hang <= $urandom_range(5, 10);
+            next_hang <= $urandom_range(interval_min, interval_max);
         end
         else if (state == EOP) begin
             if(next_hang == 0)
-                next_hang <= $urandom_range(5, 10);
+                next_hang <= $urandom_range(interval_min, interval_max);
             else
                 next_hang <= next_hang - 1;
         end
@@ -45,7 +83,7 @@ module RedSignal
         if (!rst_ni)
             hang_cycles <= 0;
         else if (state == MALICIOUS)
-            hang_cycles <= $urandom_range(10000, 99999);
+            hang_cycles <= $urandom_range(cycles_min, cycles_max);
         else if (state == HANG && tx_i && cr_rx_i)
             hang_cycles <= hang_cycles - 1;
     end
@@ -59,7 +97,13 @@ module RedSignal
                         next_state = EOP;
                     else if (next_hang == 0) begin
                         next_state = MALICIOUS;
-                        $display("[%7.3f] [RS %02dx%02d-%s] Entering malicious state", $time()/1_000_000.0, ADDRESS[15:8], ADDRESS[7:0], PORT);
+                        $display(
+                            "[%7.3f] [RS %02dx%02d-%s] Entering malicious state", 
+                            $time()/1_000_000.0, 
+                            ADDRESS[15:8], 
+                            ADDRESS[7:0], 
+                            PORT
+                        );
                     end
                     else
                         next_state = PASSTHROUGH;
@@ -106,6 +150,10 @@ module RedSignal
             rx_o    = '0;
             cr_tx_o = '0;
         end
+    end
+
+    final begin
+        $fclose(cfg);
     end
 
 endmodule

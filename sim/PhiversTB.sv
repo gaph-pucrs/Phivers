@@ -52,6 +52,7 @@ module PhiversTB
         .PORT_APP_INJ  (PORT_APP_INJ ),
         .RS5_DEBUG     (RS5_DEBUG    ),
         .Environment   (ASIC         ),
+        .LINK_CFG      (LINK_CFG     ),
         .UART_DEBUG    (UART_DEBUG   ),
         .SCHED_DEBUG   (SCHED_DEBUG  ),
         .PIPE_DEBUG    (PIPE_DEBUG   ),
