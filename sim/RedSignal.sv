@@ -15,6 +15,7 @@ module RedSignal
     input  logic cr_rx_i
 );
 
+    int unsigned tick_begin;
     int unsigned interval_min;
     int unsigned interval_max;
     int unsigned cycles_min;
@@ -34,10 +35,12 @@ module RedSignal
             $finish();
         end
         else begin
+            $fscanf(cfg, "%d", tick_begin  );
             $fscanf(cfg, "%d", interval_min);
             $fscanf(cfg, "%d", interval_max);
             $fscanf(cfg, "%d", cycles_min  );
             $fscanf(cfg, "%d", cycles_max  );
+            $fclose(cfg);
 
             $display(
                 "[%7.3f] [RS %02dx%02d-%s] Will hang for %0d to %0d cycles every %0d to %0d packets", 
@@ -92,7 +95,7 @@ module RedSignal
         case (state)
             EOP,
             IDLE: begin
-                if (tx_i) begin
+                if (tx_i && $time() > 64'(tick_begin)) begin
                     if (eop_tx_i && cr_rx_i)
                         next_state = EOP;
                     else if (next_hang == 0) begin
@@ -150,10 +153,6 @@ module RedSignal
             rx_o    = '0;
             cr_tx_o = '0;
         end
-    end
-
-    final begin
-        $fclose(cfg);
     end
 
 endmodule
