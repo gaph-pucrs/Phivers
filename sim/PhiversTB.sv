@@ -114,10 +114,10 @@ module PhiversTB
                     .dataA_i    (32'h0                                   ), 
                     .dataA_o    (imem_data[x][y]                         ),
 
-                    .enB_i      (idma_en[x][y]                           ), 
-                    .weB_i      (dma_we[x][y]                            ), 
-                    .addrB_i    (dma_addr[x][y][($clog2(IMEM_SZ) - 1):0] ), 
-                    .dataB_i    (dma_data[x][y]                          ), 
+                    .enB_i      (idma_en  [x][y]                         ), 
+                    .weB_i      (dma_we   [x][y]                         ), 
+                    .addrB_i    (dma_addr [x][y][($clog2(IMEM_SZ) - 1):0]), 
+                    .dataB_i    (dma_data [x][y]                         ), 
                     .dataB_o    (idma_data[x][y]                         )
                 );
 
@@ -128,19 +128,19 @@ module PhiversTB
                     .DEBUG_PATH ($sformatf("./debug/ram/%0dx%0d_D", x, y))
                 ) 
                 D_MEM (
-                    .clk        (clk                                     ), 
+                    .clk        (clk                                           ), 
 
-                    .enA_i      (dmem_en[x][y]                           ), 
-                    .weA_i      (dmem_we[x][y]                           ), 
-                    .addrA_i    (dmem_addr[x][y][($clog2(DMEM_SZ) - 1):0]), 
-                    .dataA_i    (dmem_data_write[x][y]                   ), 
-                    .dataA_o    (dmem_data_read[x][y]                    ),
+                    .enA_i      (dmem_en        [x][y]                         ), 
+                    .weA_i      (dmem_we        [x][y]                         ), 
+                    .addrA_i    (dmem_addr      [x][y][($clog2(DMEM_SZ) - 1):0]), 
+                    .dataA_i    (dmem_data_write[x][y]                         ), 
+                    .dataA_o    (dmem_data_read [x][y]                         ),
 
-                    .enB_i      (ddma_en[x][y]                           ), 
-                    .weB_i      (dma_we[x][y]                            ), 
-                    .addrB_i    (dma_addr[x][y][($clog2(DMEM_SZ) - 1):0] ), 
-                    .dataB_i    (dma_data[x][y]                          ), 
-                    .dataB_o    (ddma_data[x][y]                         )
+                    .enB_i      (ddma_en        [x][y]                         ), 
+                    .weB_i      (dma_we         [x][y]                         ), 
+                    .addrB_i    (dma_addr       [x][y][($clog2(DMEM_SZ) - 1):0]), 
+                    .dataB_i    (dma_data       [x][y]                         ), 
+                    .dataB_o    (ddma_data      [x][y]                         )
                 );
             end
         end

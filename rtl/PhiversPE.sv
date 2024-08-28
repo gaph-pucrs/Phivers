@@ -194,20 +194,20 @@ module PhiversPE
     logic        noc_credit_rcv [(HERMES_NPORT - 1):0];
     logic [31:0] noc_data_rcv   [(HERMES_NPORT - 1):0];
 
-    assign noc_rx[(HERMES_NPORT - 2):0]       = noc_rx_i;
-    assign noc_eop_rcv[(HERMES_NPORT - 2):0]  = noc_eop_i;
-    assign noc_credit_o                       = noc_credit_rcv[(HERMES_NPORT - 2):0];
+    assign noc_rx      [(HERMES_NPORT - 2):0] = noc_rx_i;
+    assign noc_eop_rcv [(HERMES_NPORT - 2):0] = noc_eop_i;
     assign noc_data_rcv[(HERMES_NPORT - 2):0] = noc_data_i;
+    assign noc_credit_o                       = noc_credit_rcv[(HERMES_NPORT - 2):0];
 
     logic        noc_tx         [(HERMES_NPORT - 1):0];
     logic        noc_eop_snd    [(HERMES_NPORT - 1):0];
     logic        noc_credit_snd [(HERMES_NPORT - 1):0];
     logic [31:0] noc_data_snd   [(HERMES_NPORT - 1):0];
 
-    assign noc_tx_o                             = noc_tx[(HERMES_NPORT - 2):0];
-    assign noc_eop_o                            = noc_eop_snd[(HERMES_NPORT - 2):0];
-    assign noc_credit_snd[(HERMES_NPORT - 2):0] = noc_credit_i;
+    assign noc_tx_o                             = noc_tx      [(HERMES_NPORT - 2):0];
+    assign noc_eop_o                            = noc_eop_snd [(HERMES_NPORT - 2):0];
     assign noc_data_o                           = noc_data_snd[(HERMES_NPORT - 2):0];
+    assign noc_credit_snd[(HERMES_NPORT - 2):0] = noc_credit_i;
 
     HermesRouter #(
         .ADDRESS(ADDRESS),
@@ -237,17 +237,17 @@ module PhiversPE
     logic     [(BR_NPORT - 1):0] brlite_ack_rcv;
     br_data_t [(BR_NPORT - 1):0] brlite_flit_rcv;
 
-    assign brlite_req_rcv[(BR_NPORT - 2):0]  = brlite_req_i;
-    assign brlite_ack_o                      = brlite_ack_rcv[(BR_NPORT - 2):0];
+    assign brlite_req_rcv [(BR_NPORT - 2):0] = brlite_req_i;
     assign brlite_flit_rcv[(BR_NPORT - 2):0] = brlite_flit_i;
+    assign brlite_ack_o                      = brlite_ack_rcv[(BR_NPORT - 2):0];
 
     logic     [(BR_NPORT - 1):0] brlite_req_snd;
     logic     [(BR_NPORT - 1):0] brlite_ack_snd;
     br_data_t [(BR_NPORT - 1):0] brlite_flit_snd;
 
-    assign brlite_req_o                     = brlite_req_snd[(BR_NPORT - 2):0];
-    assign brlite_ack_snd[(BR_NPORT - 2):0] = brlite_ack_i;
+    assign brlite_req_o                     = brlite_req_snd [(BR_NPORT - 2):0];
     assign brlite_flit_o                    = brlite_flit_snd[(BR_NPORT - 2):0];
+    assign brlite_ack_snd[(BR_NPORT - 2):0] = brlite_ack_i;
 
     localparam logic [15:0] seq_addr = ADDRESS[7:0] * N_PE_X + {8'h00, ADDRESS[15:8]};
     BrLiteRouter #(
@@ -298,7 +298,7 @@ module PhiversPE
     logic        brlite_mon_ack;
     brlite_mon_t brlite_mon_flit;
 
-    assign brlite_mon_req             = brlite_req_snd[(BR_NPORT - 1)] && (brlite_flit_snd[(BR_NPORT - 1)].service == BR_SVC_MON);
+    assign brlite_mon_req             = brlite_req_snd [(BR_NPORT - 1)] && (brlite_flit_snd[(BR_NPORT - 1)].service == BR_SVC_MON);
     assign brlite_mon_flit.payload    = brlite_flit_snd[(BR_NPORT - 1)].payload;
     assign brlite_mon_flit.seq_source = brlite_flit_snd[(BR_NPORT - 1)].seq_source;
     assign brlite_mon_flit.producer   = brlite_flit_snd[(BR_NPORT - 1)].producer;
@@ -362,14 +362,14 @@ module PhiversPE
         .mem_addr_o           (dma_addr                               ),
         .mem_data_o           (dma_data_o                             ),
         .mem_data_i           (dma_data_read                          ),
-        .noc_rx_i             (noc_tx[(HERMES_NPORT - 1)]             ),
-        .noc_eop_i            (noc_eop_snd[(HERMES_NPORT - 1)]        ),
-        .noc_credit_o         (noc_credit_snd[(HERMES_NPORT - 1)]     ),
-        .noc_data_i           (noc_data_snd[(HERMES_NPORT - 1)]       ),
-        .noc_tx_o             (noc_rx[(HERMES_NPORT - 1)]             ),
-        .noc_eop_o            (noc_eop_rcv[(HERMES_NPORT - 1)]        ),
-        .noc_credit_i         (noc_credit_rcv[(HERMES_NPORT - 1)]     ),
-        .noc_data_o           (noc_data_rcv[(HERMES_NPORT - 1)]       ),
+        .noc_rx_i             (noc_tx        [HERMES_NPORT - 1]       ),
+        .noc_eop_i            (noc_eop_snd   [HERMES_NPORT - 1]       ),
+        .noc_credit_o         (noc_credit_snd[HERMES_NPORT - 1]       ),
+        .noc_data_i           (noc_data_snd  [HERMES_NPORT - 1]       ),
+        .noc_tx_o             (noc_rx        [HERMES_NPORT - 1]       ),
+        .noc_eop_o            (noc_eop_rcv   [HERMES_NPORT - 1]       ),
+        .noc_credit_i         (noc_credit_rcv[HERMES_NPORT - 1]       ),
+        .noc_data_o           (noc_data_rcv  [HERMES_NPORT - 1]       ),
         .br_req_mon_i         (brlite_mon_req                         ),
         .br_ack_mon_o         (brlite_mon_ack                         ),
         .br_mon_data_i        (brlite_mon_flit                        ),
@@ -377,8 +377,8 @@ module PhiversPE
         .br_ack_svc_o         (brlite_svc_ack                         ),
         .br_svc_data_i        (brlite_svc_flit                        ),
         .br_local_busy_i      (brlite_local_busy                      ),
-        .br_req_o             (brlite_req_rcv[(BR_NPORT - 1)]         ),
-        .br_ack_i             (brlite_ack_rcv[(BR_NPORT - 1)]         ),
+        .br_req_o             (brlite_req_rcv[BR_NPORT - 1]           ),
+        .br_ack_i             (brlite_ack_rcv[BR_NPORT - 1]           ),
         .br_data_o            (brlite_flit_ni                         )
     );
 
@@ -505,13 +505,13 @@ module PhiversPE
             .LOG_PATH ("./debug/dmni")
         )
         dmni_log (
-            .clk_i      (         clk_i                    ),
-            .rst_ni     (        rst_ni                    ),
-            .tx_i       (        noc_tx[(HERMES_NPORT - 1)]),
-            .eop_i      (   noc_eop_snd[(HERMES_NPORT - 1)]),
-            .credit_i   (noc_credit_snd[(HERMES_NPORT - 1)]),
-            .data_i     (  noc_data_snd[(HERMES_NPORT - 1)]),
-            .tick_cntr_i(         mtime                    )
+            .clk_i      (         clk_i                  ),
+            .rst_ni     (        rst_ni                  ),
+            .tx_i       (        noc_tx[HERMES_NPORT - 1]),
+            .eop_i      (   noc_eop_snd[HERMES_NPORT - 1]),
+            .credit_i   (noc_credit_snd[HERMES_NPORT - 1]),
+            .data_i     (  noc_data_snd[HERMES_NPORT - 1]),
+            .tick_cntr_i(         mtime                  )
         );
     end
 

@@ -121,8 +121,8 @@ module PhiversMC
     );
 
     always_comb begin
-        localparam logic [($clog2(N_PE_X)-1):0] x = ADDR_MA_INJ[($clog2(N_PE_X) + 7):8];
-        localparam logic [($clog2(N_PE_Y)-1):0] y = ADDR_MA_INJ[($clog2(N_PE_Y) - 1):0];
+        localparam x = 32'(ADDR_MA_INJ[15:8]);
+        localparam y = 32'(ADDR_MA_INJ[7 :0]);
         ma_inj_rx        = tx       [x][y][2'(PORT_MA_INJ)];
         ma_inj_eop_rx    = eop_tx   [x][y][2'(PORT_MA_INJ)];
         ma_inj_credit_tx = credit_rx[x][y][2'(PORT_MA_INJ)];
@@ -168,8 +168,8 @@ module PhiversMC
     );
 
     always_comb begin
-        localparam logic [($clog2(N_PE_X)-1):0] x = ADDR_APP_INJ[($clog2(N_PE_X) + 7):8];
-        localparam logic [($clog2(N_PE_Y)-1):0] y = ADDR_APP_INJ[($clog2(N_PE_Y) - 1):0];
+        localparam x = 32'(ADDR_APP_INJ[15:8]);
+        localparam y = 32'(ADDR_APP_INJ[ 7:0]);
         app_inj_rx        = tx       [x][y][2'(PORT_APP_INJ)] && release_peripheral[x][y];
         app_inj_eop_rx    = eop_tx   [x][y][2'(PORT_APP_INJ)] && release_peripheral[x][y];
         app_inj_credit_tx = credit_rx[x][y][2'(PORT_APP_INJ)] && release_peripheral[x][y];
@@ -208,35 +208,35 @@ module PhiversMC
                 pe (
                     .clk_i                (clk_i                   ),
                     .rst_ni               (rst_ni                  ),
-                    .imem_addr_o          (imem_addr_o[x][y]       ),
-                    .imem_data_i          (imem_data_i[x][y]       ),
-                    .dmem_en_o            (dmem_en_o[x][y]         ),
-                    .dmem_we_o            (dmem_we_o[x][y]         ),
-                    .dmem_addr_o          (dmem_addr_o[x][y]       ),
-                    .dmem_data_i          (dmem_data_i[x][y]       ),
-                    .dmem_data_o          (dmem_data_o[x][y]       ),
-                    .idma_en_o            (idma_en_o[x][y]         ),
-                    .ddma_en_o            (ddma_en_o[x][y]         ),
-                    .dma_we_o             (dma_we_o[x][y]          ),
-                    .dma_addr_o           (dma_addr_o[x][y]        ),
-                    .idma_data_i          (idma_data_i[x][y]       ),
-                    .ddma_data_i          (ddma_data_i[x][y]       ),
-                    .dma_data_o           (dma_data_o[x][y]        ),
+                    .imem_addr_o          (imem_addr_o       [x][y]),
+                    .imem_data_i          (imem_data_i       [x][y]),
+                    .dmem_en_o            (dmem_en_o         [x][y]),
+                    .dmem_we_o            (dmem_we_o         [x][y]),
+                    .dmem_addr_o          (dmem_addr_o       [x][y]),
+                    .dmem_data_i          (dmem_data_i       [x][y]),
+                    .dmem_data_o          (dmem_data_o       [x][y]),
+                    .idma_en_o            (idma_en_o         [x][y]),
+                    .ddma_en_o            (ddma_en_o         [x][y]),
+                    .dma_we_o             (dma_we_o          [x][y]),
+                    .dma_addr_o           (dma_addr_o        [x][y]),
+                    .idma_data_i          (idma_data_i       [x][y]),
+                    .ddma_data_i          (ddma_data_i       [x][y]),
+                    .dma_data_o           (dma_data_o        [x][y]),
                     .release_peripheral_o (release_peripheral[x][y]),
-                    .noc_rx_i             (rx[x][y]                ),
-                    .noc_eop_i            (eop_rx[x][y]            ),
-                    .noc_credit_o         (credit_rx[x][y]         ),
-                    .noc_data_i           (data_rx[x][y]           ),
-                    .noc_tx_o             (tx[x][y]                ),
-                    .noc_eop_o            (eop_tx[x][y]            ),
-                    .noc_credit_i         (credit_tx[x][y]         ),
-                    .noc_data_o           (data_tx[x][y]           ),
-                    .brlite_req_i         (req_rx[x][y]            ),
-                    .brlite_ack_o         (ack_rx[x][y]            ),
-                    .brlite_flit_i        (flit_rx[x][y]           ),
-                    .brlite_req_o         (req_tx[x][y]            ),
-                    .brlite_ack_i         (ack_tx[x][y]            ),
-                    .brlite_flit_o        (flit_tx[x][y]           )
+                    .noc_rx_i             (rx                [x][y]),
+                    .noc_eop_i            (eop_rx            [x][y]),
+                    .noc_credit_o         (credit_rx         [x][y]),
+                    .noc_data_i           (data_rx           [x][y]),
+                    .noc_tx_o             (tx                [x][y]),
+                    .noc_eop_o            (eop_tx            [x][y]),
+                    .noc_credit_i         (credit_tx         [x][y]),
+                    .noc_data_o           (data_tx           [x][y]),
+                    .brlite_req_i         (req_rx            [x][y]),
+                    .brlite_ack_o         (ack_rx            [x][y]),
+                    .brlite_flit_i        (flit_rx           [x][y]),
+                    .brlite_req_o         (req_tx            [x][y]),
+                    .brlite_ack_i         (ack_tx            [x][y]),
+                    .brlite_flit_o        (flit_tx           [x][y])
                 );
             end
         end
@@ -336,12 +336,12 @@ module PhiversMC
 
     always_comb begin
         /* MA Injector address */
-        localparam logic [($clog2(N_PE_X)-1):0] MA_INJ_X = ADDR_MA_INJ[($clog2(N_PE_X) + 7):8];
-        localparam logic [($clog2(N_PE_Y)-1):0] MA_INJ_Y = ADDR_MA_INJ[($clog2(N_PE_Y) - 1):0];
+        localparam MA_INJ_X = 32'(ADDR_MA_INJ[15:8]);
+        localparam MA_INJ_Y = 32'(ADDR_MA_INJ[ 7:0]);
 
         /* App Injector address */
-        localparam logic [($clog2(N_PE_X)-1):0] APP_INJ_X = ADDR_APP_INJ[($clog2(N_PE_X) + 7):8];
-        localparam logic [($clog2(N_PE_Y)-1):0] APP_INJ_Y = ADDR_APP_INJ[($clog2(N_PE_Y) - 1):0];
+        localparam APP_INJ_X = 32'(ADDR_APP_INJ[15:8]);
+        localparam APP_INJ_Y = 32'(ADDR_APP_INJ[ 7:0]);
         
         /* North and south ground */
         for (int x = 0; x < N_PE_X; x++) begin
@@ -370,10 +370,10 @@ module PhiversMC
         end
 
         /* MA Injector connection */
-        rx       [MA_INJ_X][MA_INJ_Y][2'(PORT_MA_INJ)] = ma_inj_tx;
-        eop_rx   [MA_INJ_X][MA_INJ_Y][2'(PORT_MA_INJ)] = ma_inj_eop_tx;
-        credit_tx[MA_INJ_X][MA_INJ_Y][2'(PORT_MA_INJ)] = ma_inj_credit_rx;
-        data_rx  [MA_INJ_X][MA_INJ_Y][2'(PORT_MA_INJ)] = ma_inj_data_tx;
+        rx       [MA_INJ_X ][MA_INJ_Y ][2'(PORT_MA_INJ )] = ma_inj_tx;
+        eop_rx   [MA_INJ_X ][MA_INJ_Y ][2'(PORT_MA_INJ )] = ma_inj_eop_tx;
+        credit_tx[MA_INJ_X ][MA_INJ_Y ][2'(PORT_MA_INJ )] = ma_inj_credit_rx;
+        data_rx  [MA_INJ_X ][MA_INJ_Y ][2'(PORT_MA_INJ )] = ma_inj_data_tx;
 
         /* App Injector connection */
         rx       [APP_INJ_X][APP_INJ_Y][2'(PORT_APP_INJ)] = app_inj_tx        && release_peripheral[APP_INJ_X][APP_INJ_Y];
