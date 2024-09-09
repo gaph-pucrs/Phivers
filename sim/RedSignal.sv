@@ -96,8 +96,9 @@ module RedSignal
             EOP,
             IDLE: begin
                 if (tx_i && $time() > 64'(tick_begin)) begin
-                    if (eop_tx_i && cr_rx_i)
+                    if (eop_tx_i && cr_rx_i) begin
                         next_state = EOP;
+                    end
                     else if (next_hang == 0) begin
                         next_state = MALICIOUS;
                         $display(
@@ -108,8 +109,9 @@ module RedSignal
                             PORT
                         );
                     end
-                    else
+                    else begin
                         next_state = PASSTHROUGH;
+                    end
                 end
                 else begin
                     next_state = IDLE;
