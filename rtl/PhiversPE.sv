@@ -350,6 +350,7 @@ module PhiversPE
     dmni (
         .clk_i                (clk_i                                  ),
         .rst_ni               (rst_ni                                 ),
+        .tick_counter_i       (mtime[31:0]                            ),
         .irq_o                (dmni_irq                               ),
         .cfg_en_i             (ni_en                                  ),
         .cfg_we_i             (ni_we                                  ),
