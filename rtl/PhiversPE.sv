@@ -101,13 +101,15 @@ module PhiversPE
 
     RS5 #(
         .Environment   (Environment   ),
-        .RV32          (RV32M         ),
-        .COMPRESSED    (0             ),
+        .MULEXT        (MUL_M         ),
+        .AMOEXT        (AMO_A         ),
+        .COMPRESSED    (1             ),
         .VEnable       (0             ),
         /* VLEN: Don't Care */
         .XOSVMEnable   (1             ),
         .ZIHPMEnable   (0             ),
         .ZKNEEnable    (0             ),
+        .BRANCHPRED    (1             ),
         .DEBUG         (RS5_DEBUG     ),
         .DBG_REG_FILE  ($sformatf("./debug/cpu/%0dx%0d_regBank.txt", ADDRESS[15:8], ADDRESS[7:0])),
         .PROFILING     (RS5_DEBUG     ),
