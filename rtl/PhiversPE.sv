@@ -21,7 +21,8 @@ module PhiversPE
     parameter bit           SCHED_DEBUG   = 1,
     parameter bit           PIPE_DEBUG    = 1,
     parameter bit           TRAFFIC_DEBUG = 1,
-    parameter bit           DMNI_DEBUG    = 0
+    parameter bit           DMNI_DEBUG    = 0,
+    parameter bit           SAFE_DEBUG    = 1
 )
 (
     input  logic                        clk_i,
@@ -453,6 +454,7 @@ module PhiversPE
         .SCHED_DEBUG     (SCHED_DEBUG                    ),
         .PIPE_DEBUG      (PIPE_DEBUG                     ),
         .TRAFFIC_DEBUG   (TRAFFIC_DEBUG                  ),
+        .SAFE_DEBUG      (SAFE_DEBUG                     ),
         .DBG_SCHED_FILE  ("./debug/scheduling_report.txt"),
         .DBG_TRAFFIC_FILE("./debug/traffic_router.txt"   )
     )

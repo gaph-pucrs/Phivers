@@ -23,7 +23,8 @@ module PhiversMC
     parameter bit           SCHED_DEBUG                               = 1,
     parameter bit           PIPE_DEBUG                                = 1,
     parameter bit           TRAFFIC_DEBUG                             = 1,
-    parameter bit           DMNI_DEBUG                                = 0
+    parameter bit           DMNI_DEBUG                                = 0,
+    parameter bit           SAFE_DEBUG                                = 1
 )
 (
     input  logic        clk_i,
@@ -203,7 +204,8 @@ module PhiversMC
                     .SCHED_DEBUG   (SCHED_DEBUG  ),
                     .PIPE_DEBUG    (PIPE_DEBUG   ),
                     .TRAFFIC_DEBUG (TRAFFIC_DEBUG),
-                    .DMNI_DEBUG    (DMNI_DEBUG   )
+                    .DMNI_DEBUG    (DMNI_DEBUG   ),
+                    .SAFE_DEBUG    (SAFE_DEBUG   )
                 ) 
                 pe (
                     .clk_i                (clk_i                   ),

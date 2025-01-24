@@ -9,6 +9,7 @@ module Debug
     parameter bit          SCHED_DEBUG      = 1,
     parameter bit          PIPE_DEBUG       = 1,
     parameter bit          TRAFFIC_DEBUG    = 1,
+    parameter bit          SAFE_DEBUG       = 1,
     parameter string       DBG_SCHED_FILE   = "./debug/scheduling_report.txt",
     parameter string       DBG_TRAFFIC_FILE = "./debug/traffic_router.txt"
 )
@@ -182,6 +183,48 @@ module Debug
                     $fclose(traffic_fd);
                 end                    
             end
+        end
+    end
+
+    if (SAFE_DEBUG) begin : gen_safe_dbg
+        int safe_fd;
+
+        initial begin
+            safe_fd = $fopen($sformatf("debug/safe/%0dx%0d.txt", ADDRESS[15:8], ADDRESS[7:0]), "w");
+            if (safe_fd == '0) begin
+                $display("[Debug] Could not open safe file");
+                $finish();
+            end
+        end
+
+        logic [31:0] safe_timestamp;
+        logic [31:0] safe_edge;
+        logic [31:0] safe_latency;
+
+        always_ff @(posedge clk_i or negedge rst_ni) begin
+            if (rst_ni) begin
+                if (en_i && we_i) begin
+                    case (addr_i)
+                        24'h000050: safe_timestamp <= data_i;
+                        24'h000054: safe_latency   <= data_i;
+                        24'h000058: safe_edge      <= data_i;
+                        24'h00005C: 
+                            $fwrite(
+                                safe_fd, 
+                                "%0d,%0d,%0d,%0d,%0d\n", 
+                                safe_timestamp,
+                                safe_edge >> 16,
+                                safe_edge & 32'h0000FFFF,
+                                safe_latency,
+                                data_i
+                            );
+                    endcase
+                end
+            end
+        end
+
+        final begin
+            $fclose(safe_fd);
         end
     end
 

@@ -57,7 +57,8 @@ module PhiversTB
         .SCHED_DEBUG   (SCHED_DEBUG  ),
         .PIPE_DEBUG    (PIPE_DEBUG   ),
         .TRAFFIC_DEBUG (TRAFFIC_DEBUG),
-        .DMNI_DEBUG    (DMNI_DEBUG   )
+        .DMNI_DEBUG    (DMNI_DEBUG   ),
+        .SAFE_DEBUG    (SAFE_DEBUG   )
     )
     mc (
         .clk_i            (clk            ),
