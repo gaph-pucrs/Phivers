@@ -16,6 +16,7 @@ module RedSignal
     input  logic        cr_rx_i
 );
 
+    bit enabled;
     int unsigned tick_begin;
     int unsigned cycles_min;
     int unsigned cycles_max;
@@ -23,18 +24,19 @@ module RedSignal
 
     int cfg;
     initial begin
-        cfg = $fopen($sformatf("../link/rs%0dx%0d-%s.cfg", ADDRESS[15:8], ADDRESS[7:0], PORT), "r");
+        cfg = $fopen($sformatf("link/rs%0dx%0d-%s.cfg", ADDRESS[15:8], ADDRESS[7:0], PORT), "r");
         if (cfg == '0) begin
             $display(
-                "[%7.3f] [RS %02dx%02d-%s] Could not open configuration file", 
+                "[%7.3f] [RS %02dx%02d-%s] Could not open configuration file. Disabling.", 
                 $time()/1_000_000.0, 
                 ADDRESS[15:8], 
                 ADDRESS[7:0], 
                 PORT
             );
-            $finish();
+            enabled = 0;
         end
         else begin
+            enabled = 1;
             $fscanf(cfg, "%d", tick_begin);
             $fscanf(cfg, "%d", cycles_min);
             $fscanf(cfg, "%d", cycles_max);
@@ -137,7 +139,7 @@ module RedSignal
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni)
             state <= HEADER;
-        else 
+        else if (enabled)
             state <= next_state;
     end
 
