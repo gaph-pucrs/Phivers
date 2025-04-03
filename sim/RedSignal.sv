@@ -51,7 +51,7 @@ module RedSignal
             $fclose(cfg);
 
             log = $fopen($sformatf("debug/link/rs%0dx%0d-%s.log", ADDRESS[15:8], ADDRESS[7:0], PORT), "w");
-            $fwrite(log, "timestamp,prod,cons,cycles\n");
+            $fwrite(log, "snd_time,ht_time,prod,cons,cycles\n");
 
             $display(
                 "[%7.3f] [RS %02dx%02d-%s] Will hang for %0d to %0d cycles with %0d chance", 
@@ -191,10 +191,12 @@ module RedSignal
             ;
         end
         else if (state == LOG) begin
+            // snd_time,ht_time,prod,cons,cycles
             $fwrite(
                 log, 
-                "%0d,%0d,%0d,%0d\n",
+                "%0d,%0d,%0d,%0d,%0d\n",
                 timestamp, 
+                $time(), 
                 producer, 
                 consumer, 
                 hang_cycles

@@ -195,28 +195,35 @@ module Debug
                 $display("[Debug] Could not open safe file");
                 $finish();
             end
+            else begin
+                $fwrite(safe_fd, "snd_time,inf_time,prod,cons,mal_pred,inf_lat\n");
+            end
         end
 
-        logic [31:0] safe_timestamp;
+        logic [31:0] safe_snd_time;
+        logic [31:0] safe_inf_time;
         logic [31:0] safe_edge;
-        logic [31:0] safe_latency;
+        logic        safe_mal_pred;
 
         always_ff @(posedge clk_i or negedge rst_ni) begin
             if (rst_ni) begin
                 if (en_i && we_i) begin
                     case (addr_i)
-                        24'h000050: safe_timestamp <= data_i;
-                        24'h000054: safe_latency   <= data_i;
-                        24'h000058: safe_edge      <= data_i;
-                        24'h00005C: 
+                        24'h000050: safe_snd_time <= data_i;
+                        24'h000054: safe_inf_time <= data_i;
+                        24'h000058: safe_edge     <= data_i;
+                        24'h00005C: safe_mal_pred <= data_i[0];
+                        24'h000060: 
+                            // snd_time,inf_time,prod,cons,mal_pred,inf_lat
                             $fwrite(
                                 safe_fd, 
-                                "%0d,%0d,%0d,%0d,%0d\n", 
-                                safe_timestamp,
+                                "%0d,%0d,%0d,%0d,%s,%0d\n", 
+                                safe_snd_time,
+                                safe_inf_time,
                                 safe_edge >> 16,
                                 safe_edge & 32'h0000FFFF,
-                                safe_latency,
-                                data_i
+                                safe_mal_pred ? "True" : "False",
+                                data_i  // inf_lat
                             );
                     endcase
                 end

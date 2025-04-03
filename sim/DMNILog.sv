@@ -34,7 +34,7 @@ module DMNILog
             );
             $finish();
         end
-        $fwrite(fd, "timestamp,total_time,cons,prod,noc_time,size\n");
+        $fwrite(fd, "snd_time,noc_time,rcv_time,size,prod,cons\n");
     end
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -125,15 +125,16 @@ module DMNILog
 
     always_ff @(posedge clk_i) begin
         if (last_flit_received && service == MESSAGE_DELIVERY) begin
+            // snd_time,noc_time,rcv_time,size,prod,cons
             $fwrite(
                 fd, 
-                "%0d,%0d,%08x,%08x,%0d,%0d\n", 
-                tick_cntr_i,                    /* Timestamp          */
-                (tick_cntr_i - 64'(timestamp)), /* Total time         */
-                consumer,
-                producer,
-                (then - 64'(timestamp)),        /* Time spent in NoC  */
-                (flit_idx + 1'b1)               /* Message size       */
+                "%0d,%0d,%0d,%0d,%08x,%08x\n", 
+                timestamp,                     /* Send timestamp     */
+                then,                          /* Wormhole timestamp */
+                tick_cntr_i,                   /* Receive timestamp  */
+                (flit_idx + 1'b1),             /* Message size       */
+                producer,                      /* Producer ID        */
+                consumer                       /* Consumer ID        */
             );
         end
     end
