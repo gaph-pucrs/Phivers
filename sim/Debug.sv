@@ -196,14 +196,13 @@ module Debug
                 $finish();
             end
             else begin
-                $fwrite(safe_fd, "snd_time,inf_time,prod,cons,mal_pred,inf_lat\n");
+                $fwrite(safe_fd, "snd_time,inf_time,prod,cons,inf_lat\n");
             end
         end
 
         logic [31:0] safe_snd_time;
         logic [31:0] safe_inf_time;
         logic [31:0] safe_edge;
-        logic        safe_mal_pred;
 
         always_ff @(posedge clk_i or negedge rst_ni) begin
             if (rst_ni) begin
@@ -212,17 +211,15 @@ module Debug
                         24'h000050: safe_snd_time <= data_i;
                         24'h000054: safe_inf_time <= data_i;
                         24'h000058: safe_edge     <= data_i;
-                        24'h00005C: safe_mal_pred <= data_i[0];
-                        24'h000060: 
-                            // snd_time,inf_time,prod,cons,mal_pred,inf_lat
+                        24'h00005C: 
+                            // snd_time,inf_time,prod,cons,inf_lat
                             $fwrite(
                                 safe_fd, 
-                                "%0d,%0d,%0d,%0d,%s,%0d\n", 
+                                "%0d,%0d,%0d,%0d,%0d\n", 
                                 safe_snd_time,
                                 safe_inf_time,
                                 safe_edge >> 16,
                                 safe_edge & 32'h0000FFFF,
-                                safe_mal_pred ? "True" : "False",
                                 data_i  // inf_lat
                             );
                     endcase
