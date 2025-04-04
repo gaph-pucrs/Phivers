@@ -128,7 +128,7 @@ module RedSignal
         case (state)
             HEADER:    begin
                 if (received)
-                    next_state = ($time() >= 64'(tick_begin)) ? SIZE : EOP;
+                    next_state = (int'($time()/10) >= tick_begin) ? SIZE : EOP;
                 else
                     next_state = HEADER;
             end
@@ -196,7 +196,7 @@ module RedSignal
                 log, 
                 "%0d,%0d,%0d,%0d,%0d\n",
                 timestamp, 
-                $time(), 
+                int'($time()/10), 
                 producer, 
                 consumer, 
                 hang_cycles
