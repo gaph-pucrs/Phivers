@@ -78,9 +78,6 @@ module PhiversPE
 
     logic        mei;
     logic        mti;
-    logic [31:0] irq;
-
-    assign irq = {20'b0, mei, 3'b0, mti, 7'b0};
 
     logic        irq_ack;
     logic        cpu_en;
@@ -101,20 +98,21 @@ module PhiversPE
     assign dmem_data_o = cpu_data_write;
 
     RS5 #(
-        .Environment   (Environment   ),
-        .MULEXT        (MUL_M         ),
-        .AMOEXT        (AMO_A         ),
-        .COMPRESSED    (1             ),
-        .VEnable       (0             ),
+        .Environment     (Environment   ),
+        .MULEXT          (MUL_M         ),
+        .AMOEXT          (AMO_A         ),
+        .COMPRESSED      (1             ),
+        .VEnable         (0             ),
         /* VLEN: Don't Care */
-        .XOSVMEnable   (1             ),
-        .ZIHPMEnable   (0             ),
-        .ZKNEEnable    (0             ),
-        .BRANCHPRED    (1             ),
-        .DEBUG         (RS5_DEBUG     ),
-        .DBG_REG_FILE  ($sformatf("./debug/cpu/%0dx%0d_regBank.txt", ADDRESS[15:8], ADDRESS[7:0])),
-        .PROFILING     (RS5_DEBUG     ),
-        .PROFILING_FILE($sformatf("./debug/cpu/%0dx%0d_Report.txt",  ADDRESS[15:8], ADDRESS[7:0]))
+        .XOSVMEnable     (1             ),
+        .HPMCOUNTEREnable(0             ),
+        .ZKNEEnable      (0             ),
+        .BRANCHPRED      (1             ),
+        .ZICONDEnable    (0             ),
+        .DEBUG           (RS5_DEBUG     ),
+        .PROFILING       (RS5_DEBUG     ),
+        .DBG_REG_FILE    ($sformatf("./debug/cpu/%0dx%0d_regBank.txt", ADDRESS[15:8], ADDRESS[7:0])),
+        .PROFILING_FILE  ($sformatf("./debug/cpu/%0dx%0d_Report.txt",  ADDRESS[15:8], ADDRESS[7:0]))
     )
     processor (
         .clk                    (clk_i         ),
@@ -124,7 +122,8 @@ module PhiversPE
         .instruction_i          (imem_data_i   ),
         .mem_data_i             (cpu_data_read ),
         .mtime_i                (mtime         ),
-        .irq_i                  (irq           ),
+        .tip_i                  (mti           ),
+        .eip_i                  (mei           ),
         .instruction_address_o  (imem_addr     ),
         .mem_operation_enable_o (cpu_en        ),
         .mem_write_enable_o     (cpu_we        ),
