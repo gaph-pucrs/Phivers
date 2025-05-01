@@ -296,27 +296,16 @@ module PhiversPE
             dma_data_read = '0;
     end
 
-    logic        brlite_mon_req;
-    logic        brlite_mon_ack;
-    brlite_mon_t brlite_mon_flit;
+    logic        brlite_req;
+    logic        brlite_ack;
+    br_payload_t brlite_flit;
 
-    assign brlite_mon_req             = brlite_req_snd [(BR_NPORT - 1)] && (brlite_flit_snd[(BR_NPORT - 1)].service == BR_SVC_MON);
-    assign brlite_mon_flit.payload    = brlite_flit_snd[(BR_NPORT - 1)].payload;
-    assign brlite_mon_flit.seq_source = brlite_flit_snd[(BR_NPORT - 1)].seq_source;
-    assign brlite_mon_flit.producer   = brlite_flit_snd[(BR_NPORT - 1)].producer;
-    assign brlite_mon_flit.msvc       = brlite_flit_snd[(BR_NPORT - 1)].ksvc[($clog2(BRLITE_MON_NSVC) - 1):0];
+    assign brlite_req = brlite_req_snd[(BR_NPORT - 1)];
+    assign brlite_flit.payload    = brlite_flit_snd[(BR_NPORT - 1)].payload;
+    assign brlite_flit.seq_source = brlite_flit_snd[(BR_NPORT - 1)].seq_source;
+    assign brlite_flit.ksvc       = brlite_flit_snd[(BR_NPORT - 1)].ksvc;
 
-    logic        brlite_svc_req;
-    logic        brlite_svc_ack;
-    brlite_svc_t brlite_svc_flit;
-
-    assign brlite_svc_req = brlite_req_snd[(BR_NPORT - 1)] && (brlite_flit_snd[(BR_NPORT - 1)].service != BR_SVC_MON);
-    assign brlite_svc_flit.payload    = brlite_flit_snd[(BR_NPORT - 1)].payload;
-    assign brlite_svc_flit.seq_source = brlite_flit_snd[(BR_NPORT - 1)].seq_source;
-    assign brlite_svc_flit.producer   = brlite_flit_snd[(BR_NPORT - 1)].producer;
-    assign brlite_svc_flit.ksvc       = brlite_flit_snd[(BR_NPORT - 1)].ksvc;
-
-    assign brlite_ack_snd[(BR_NPORT - 1)] = (brlite_flit_snd[(BR_NPORT - 1)].service == BR_SVC_MON) ? brlite_mon_ack : brlite_svc_ack;
+    assign brlite_ack_snd[(BR_NPORT - 1)] = brlite_ack;
 
     logic [4:0] brlite_id;
 
@@ -327,21 +316,21 @@ module PhiversPE
             brlite_id <= brlite_id + 1'b1;
     end
 
-    brlite_out_t brlite_flit_ni;
+    /* We ignore seq_source here */
+    /* verilator lint_off UNUSEDSIGNAL */
+    br_payload_t brlite_flit_ni;
+    /* verilator lint_on UNUSEDSIGNAL */
 
     assign brlite_flit_rcv[(BR_NPORT - 1)].payload    = brlite_flit_ni.payload;
-    assign brlite_flit_rcv[(BR_NPORT - 1)].seq_target = brlite_flit_ni.seq_target;
     assign brlite_flit_rcv[(BR_NPORT - 1)].seq_source = seq_addr;
-    assign brlite_flit_rcv[(BR_NPORT - 1)].producer   = brlite_flit_ni.producer;
     assign brlite_flit_rcv[(BR_NPORT - 1)].ksvc       = brlite_flit_ni.ksvc;
     assign brlite_flit_rcv[(BR_NPORT - 1)].id         = brlite_id;
-    assign brlite_flit_rcv[(BR_NPORT - 1)].service    = br_svc_t'(brlite_flit_ni.service);
+    assign brlite_flit_rcv[(BR_NPORT - 1)].clear      = 1'b0;
 
     DMNI #(
         .HERMES_FLIT_SIZE   (32          ),
         .HERMES_BUFFER_SIZE (16          ),
-        .BR_MON_BUFFER_SIZE (8           ),
-        .BR_SVC_BUFFER_SIZE (16          ),
+        .BR_BUFFER_SIZE     (16          ),
         .N_PE_X             (N_PE_X      ),
         .N_PE_Y             (N_PE_Y      ),
         .TASKS_PER_PE       (TASKS_PER_PE),
@@ -373,12 +362,9 @@ module PhiversPE
         .noc_eop_o            (noc_eop_rcv   [HERMES_NPORT - 1]       ),
         .noc_credit_i         (noc_credit_rcv[HERMES_NPORT - 1]       ),
         .noc_data_o           (noc_data_rcv  [HERMES_NPORT - 1]       ),
-        .br_req_mon_i         (brlite_mon_req                         ),
-        .br_ack_mon_o         (brlite_mon_ack                         ),
-        .br_mon_data_i        (brlite_mon_flit                        ),
-        .br_req_svc_i         (brlite_svc_req                         ),
-        .br_ack_svc_o         (brlite_svc_ack                         ),
-        .br_svc_data_i        (brlite_svc_flit                        ),
+        .br_req_i             (brlite_req                             ),
+        .br_ack_o             (brlite_ack                             ),
+        .br_data_i            (brlite_flit                            ),
         .br_local_busy_i      (brlite_local_busy                      ),
         .br_req_o             (brlite_req_rcv[BR_NPORT - 1]           ),
         .br_ack_i             (brlite_ack_rcv[BR_NPORT - 1]           ),
@@ -488,8 +474,7 @@ module PhiversPE
             TrafficBroadcast #(
                 .ADDRESS  (ADDRESS                     ),
                 .PORT     (br_port_t'(p)               ),
-                .FILE_NAME("./debug/traffic_router.txt"),
-                .N_PE_X   (N_PE_X                      )
+                .FILE_NAME("./debug/traffic_router.txt")
             )
             traffic_broadcast (
                 .clk_i      (clk_i             ),

@@ -7,8 +7,7 @@ module TrafficBroadcast
 #(
     parameter logic [15:0] ADDRESS   = 16'h0000,
     parameter br_port_t    PORT      = BR_EAST,
-    parameter string       FILE_NAME = "./debug/traffic_router.txt",
-    parameter              N_PE_X    = 2
+    parameter string       FILE_NAME = "./debug/traffic_router.txt"
 )
 (
     input logic clk_i,
@@ -53,7 +52,7 @@ module TrafficBroadcast
     int fd;
 
     always_ff @(posedge ack_rx_i) begin
-        if (data_i.service != BR_SVC_CLEAR) begin
+        if (!data_i.clear) begin
             /* verilator lint_off BLKSEQ */
             fd = $fopen(FILE_NAME, "a");
             /* verilator lint_on BLKSEQ */
@@ -71,7 +70,7 @@ module TrafficBroadcast
                 1'b1, 
                 bandwidth_allocation, 
                 (PORT*2 + 1), 
-                {8'(32'(data_i.seq_target) % N_PE_X), 8'(32'(data_i.seq_target) / N_PE_X)}
+                '1
             );
 
             $fflush(fd);
