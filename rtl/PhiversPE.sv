@@ -274,10 +274,7 @@ module PhiversPE
 ////////////////////////////////////////////////////////////////////////////////
 
     logic        ni_en;
-    logic        ni_we;
     logic [31:0] ni_data_read;
-
-    assign ni_we = (| cpu_we);
 
     logic        dma_en;
     logic [3:0]  dma_we;
@@ -344,7 +341,7 @@ module PhiversPE
         .tick_counter_i       (mtime[31:0]                            ),
         .irq_o                (dmni_irq                               ),
         .cfg_en_i             (ni_en                                  ),
-        .cfg_we_i             (ni_we                                  ),
+        .cfg_we_i             (cpu_we                                 ),
         .cfg_addr_i           (cpu_addr[($clog2(DMNI_MMR_SIZE) + 1):2]),
         .cfg_data_i           (cpu_data_write                         ),
         .cfg_data_o           (ni_data_read                           ),
