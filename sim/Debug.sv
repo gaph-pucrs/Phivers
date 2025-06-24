@@ -22,7 +22,9 @@ module Debug
     input  logic [23:0] addr_i,
     input  logic [31:0] data_i,
 
+    /* verilator lint_off UNUSEDSIGNAL */
     input  logic [63:0] tick_cntr_i
+    /* verilator lint_on UNUSEDSIGNAL */
 );
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
