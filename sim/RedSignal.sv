@@ -1,4 +1,5 @@
 module RedSignal
+    import TaskInjectorPkg::*;
 #(
     parameter logic [15:0] ADDRESS  = 16'b0,
     parameter string       PORT     = ""
@@ -21,9 +22,9 @@ module RedSignal
     int unsigned cycles_min;
     int unsigned cycles_max;
     int unsigned chance;
-    int filter_app;
-    int filter_prod;
-    int filter_cons;
+    logic [ 7:0] filter_app;
+    logic [ 7:0] filter_prod;
+    logic [ 7:0] filter_cons;
 
     int cfg;
     int log;
@@ -68,11 +69,8 @@ module RedSignal
 
     typedef enum {
         HEADER,
-        SIZE,
-        SERVICE,
-        PROD,
-        CONS,
         SRCPE,
+        EDGE,
         TIMESTAMP,
         LOG, 
         HANG,
@@ -108,55 +106,50 @@ module RedSignal
         end
     end
 
-    logic [31:0] producer;
+    logic [15:0] producer;
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni)
             producer <= '0;
-        else if (state == PROD)
-            producer <= data_tx_i;
+        else if (state == EDGE)
+            producer <= data_tx_i[31:16];
     end
 
-    logic [31:0] consumer;
+    logic [15:0] consumer;
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni)
             consumer <= '0;
-        else if (state == CONS)
-            consumer <= data_tx_i;
+        else if (state == EDGE)
+            consumer <= data_tx_i[15: 0];
     end
 
     always_comb begin
         case (state)
             HEADER:    begin
-                if (received)
-                    next_state = (int'($time()/10) >= tick_begin) ? SIZE : EOP;
-                else
+                if (received) begin
+                    if ((int'($time()/10) >= tick_begin) && data_tx_i[23:16] == MESSAGE_DELIVERY)
+                        next_state = SRCPE;
+                    else
+                        next_state = EOP;
+                end
+                else begin
                     next_state = HEADER;
+                end
             end
-            SIZE:    next_state = received ? SERVICE : SIZE;
-            SERVICE:   begin
-                if (received)
-                    next_state = (data_tx_i == 32'h00000001) ? PROD : EOP;
-                else
-                    next_state = SERVICE;
-            end
-            PROD:      next_state = received ? CONS : PROD;
-            CONS:      begin
-                if (
-                       (filter_app  != -1 && producer[15:8] != filter_app [7:0])
-                    || (filter_prod != -1 && producer[ 7:0] != filter_prod[7:0])
-                )
-                    next_state = EOP;
-                else
-                    next_state = received ? SRCPE : CONS;
-            end
-            SRCPE:     begin
-                if (
-                       (filter_app  != -1 && consumer[15:8] != filter_app [7:0])
-                    || (filter_cons != -1 && consumer[ 7:0] != filter_cons[7:0])
-                )
-                    next_state = EOP;
-                else
-                    next_state = received ? TIMESTAMP : SRCPE;
+            SRCPE:    next_state = received ? EDGE : SRCPE;
+            EDGE: begin
+                if (received) begin
+                    if (
+                        (filter_app  == '1 || data_tx_i[31:24] == filter_app) &&
+                        (filter_prod == '1 || data_tx_i[23:16] == filter_prod) &&
+                        (filter_cons == '1 || data_tx_i[ 7: 0] == filter_cons)
+                    )
+                        next_state = TIMESTAMP;
+                    else
+                        next_state = EOP;
+                end
+                else begin
+                    next_state = EDGE;
+                end
             end
             TIMESTAMP: begin
                 if (next_hang >= chance)
