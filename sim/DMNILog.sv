@@ -77,49 +77,49 @@ module DMNILog
         if (!rst_ni)
             flit_idx <= '0;
         else if (state == HEADER)
-            flit_idx <= 32'h01;
+            flit_idx <= 32'h00000001;
         else if (flit_received)
             flit_idx <= flit_idx + 1'b1;
     end
 
-    logic [63:0] then;
-    logic [(FLIT_SIZE-1):0] service;
-    logic [(FLIT_SIZE-1):0] producer;
-    logic [(FLIT_SIZE-1):0] consumer;
-    logic [(FLIT_SIZE-1):0] timestamp;
+    logic [ 7:0] service;
+    logic [15:0] sender;
+    logic [15:0] receiver;
+    logic [31:0] timestamp;
+    logic [31:0] then;
     
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni)
             then <= '0;
         else if (state == HEADER)
-            then <= tick_cntr_i;
+            then <= tick_cntr_i[31:0];
     end
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni)
             service <= '0;
+        else if (state == HEADER)
+            service <= data_i[23:16];
+    end
+
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (!rst_ni)
+            sender <= '0;
         else if (flit_idx == 32'h02)
-            service <= data_i;
+            sender <= data_i[31:16];
     end
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni)
-            producer <= '0;
-        else if (flit_idx == 32'h03)
-            producer <= data_i;
-    end
-
-    always_ff @(posedge clk_i or negedge rst_ni) begin
-        if (!rst_ni)
-            consumer <= '0;
-        else if (flit_idx == 32'h04)
-            consumer <= data_i;
+            receiver <= '0;
+        else if (flit_idx == 32'h02)
+            receiver <= data_i[15:0];
     end
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni)
             timestamp <= '0;
-        else if (flit_idx == 32'h06)
+        else if (flit_idx == 32'h03)
             timestamp <= data_i;
     end
 
@@ -128,13 +128,13 @@ module DMNILog
             // snd_time,noc_time,rcv_time,size,prod,cons
             $fwrite(
                 fd, 
-                "%0d,%0d,%0d,%0d,%08x,%08x\n", 
+                "%0d,%0d,%0d,%0d,%04x,%04x\n", 
                 timestamp,                     /* Send timestamp     */
                 then,                          /* Wormhole timestamp */
                 tick_cntr_i,                   /* Receive timestamp  */
                 (flit_idx + 1'b1),             /* Message size       */
-                producer,                      /* Producer ID        */
-                consumer                       /* Consumer ID        */
+                sender,                        /* Producer ID        */
+                receiver                       /* Consumer ID        */
             );
         end
     end
