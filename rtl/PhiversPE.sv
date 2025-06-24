@@ -286,9 +286,27 @@ module PhiversPE
     assign dma_we_o   = dma_we;
     assign dma_addr_o = dma_addr[23:0];
 
+    logic idma_en_r;
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (!rst_ni)
+            idma_en_r <= '0;
+        else
+            idma_en_r <= idma_en_o;
+    end
+
+    logic ddma_en_r;
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (!rst_ni)
+            ddma_en_r <= '0;
+        else
+            ddma_en_r <= ddma_en_o;
+    end
+
     always_comb begin
-        if (dma_addr[31:25] == '0)
-            dma_data_read = dma_addr[24] ? ddma_data_i : idma_data_i;
+        if (ddma_en_r)
+            dma_data_read = ddma_data_i;
+        else if (idma_en_r)
+            dma_data_read = idma_data_i;
         else
             dma_data_read = '0;
     end
@@ -342,7 +360,7 @@ module PhiversPE
         .irq_o                (dmni_irq                               ),
         .cfg_en_i             (ni_en                                  ),
         .cfg_we_i             (cpu_we                                 ),
-        .cfg_addr_i           (cpu_addr[($clog2(DMNI_MMR_SIZE) + 1):2]),
+        .cfg_addr_i           (cpu_addr[7:0]                          ),
         .cfg_data_i           (cpu_data_write                         ),
         .cfg_data_o           (ni_data_read                           ),
         .release_peripheral_o (release_peripheral_o                   ),
