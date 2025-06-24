@@ -100,7 +100,6 @@ module PhiversMC
     TaskInjector #(
         .INJECTOR_ADDRESS ({1'b1, PORT_MA_INJ[1:0], 13'b0, ADDR_MA_INJ}),
         .FLIT_SIZE        (32                                          ),
-        .MAX_PAYLOAD_SIZE (32                                          ),
         .INJECT_MAPPER    (1                                           )
     )
     MAInjector (
@@ -147,7 +146,6 @@ module PhiversMC
     TaskInjector #(
         .INJECTOR_ADDRESS ({1'b1, PORT_APP_INJ[1:0], 13'b0, ADDR_APP_INJ}),
         .FLIT_SIZE        (32                                            ),
-        .MAX_PAYLOAD_SIZE (32                                            ),
         .INJECT_MAPPER    (0                                             )
     )
     AppInjector (

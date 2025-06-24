@@ -19,7 +19,10 @@ module TrafficRouter
     input logic                   credit_i,
     input logic [(FLIT_SIZE-1):0] data_i,
 
+    /* We only use lower 32 bits */
+    /* verilator lint_off UNUSEDSIGNAL */
     input logic [63:0]            tick_cntr_i
+    /* verilator lint_on UNUSEDSIGNAL */
 );
 
     logic flit_received;
@@ -64,40 +67,20 @@ module TrafficRouter
 // Monitored variables
 ////////////////////////////////////////////////////////////////////////////////
 
-    logic [63:0] bandwidth_allocation;
-
-    /* 0 */
-    logic [15:0] target;
-    logic [63:0] header_time;
-
-    /* 1 */
-    logic [31:0] size;
-    // flit_cntr too
     logic [31:0] flit_idx;
-
-    /* 2 */
-    logic [31:0] service;
-
-    /* 3 */
-    logic [15:0] task_id;
-
-    /* 4 */
-    logic [15:0] cons_id;
-
     always_ff @(posedge clk_i or negedge rst_ni) begin
-        if (!rst_ni)
-            target <= '0;
-        else if (mon_state == MON_RCV_HEADER)
-            target <= data_i[15:0];
+        if (!rst_ni) begin
+            flit_idx <= '0;
+        end
+        else begin
+            if (mon_state == MON_RCV_HEADER)
+                flit_idx <= 32'h00000001;
+            else if (flit_received)
+                flit_idx <= flit_idx + 1'b1;
+        end
     end
 
-    always_ff @(posedge clk_i or negedge rst_ni) begin
-        if (!rst_ni)
-            header_time <= '0;
-        else if (mon_state == MON_RCV_HEADER)
-            header_time <= tick_cntr_i;
-    end
-
+    logic [63:0] bandwidth_allocation;
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni) begin
             bandwidth_allocation <= '0;
@@ -110,61 +93,95 @@ module TrafficRouter
         end
     end
 
-    always_ff @(posedge clk_i or negedge rst_ni) begin
-        if (!rst_ni) begin
-            flit_idx <= '0;
-        end
-        else begin
-            if (mon_state == MON_RCV_HEADER)
-                flit_idx <= 32'h01;
-            else if (flit_received)
-                flit_idx <= flit_idx + 1'b1;
-        end
-    end
-
+    logic [31:0] header_time;
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni)
-            size <= '0;
-        else if (flit_idx == 32'd1)
-            size <= data_i;
+            header_time <= '0;
+        else if (mon_state == MON_RCV_HEADER)
+            header_time <= tick_cntr_i[31:0];
     end
 
+////////////////////////////////////////////////////////////////////////////////
+// Flit 0 monitored variables
+////////////////////////////////////////////////////////////////////////////////
+
+    logic [15:0] target;
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (!rst_ni)
+            target <= '0;
+        else if (mon_state == MON_RCV_HEADER)
+            target <= data_i[15:0];
+    end
+
+    logic [ 7:0] service;
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni)
             service <= '0;
-        else if (flit_idx == 32'd2)
-            service <= data_i;
+        else if (mon_state == MON_RCV_HEADER)
+            service <= data_i[23:16];
     end
 
+////////////////////////////////////////////////////////////////////////////////
+// Flit 2 monitored variables
+////////////////////////////////////////////////////////////////////////////////
+
+    /* 2 */
+    logic [15:0] receiver;
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni)
-            task_id <= '0;
-        else if (flit_idx == 32'd3)
-            task_id <= data_i[15:0];
+            receiver <= '0;
+        else if (flit_idx == 32'h00000002)
+            receiver <= data_i[15:0];
     end
 
+    logic [15:0] sender;
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni)
-            cons_id <= '0;
-        else if (flit_idx == 32'd4)
-            cons_id <= data_i[15:0];
+            sender <= '0;
+        else if (flit_idx == 32'h00000002)
+            sender <= data_i[31:16];
+    end
+
+////////////////////////////////////////////////////////////////////////////////
+// Flit 4 monitored variables
+////////////////////////////////////////////////////////////////////////////////
+
+    logic [15:0] mig_task;
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (!rst_ni)
+            mig_task <= '0;
+        else if (flit_idx == 32'h00000004)
+            mig_task <= data_i[15:0];
+    end
+
+////////////////////////////////////////////////////////////////////////////////
+// Flit 5 monitored variables
+////////////////////////////////////////////////////////////////////////////////
+
+    logic [15:0] alloc_task;
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (!rst_ni)
+            alloc_task <= '0;
+        else if (flit_idx == 32'h00000005)
+            alloc_task <= data_i[31:16];
     end
 
 ////////////////////////////////////////////////////////////////////////////////
 // Logging control
 ////////////////////////////////////////////////////////////////////////////////
 
-    logic write_task_id;
-    assign write_task_id = service inside {
-        MESSAGE_REQUEST, 
-        MESSAGE_DELIVERY, 
-        DATA_AV, 
-        MIGRATION_DATA_BSS, 
+    logic write_mig_task;
+    assign write_mig_task = service inside {
+        MIGRATION_DATA
+    };
+
+    logic write_alloc_task;
+    assign write_alloc_task = service inside {
         TASK_ALLOCATION
     };
 
-    logic write_cons_id;
-    assign write_cons_id = service inside {
+    logic write_edge;
+    assign write_edge = service inside {
         MESSAGE_REQUEST, 
         MESSAGE_DELIVERY, 
         DATA_AV
@@ -193,17 +210,20 @@ module TrafficRouter
                 header_time,
                 ADDRESS, 
                 service, 
-                size, 
+                flit_idx, 
                 bandwidth_allocation, 
                 (PORT*2), 
                 target
             );
 
-            if (write_task_id)
-                $fwrite(fd, "\t%0d", task_id);
+            if (write_mig_task)
+                $fwrite(fd, "\t%0d", mig_task);
 
-            if (write_cons_id)
-                $fwrite(fd, "\t%0d", cons_id);
+            if (write_alloc_task)
+                $fwrite(fd, "\t%0d", alloc_task);
+
+            if (write_edge)
+                $fwrite(fd, "\t%0d\t%0d", sender, receiver);
 
             $fwrite(fd, "\n");
 
