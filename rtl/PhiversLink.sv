@@ -35,10 +35,10 @@ module PhiversLink
                 .eop_tx_i (eop_tx_i ),
                 .data_tx_i(data_tx_i),
                 .rx_o     (rx_o     ),
-                .cr_rx_i  (cr_rx_i  )
+                .cr_rx_i  (cr_rx_i  ),
+                .eop_rx_o (eop_rx_o ),
+                .data_rx_o(data_rx_o)
             );
-            assign eop_rx_o  = eop_tx_i;
-            assign data_rx_o = data_tx_i;
         end
         else begin : gen_no_ht
             assign rx_o      = tx_i;
