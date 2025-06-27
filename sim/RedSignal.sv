@@ -140,7 +140,7 @@ module RedSignal
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni)
             hang_cycles <= $urandom_range(cycles_min, cycles_max);
-        else if (state == HANG)
+        else if (state == HANG && received)
             hang_cycles <= hang_finish ? $urandom_range(cycles_min, cycles_max) : hang_cycles - 1;
     end
 
@@ -172,6 +172,25 @@ module RedSignal
     logic buf_recv;
     assign buf_recv = buf_rx && buf_cr_rx;
 
+    logic buf_sent;
+    assign buf_sent = buf_tx && buf_cr_tx;
+
+    logic [2:0] buf_size;
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (!rst_ni) begin
+            buf_size <= '0;
+        end
+        else begin
+            if (buf_recv)
+                buf_size <= buf_size + 1'b1;
+            else if (buf_sent)
+                buf_size <= buf_size - 1'b1;
+        end
+    end
+
+    logic last_buf_flit;
+    assign last_buf_flit = (buf_size == 3'b001);
+
     always_comb begin
         case (state)
             PASS:
@@ -194,12 +213,10 @@ module RedSignal
                     next_state = TIMESTAMP;
             end
             HANG:
-                next_state = hang_finish                       ? EMPTY     : HANG;
+                next_state = (hang_finish && received)         ? EMPTY     : HANG;
             EMPTY: begin
-                if (!buf_tx)
-                    next_state = EOP;
-                else if (buf_eop && buf_cr_tx)
-                    next_state = HEADER;
+                if (buf_sent && last_buf_flit)
+                    next_state = buf_eop                       ? HEADER    : EOP;
                 else
                     next_state = EMPTY;
             end
@@ -245,7 +262,6 @@ module RedSignal
             logged <= 1'b0;
         end
     end
-
 
     always_comb begin
         case (state)
