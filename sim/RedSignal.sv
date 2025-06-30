@@ -31,6 +31,7 @@ module RedSignal
     int cfg;
     int log;
     initial begin
+        $urandom(7);
         cfg = $fopen($sformatf("link/rs%0dx%0d-%s.cfg", ADDRESS[15:8], ADDRESS[7:0], PORT), "r");
         if (cfg == '0) begin
             $display(
