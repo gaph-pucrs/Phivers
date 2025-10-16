@@ -29,6 +29,7 @@ module PhiversPE
     input  logic                        rst_ni,
 
     /* Instruction memory interface: read-only */
+    output logic                        imem_enable_o,
     output logic     [23:0]             imem_addr_o,
     input  logic     [31:0]             imem_data_i,
 
@@ -98,38 +99,45 @@ module PhiversPE
     assign dmem_data_o = cpu_data_write;
 
     RS5 #(
-        .Environment     (Environment   ),
-        .MULEXT          (MUL_M         ),
-        .AMOEXT          (AMO_A         ),
-        .COMPRESSED      (1             ),
-        .VEnable         (0             ),
-        /* VLEN: Don't Care */
-        .XOSVMEnable     (1             ),
-        .HPMCOUNTEREnable(0             ),
-        .ZKNEEnable      (0             ),
-        .BRANCHPRED      (1             ),
-        .ZICONDEnable    (0             ),
-        .DEBUG           (RS5_DEBUG     ),
-        .PROFILING       (RS5_DEBUG     ),
+        .DEBUG           (RS5_DEBUG  ),
         .DBG_REG_FILE    ($sformatf("./debug/cpu/%0dx%0d_regBank.txt", ADDRESS[15:8], ADDRESS[7:0])),
-        .PROFILING_FILE  ($sformatf("./debug/cpu/%0dx%0d_Report.txt",  ADDRESS[15:8], ADDRESS[7:0]))
+        .PROFILING       (RS5_DEBUG  ),
+        .PROFILING_FILE  ($sformatf("./debug/cpu/%0dx%0d_Report.txt",  ADDRESS[15:8], ADDRESS[7:0])),
+        .Environment     (Environment),
+        .MULEXT          (MUL_M      ),
+        .AMOEXT          (AMO_A      ),
+        .START_ADDR      ('0         ),
+        .COMPRESSED      (1'b1       ),
+        .VEnable         (1'b0       ),
+        /* VLEN: Don't Care */
+        /* LLEN: Don't Care */
+        .XOSVMEnable     (1'b1       ),
+        .ZKNEEnable      (1'b0       ),
+        .ZICONDEnable    (1'b1       ),
+        .ZCBEnable       (1'b1       ),
+        .HPMCOUNTEREnable(1'b0       ),
+        .IQUEUE_SIZE     (2          ),
+        .BRANCHPRED      (1'b1       ),
+        .FORWARDING      (1'b1       )
     )
     processor (
         .clk                    (clk_i         ),
         .reset_n                (rst_ni        ),
-        .stall                  (1'b0          ),
         .sys_reset_i            (1'b0          ),
-        .instruction_i          (imem_data_i   ),
-        .mem_data_i             (cpu_data_read ),
-        .mtime_i                (mtime         ),
+        .stall                  (1'b0          ),
+        .busy_i                 (1'b0          ),
         .tip_i                  (mti           ),
         .eip_i                  (mei           ),
+        .interrupt_ack_o        (irq_ack       ),
+        .mtime_i                (mtime         ),
+        .imem_operation_enable_o(imem_enable_o ),
         .instruction_address_o  (imem_addr     ),
-        .mem_operation_enable_o (cpu_en        ),
+        .instruction_i          (imem_data_i   ),
+        .dmem_operation_enable_o(cpu_en        ),
         .mem_write_enable_o     (cpu_we        ),
         .mem_address_o          (cpu_addr      ),
         .mem_data_o             (cpu_data_write),
-        .interrupt_ack_o        (irq_ack       )
+        .mem_data_i             (cpu_data_read )        
     );
 
 ////////////////////////////////////////////////////////////////////////////////

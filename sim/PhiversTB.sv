@@ -19,6 +19,7 @@ module PhiversTB
     logic        app_src_credit;
     logic [31:0] app_src_data;
 
+    logic        imem_enable     [(N_PE_X - 1):0][(N_PE_Y - 1):0];
     logic [23:0] imem_addr       [(N_PE_X - 1):0][(N_PE_Y - 1):0];
     logic [31:0] imem_data       [(N_PE_X - 1):0][(N_PE_Y - 1):0];
 
@@ -71,6 +72,7 @@ module PhiversTB
         .app_src_rx_i     (app_src_rx     ),
         .app_src_credit_o (app_src_credit ),
         .app_src_data_i   (app_src_data   ),
+        .imem_enable_o    (imem_enable    ),
         .imem_addr_o      (imem_addr      ),
         .imem_data_i      (imem_data      ),
         .dmem_en_o        (dmem_en        ),
@@ -109,7 +111,7 @@ module PhiversTB
                 I_MEM (
                     .clk        (clk                                     ),
 
-                    .enA_i      (1'b1                                    ), 
+                    .enA_i      (imem_enable[x][y]                       ), 
                     .weA_i      (4'h0                                    ), 
                     .addrA_i    (imem_addr[x][y][($clog2(IMEM_SZ) - 1):0]), 
                     .dataA_i    (32'h0                                   ), 

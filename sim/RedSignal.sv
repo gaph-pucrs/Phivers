@@ -147,6 +147,11 @@ module RedSignal
 
     assign hang_finish = (hang_cycles == 0);
 
+    /* verilator lint_off UNUSEDSIGNAL */
+    logic almost_full;
+    logic almost_empty;
+    /* verilator lint_on UNUSEDSIGNAL */
+
     logic buf_rx;
     logic buf_cr_rx;
     logic buf_tx;
@@ -167,7 +172,10 @@ module RedSignal
 
         .tx_o     (buf_tx               ),
         .tx_ack_i (buf_cr_tx            ),
-        .data_o   ({buf_eop,   buf_data})
+        .data_o   ({buf_eop,   buf_data}),
+
+        .almost_full_o (almost_full     ),
+        .almost_empty_o(almost_empty    )
     );
 
     logic buf_recv;

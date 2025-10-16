@@ -42,6 +42,7 @@ module PhiversMC
     input  logic [31:0] app_src_data_i,
 
     /* Instruction memory interface: read-only */
+    output logic        imem_enable_o     [(N_PE_X - 1):0][(N_PE_Y - 1):0],
     output logic [23:0] imem_addr_o       [(N_PE_X - 1):0][(N_PE_Y - 1):0],
     input  logic [31:0] imem_data_i       [(N_PE_X - 1):0][(N_PE_Y - 1):0],
 
@@ -208,6 +209,7 @@ module PhiversMC
                 pe (
                     .clk_i                (clk_i                   ),
                     .rst_ni               (rst_ni                  ),
+                    .imem_enable_o        (imem_enable_o     [x][y]),
                     .imem_addr_o          (imem_addr_o       [x][y]),
                     .imem_data_i          (imem_data_i       [x][y]),
                     .dmem_en_o            (dmem_en_o         [x][y]),
