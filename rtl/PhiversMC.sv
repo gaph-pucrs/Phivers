@@ -42,13 +42,13 @@ module PhiversMC
     input  logic [31:0] app_src_data_i,
 
     /* Instruction memory interface: read-only */
-    output logic [23:0] imem_addr_o       [(N_PE_X - 1):0][(N_PE_Y - 1):0],
+    output logic [29:0] imem_addr_o       [(N_PE_X - 1):0][(N_PE_Y - 1):0],
     input  logic [31:0] imem_data_i       [(N_PE_X - 1):0][(N_PE_Y - 1):0],
 
     /* Data memory interface: read/write */
     output logic        dmem_en_o         [(N_PE_X - 1):0][(N_PE_Y - 1):0],
     output logic [3:0]  dmem_we_o         [(N_PE_X - 1):0][(N_PE_Y - 1):0],
-    output logic [23:0] dmem_addr_o       [(N_PE_X - 1):0][(N_PE_Y - 1):0],
+    output logic [29:0] dmem_addr_o       [(N_PE_X - 1):0][(N_PE_Y - 1):0],
     input  logic [31:0] dmem_data_i       [(N_PE_X - 1):0][(N_PE_Y - 1):0],
     output logic [31:0] dmem_data_o       [(N_PE_X - 1):0][(N_PE_Y - 1):0],
 
@@ -56,7 +56,7 @@ module PhiversMC
     output logic        idma_en_o         [(N_PE_X - 1):0][(N_PE_Y - 1):0],
     output logic        ddma_en_o         [(N_PE_X - 1):0][(N_PE_Y - 1):0],
     output logic [3:0]  dma_we_o          [(N_PE_X - 1):0][(N_PE_Y - 1):0],
-    output logic [23:0] dma_addr_o        [(N_PE_X - 1):0][(N_PE_Y - 1):0],
+    output logic [29:0] dma_addr_o        [(N_PE_X - 1):0][(N_PE_Y - 1):0],
     input  logic [31:0] idma_data_i       [(N_PE_X - 1):0][(N_PE_Y - 1):0],
     input  logic [31:0] ddma_data_i       [(N_PE_X - 1):0][(N_PE_Y - 1):0],
     output logic [31:0] dma_data_o        [(N_PE_X - 1):0][(N_PE_Y - 1):0]

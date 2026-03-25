@@ -29,13 +29,13 @@ module PhiversPE
     input  logic                        rst_ni,
 
     /* Instruction memory interface: read-only */
-    output logic     [23:0]             imem_addr_o,
+    output logic     [29:0]             imem_addr_o,
     input  logic     [31:0]             imem_data_i,
 
     /* Data memory interface: read/write */
     output logic                        dmem_en_o,
     output logic     [3:0]              dmem_we_o,
-    output logic     [23:0]             dmem_addr_o,
+    output logic     [29:0]             dmem_addr_o,
     input  logic     [31:0]             dmem_data_i,
     output logic     [31:0]             dmem_data_o,
 
@@ -43,7 +43,7 @@ module PhiversPE
     output logic                        idma_en_o,
     output logic                        ddma_en_o,
     output logic     [3:0]              dma_we_o,
-    output logic     [23:0]             dma_addr_o,
+    output logic     [29:0]             dma_addr_o,
     input  logic     [31:0]             idma_data_i,
     input  logic     [31:0]             ddma_data_i,
     output logic     [31:0]             dma_data_o,
@@ -92,9 +92,9 @@ module PhiversPE
     logic [31:0] imem_addr;
     /* verilator lint_on UNUSEDSIGNAL */
 
-    assign imem_addr_o = imem_addr[23:0];
+    assign imem_addr_o = imem_addr[29:0];
     assign dmem_we_o   = cpu_we;
-    assign dmem_addr_o = cpu_addr[23:0];
+    assign dmem_addr_o = cpu_addr[29:0];
     assign dmem_data_o = cpu_data_write;
 
     RS5 #(
@@ -278,13 +278,13 @@ module PhiversPE
 
     logic        dma_en;
     logic [3:0]  dma_we;
-    logic [31:0] dma_addr;
     logic [31:0] dma_data_read;
+    logic [31:0] dma_addr;
 
-    assign idma_en_o  = (dma_addr[31:24] == 8'b00000000) && dma_en;
-    assign ddma_en_o  = (dma_addr[31:24] == 8'b00000001) && dma_en;
+    assign idma_en_o  = (dma_addr[31:30] == 2'b00) && dma_en;
+    assign ddma_en_o  = (dma_addr[31:30] == 2'b01) && dma_en;
     assign dma_we_o   = dma_we;
-    assign dma_addr_o = dma_addr[23:0];
+    assign dma_addr_o = dma_addr[29:0];
 
     logic idma_en_r;
     always_ff @(posedge clk_i or negedge rst_ni) begin
@@ -392,21 +392,19 @@ module PhiversPE
 
     /**
      * Memory map:
-     * [0x00000000, 0x01000000[ -> instruction
-     * [0x01000000, 0x02000000[ -> data
-     * [0x02000000, 0x03000000[ -> RTC
-     * [0x04000000, 0x05000000[ -> PLIC
-     * [0x08000000, 0x09000000[ -> NI
-     * [0x10000000, 0x11000000[ -> Reserved 4
-     * [0x20000000, 0x21000000[ -> Reserved 5
-     * [0x40000000, 0x41000000[ -> Reserved 6
-     * [0x80000000, 0x81000000[ -> DEBUG
+     * [0x00000000, 0x40000000[ -> instruction
+     * [0x40000000, 0x80000000[ -> data
+     * [0x80000000, 0x90000000[ -> PLIC
+     * [0x90000000, 0xA0000000[ -> NI
+     * [0xA0000000, 0xB0000000[ -> RTC
+     * [0xF0000000, 0xFFFFFFFF] -> DEBUG
      */
 
-    assign dmem_en_o = cpu_en && (cpu_addr[31:24] == 8'b00000001);
-    assign rtc_en    = cpu_en && (cpu_addr[31:24] == 8'b00000010);
-    assign plic_en   = cpu_en && (cpu_addr[31:24] == 8'b00000100);
-    assign ni_en     = cpu_en && (cpu_addr[31:24] == 8'b00001000);
+    assign dmem_en_o = cpu_en && (cpu_addr[31:30] == 2'b01);
+
+    assign plic_en   = cpu_en && (cpu_addr[31:28] == 4'b1000);
+    assign ni_en     = cpu_en && (cpu_addr[31:28] == 4'b1001);
+    assign rtc_en    = cpu_en && (cpu_addr[31:28] == 4'b1010);
 
     /* On read, the data is available at the next cycle */
     logic rtc_en_r;
@@ -444,7 +442,7 @@ module PhiversPE
     logic dbg_en;
     logic dbg_we;
 
-    assign dbg_en = cpu_en && (cpu_addr[31:24] == 8'b10000000);
+    assign dbg_en = cpu_en && (cpu_addr[31:28] == 4'b1111);
     assign dbg_we = (| cpu_we);
     
     Debug #(

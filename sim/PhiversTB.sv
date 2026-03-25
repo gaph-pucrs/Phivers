@@ -19,19 +19,19 @@ module PhiversTB
     logic        app_src_credit;
     logic [31:0] app_src_data;
 
-    logic [23:0] imem_addr       [(N_PE_X - 1):0][(N_PE_Y - 1):0];
+    logic [29:0] imem_addr       [(N_PE_X - 1):0][(N_PE_Y - 1):0];
     logic [31:0] imem_data       [(N_PE_X - 1):0][(N_PE_Y - 1):0];
 
     logic        dmem_en         [(N_PE_X - 1):0][(N_PE_Y - 1):0];
     logic [3:0]  dmem_we         [(N_PE_X - 1):0][(N_PE_Y - 1):0];
-    logic [23:0] dmem_addr       [(N_PE_X - 1):0][(N_PE_Y - 1):0];
+    logic [29:0] dmem_addr       [(N_PE_X - 1):0][(N_PE_Y - 1):0];
     logic [31:0] dmem_data_read  [(N_PE_X - 1):0][(N_PE_Y - 1):0];
     logic [31:0] dmem_data_write [(N_PE_X - 1):0][(N_PE_Y - 1):0];
 
     logic        idma_en         [(N_PE_X - 1):0][(N_PE_Y - 1):0];
     logic        ddma_en         [(N_PE_X - 1):0][(N_PE_Y - 1):0];
     logic [3:0]  dma_we          [(N_PE_X - 1):0][(N_PE_Y - 1):0];
-    logic [23:0] dma_addr        [(N_PE_X - 1):0][(N_PE_Y - 1):0];
+    logic [29:0] dma_addr        [(N_PE_X - 1):0][(N_PE_Y - 1):0];
     logic [31:0] idma_data       [(N_PE_X - 1):0][(N_PE_Y - 1):0];
     logic [31:0] ddma_data       [(N_PE_X - 1):0][(N_PE_Y - 1):0];
     logic [31:0] dma_data        [(N_PE_X - 1):0][(N_PE_Y - 1):0];
