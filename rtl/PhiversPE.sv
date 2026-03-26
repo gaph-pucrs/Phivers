@@ -90,6 +90,7 @@ module PhiversPE
     /* The CPU is 32 bits but not all bits are used in memory */
     /* verilator lint_off UNUSEDSIGNAL */
     logic [31:0] imem_addr;
+    logic        imem_en;
     /* verilator lint_on UNUSEDSIGNAL */
 
     assign imem_addr_o = imem_addr[29:0];
@@ -103,7 +104,7 @@ module PhiversPE
         .AMOEXT          (AMO_A         ),
         .COMPRESSED      (1             ),
         .VEnable         (0             ),
-        /* VLEN: Don't Care */
+        .VLEN            (64            ),
         .XOSVMEnable     (1             ),
         .HPMCOUNTEREnable(0             ),
         .ZKNEEnable      (0             ),
@@ -118,6 +119,7 @@ module PhiversPE
         .clk                    (clk_i         ),
         .reset_n                (rst_ni        ),
         .stall                  (1'b0          ),
+        .busy_i                 (1'b0          ),
         .sys_reset_i            (1'b0          ),
         .instruction_i          (imem_data_i   ),
         .mem_data_i             (cpu_data_read ),
@@ -125,7 +127,8 @@ module PhiversPE
         .tip_i                  (mti           ),
         .eip_i                  (mei           ),
         .instruction_address_o  (imem_addr     ),
-        .mem_operation_enable_o (cpu_en        ),
+        .imem_operation_enable_o(imem_en       ),
+        .dmem_operation_enable_o(cpu_en        ),
         .mem_write_enable_o     (cpu_we        ),
         .mem_address_o          (cpu_addr      ),
         .mem_data_o             (cpu_data_write),
