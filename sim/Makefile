@@ -17,7 +17,7 @@ SVFLAGS += -I$(TASKINJECTOR) -I$(TASKINJECTOR)/../sim
 # Add RS5
 RS5 = ../RS5/rtl
 SVSRC += $(wildcard $(RS5)/*.sv)
-SVFLAGS += -I$(RS5) -I$(RS5)/../sim
+SVFLAGS += -I$(RS5) -I$(RS5)/../sim -I$(RS5)/vector
 
 # Add Ringbuffer
 RINGBUFFER = ../RingBuffer/rtl
