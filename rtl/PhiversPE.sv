@@ -22,7 +22,9 @@ module PhiversPE
     parameter bit           PIPE_DEBUG    = 1,
     parameter bit           TRAFFIC_DEBUG = 1,
     parameter bit           DMNI_DEBUG    = 0,
-    parameter bit           SAFE_DEBUG    = 1
+    parameter bit           SAFE_DEBUG    = 1,
+    parameter bit           VEnable       = 0,
+    parameter int           VLEN          = 64
 )
 (
     input  logic                        clk_i,
@@ -108,9 +110,8 @@ module PhiversPE
         .AMOEXT          (AMO_A      ),
         .START_ADDR      ('0         ),
         .COMPRESSED      (1'b1       ),
-        .VEnable         (1'b0       ),
-        /* VLEN: Don't Care */
-        /* LLEN: Don't Care */
+        .VEnable         (VEnable    ),
+        .VLEN            (VLEN       ),
         .XOSVMEnable     (1'b1       ),
         .ZKNEEnable      (1'b0       ),
         .ZICONDEnable    (1'b1       ),
