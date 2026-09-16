@@ -353,8 +353,8 @@ module PhiversPE
 
     DMNI #(
         .HERMES_FLIT_SIZE   (32          ),
-        .HERMES_BUFFER_SIZE (16          ),
-        .BR_BUFFER_SIZE     (16          ),
+        .HERMES_BUFFER_SIZE (8           ),
+        .BR_BUFFER_SIZE     (4           ),
         .N_PE_X             (N_PE_X      ),
         .N_PE_Y             (N_PE_Y      ),
         .TASKS_PER_PE       (TASKS_PER_PE),
