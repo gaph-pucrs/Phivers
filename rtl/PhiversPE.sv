@@ -442,7 +442,7 @@ module PhiversPE
 ////////////////////////////////////////////////////////////////////////////////
 // DEBUG connections
 ////////////////////////////////////////////////////////////////////////////////
-
+`ifndef SYNTH
     logic dbg_en;
     logic dbg_we;
 
@@ -520,5 +520,6 @@ module PhiversPE
             .tick_cntr_i(         mtime                  )
         );
     end
+`endif
 
 endmodule
