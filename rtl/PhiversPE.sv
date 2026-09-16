@@ -101,10 +101,12 @@ module PhiversPE
     assign dmem_data_o = cpu_data_write;
 
     RS5 #(
+    `ifndef SYNTH
         .DEBUG           (RS5_DEBUG  ),
         .DBG_REG_FILE    ($sformatf("./debug/cpu/%0dx%0d_regBank.txt", ADDRESS[15:8], ADDRESS[7:0])),
         .PROFILING       (RS5_DEBUG  ),
         .PROFILING_FILE  ($sformatf("./debug/cpu/%0dx%0d_Report.txt",  ADDRESS[15:8], ADDRESS[7:0])),
+    `endif
         .Environment     (Environment),
         .MULEXT          (MUL_M      ),
         .AMOEXT          (AMO_A      ),
