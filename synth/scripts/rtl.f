@@ -5,6 +5,8 @@ ${PHIVERS_DIR}/RS5/rtl/aes/riscv_crypto_sbox_aes_out.sv
 ${PHIVERS_DIR}/RS5/rtl/aes/riscv_crypto_aes_fwd_sbox.sv
 ${PHIVERS_DIR}/RS5/rtl/aes/riscv_crypto_aes_sbox.sv
 ${PHIVERS_DIR}/RS5/rtl/aes_unit.sv
+${PHIVERS_DIR}/RS5/rtl/sha2_unit.sv
+${PHIVERS_DIR}/RS5/rtl/xkyber.sv
 ${PHIVERS_DIR}/RS5/rtl/vector/vectorReductionTree.sv
 ${PHIVERS_DIR}/RS5/rtl/vector/vectorReductions.sv
 ${PHIVERS_DIR}/RS5/rtl/vector/vectorSlide.sv
@@ -22,6 +24,7 @@ ${PHIVERS_DIR}/RS5/rtl/div.sv
 ${PHIVERS_DIR}/RS5/rtl/execute.sv
 ${PHIVERS_DIR}/RS5/rtl/fetch.sv
 ${PHIVERS_DIR}/RS5/rtl/lrsc.sv
+${PHIVERS_DIR}/RS5/rtl/mem_access.sv
 ${PHIVERS_DIR}/RS5/rtl/mmu.sv
 ${PHIVERS_DIR}/RS5/rtl/mulNbits.sv
 ${PHIVERS_DIR}/RS5/rtl/mul.sv

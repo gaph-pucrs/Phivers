@@ -9,7 +9,7 @@ a PE is a tile of the NoC, its interfaces stay on die.
 ```sh
 module load ddi/231       # or: module load wimed
 cd synth
-make synth                # full flow, ~2.0 ns target
+make                      # full flow, ~2.0 ns target
 ```
 
 Results land in `reports/<run>/` and `outputs/<run>/`, where `<run>` defaults to
@@ -22,9 +22,9 @@ by side.
 `VECTOR=1` turns the vector unit on and `VLEN` sets the vector register width:
 
 ```sh
-make synth                       # scalar     -> run PhiversPE_scalar_2p0ns
-make synth VECTOR=1              # VLEN=128   -> run PhiversPE_v128_2p0ns
-make synth VECTOR=1 VLEN=256     # VLEN=256   -> run PhiversPE_v256_2p0ns
+make                       # scalar     -> run PhiversPE_scalar_2p0ns
+make VECTOR=1              # VLEN=128   -> run PhiversPE_v128_2p0ns
+make VECTOR=1 VLEN=256     # VLEN=256   -> run PhiversPE_v256_2p0ns
 ```
 
 `VLEN` has to be a multiple of 32 and at least 32: the unit slices every
@@ -38,13 +38,10 @@ every netlist is named the same whatever the configuration - the run directory
 is what tells the configurations apart.
 
 ```sh
-make synth PERIOD=1.5     # different target, different run directory
-make synth VECTOR=1       # PE with the RS5 vector unit, VLEN=128
-make elab                 # stop after elaboration - the fast RTL check
-make generic              # stop after generic synthesis
-make shell                # interactive Genus, setup already sourced
-make export               # re-write the Innovus hand-off from a finished .db
-make help                 # every knob
+make PERIOD=1.5           # different target, different run directory
+make VECTOR=1             # PE with the RS5 vector unit, VLEN=128
+make STOP_AFTER=elaborate # stop early - the fast RTL check
+make clean                # remove work/
 ```
 
 ## Layout
@@ -67,7 +64,7 @@ synth/
 Nothing is hardcoded to an absolute path: the Makefile passes `SYNTH_DIR` in the
 environment and `scripts/setup.tcl` derives the repository root from it.
 
-`make synth` copies `scripts/` into `work/<run>/scripts/` and runs Genus on that
+`make` copies `scripts/` into `work/<run>/scripts/` and runs Genus on that
 copy. Genus reads its command file incrementally, so editing a script while a
 run is in flight makes it resume at the wrong offset and re-execute earlier
 steps - the snapshot makes that impossible, and it also records exactly which
@@ -83,7 +80,8 @@ resolves relative to the file that contains it.
 ## Configuration
 
 Every knob is an environment variable read by `scripts/setup.tcl`, so it can be
-overridden on the command line: `make synth EFFORT=medium CPUS=16`.
+overridden on the command line: `make EFFORT=medium CPUS=16`. The Makefile
+header lists them all.
 
 | knob | default | meaning |
 |------|---------|---------|

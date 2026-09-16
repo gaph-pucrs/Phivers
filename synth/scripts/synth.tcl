@@ -183,11 +183,6 @@ rpt write_sdc -view $SIGNOFF_VIEW                      > $OUTPUTS_DIR/${TOP_MODU
 rpt write_sdf -view $SIGNOFF_VIEW -timescale ns        > $OUTPUTS_DIR/${TOP_MODULE}.sdf
 rpt write_db -common -all_root_attributes $OUTPUTS_DIR/${TOP_MODULE}.db
 
-# Everything Innovus needs (netlist, mmmc, libraries, physical config).
-# Genus 23.1 dropped the -innovus flag: write_design only takes -base_name.
-file mkdir $OUTPUTS_DIR/innovus
-rpt write_design -base_name $OUTPUTS_DIR/innovus/${TOP_MODULE}
-
 if {$WRITE_LEC} {
     file mkdir $OUTPUTS_DIR/conformal
     rpt write_hdl -lec                                 > $OUTPUTS_DIR/conformal/${TOP_MODULE}_lec.v
@@ -197,6 +192,29 @@ if {$WRITE_LEC} {
                      -tmp_dir $WORK_DIR -verbose \
                                                        > $OUTPUTS_DIR/conformal/${TOP_MODULE}_lec.do
 }
+
+################################################################################
+# Place and route hand-off
+#
+# Everything Innovus needs: netlist, mmmc setup, libraries, physical config.
+# Genus 23.1 dropped the -innovus flag, write_design only takes -base_name.
+#
+# Every run ends with this, and deliberately not through rpt: the hand-off is a
+# required output, so a failure has to stop the flow loudly instead of leaving a
+# silently incomplete outputs directory behind. It runs last, so that stopping
+# here costs none of the other deliverables.
+################################################################################
+
+banner "Writing the Innovus hand-off"
+
+file mkdir $OUTPUTS_DIR/innovus
+write_design -base_name $OUTPUTS_DIR/innovus/${TOP_MODULE}
+
+set handoff [glob -nocomplain $OUTPUTS_DIR/innovus/*]
+if {[llength $handoff] == 0} {
+    error "write_design wrote nothing to $OUTPUTS_DIR/innovus"
+}
+puts "Innovus hand-off: [llength $handoff] files in $OUTPUTS_DIR/innovus"
 
 banner "Done - reports in $REPORTS_DIR, netlist in $OUTPUTS_DIR"
 
