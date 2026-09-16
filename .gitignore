@@ -8,3 +8,8 @@ work
 sim/debug
 sim/phivers
 phivers
+synth/work/
+synth/reports/
+synth/outputs/
+synth/genus.log*
+synth/genus.cmd*
