@@ -1,0 +1,101 @@
+################################################################################
+# Phivers PE - MMMC setup
+#
+# Three corners are analysed during synthesis:
+#   slow    ssg 0.81V 125C  + rcworst   -> setup
+#   typical  tt 0.90V  25C  + typical   -> power
+#   fast    ffg 0.99V -40C  + rcbest    -> hold
+################################################################################
+
+source $env(PHIVERS_SCRIPTS_DIR)/setup.tcl
+
+################################################################################
+# library_sets
+################################################################################
+
+create_library_set -name libset_ss_0p81v_125c \
+    -timing "$TIMING_DIR/tcbn28hpcplusbwp30p140ssg0p81v125c_ccs.lib" \
+    -aocv   "$AOCV_DIR/ssg0p81v125c/clock_p_data_p/tcbn28hpcplusbwp30p140ssg0p81v125c_setup_P_P_ccs.aocvm \
+             $AOCV_DIR/ssg0p81v125c/clock_p_data_p/tcbn28hpcplusbwp30p140ssg0p81v125c_hold_P_P_ccs.aocvm"
+
+create_library_set -name libset_tt_0p90v_25c \
+    -timing "$TIMING_DIR/tcbn28hpcplusbwp30p140tt0p9v25c_ccs.lib" \
+    -aocv   "$AOCV_DIR/tt0p9v25c/clock_p_data_p/tcbn28hpcplusbwp30p140tt0p9v25c_setup_P_P_ccs.aocvm \
+             $AOCV_DIR/tt0p9v25c/clock_p_data_p/tcbn28hpcplusbwp30p140tt0p9v25c_hold_P_P_ccs.aocvm"
+
+create_library_set -name libset_ff_0p99v_m40c \
+    -timing "$TIMING_DIR/tcbn28hpcplusbwp30p140ffg0p99vm40c_ccs.lib" \
+    -aocv   "$AOCV_DIR/ffg0p99vm40c/clock_p_data_p/tcbn28hpcplusbwp30p140ffg0p99vm40c_hold_P_P_ccs.aocvm"
+    # the PDK only ships the hold derates for the fast corner, which is the
+    # only thing this corner is used for
+
+################################################################################
+# opconds
+################################################################################
+
+create_opcond -name opcond_0p81v_125c -voltage 0.81 -temperature  125.0
+create_opcond -name opcond_0p90v_25c  -voltage 0.90 -temperature   25.0
+create_opcond -name opcond_0p99v_m40c -voltage 0.99 -temperature  -40.0
+
+################################################################################
+# timing_conditions
+################################################################################
+
+create_timing_condition -name tc_ss_0p81v_125c \
+    -opcond opcond_0p81v_125c -library_sets {libset_ss_0p81v_125c}
+
+create_timing_condition -name tc_tt_0p90v_25c \
+    -opcond opcond_0p90v_25c  -library_sets {libset_tt_0p90v_25c}
+
+create_timing_condition -name tc_ff_0p99v_m40c \
+    -opcond opcond_0p99v_m40c -library_sets {libset_ff_0p99v_m40c}
+
+################################################################################
+# rc_corners
+################################################################################
+
+create_rc_corner -name rcc_125c_rcworst \
+    -temperature  125.0 \
+    -qrc_tech $QRC_DIR/RC_QRC_crn28hpc+_1p09m+ut-alrdl_5x1y1z1u_rcworst/qrcTechFile
+
+create_rc_corner -name rcc_25c_typical \
+    -temperature   25.0 \
+    -qrc_tech $QRC_DIR/RC_QRC_crn28hpc+_1p09m+ut-alrdl_5x1y1z1u_typical/qrcTechFile
+
+create_rc_corner -name rcc_m40c_rcbest \
+    -temperature  -40.0 \
+    -qrc_tech $QRC_DIR/RC_QRC_crn28hpc+_1p09m+ut-alrdl_5x1y1z1u_rcbest/qrcTechFile
+
+################################################################################
+# delay_corners
+################################################################################
+
+create_delay_corner -name dc_slow \
+    -timing_condition tc_ss_0p81v_125c -rc_corner rcc_125c_rcworst
+
+create_delay_corner -name dc_typ \
+    -timing_condition tc_tt_0p90v_25c  -rc_corner rcc_25c_typical
+
+create_delay_corner -name dc_fast \
+    -timing_condition tc_ff_0p99v_m40c -rc_corner rcc_m40c_rcbest
+
+################################################################################
+# constraint_mode
+################################################################################
+
+create_constraint_mode -name func \
+    -sdc_files "$env(PHIVERS_SCRIPTS_DIR)/constraints.sdc"
+
+################################################################################
+# analysis_views
+################################################################################
+
+create_analysis_view -name av_slow -constraint_mode func -delay_corner dc_slow
+create_analysis_view -name av_typ  -constraint_mode func -delay_corner dc_typ
+create_analysis_view -name av_fast -constraint_mode func -delay_corner dc_fast
+
+set_analysis_view \
+    -setup   {av_slow av_typ av_fast} \
+    -hold    {av_fast av_typ av_slow} \
+    -leakage av_typ \
+    -dynamic av_typ
