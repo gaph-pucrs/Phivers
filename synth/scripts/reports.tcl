@@ -75,7 +75,6 @@ proc report_final {} {
     # closed in Innovus once the clock tree exists.
     foreach view {av_slow av_typ av_fast} {
         rpt report_timing -views $view -max_paths 50 > $dir/timing_$view.rpt
+        rpt report_power -view $view -unit mW           > $dir/power_$view.rpt
     }
-
-    rpt report_power -view av_typ -unit mW           > $dir/power_av_typ.rpt
 }

@@ -35,7 +35,6 @@ VLEN           ?= 128
 #   RETIME          register retiming
 #   PHYSICAL        physical-aware synthesis (reads the LEF, uses PLE)
 #   LEC             also write the Conformal dofile
-#   STOP_AFTER      elaborate | generic | map | opt | all
 ################################################################################
 
 CPUS           ?= 8
@@ -46,11 +45,10 @@ ERROR_ON_LATCH ?= true
 RETIME         ?= false
 PHYSICAL       ?= true
 LEC            ?= false
-STOP_AFTER     ?= all
 
 # scripts/setup.tcl reads all of these; an empty one falls back to its default.
 export PERIOD VECTOR VLEN CPUS EFFORT POWER_EFFORT CLOCK_GATING
-export ERROR_ON_LATCH RETIME PHYSICAL LEC STOP_AFTER SYNTH_DIR
+export ERROR_ON_LATCH RETIME PHYSICAL LEC SYNTH_DIR
 
 ################################################################################
 # Paths and run name

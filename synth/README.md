@@ -40,7 +40,6 @@ is what tells the configurations apart.
 ```sh
 make PERIOD=1.5           # different target, different run directory
 make VECTOR=1             # PE with the RS5 vector unit, VLEN=128
-make STOP_AFTER=elaborate # stop early - the fast RTL check
 make clean                # remove work/
 ```
 
@@ -97,7 +96,6 @@ header lists them all.
 | `RETIME` | `false` | register retiming |
 | `PHYSICAL` | `true` | read the LEF and use PLE wire estimates |
 | `LEC` | `false` | also write the Conformal dofile |
-| `STOP_AFTER` | `all` | `elaborate` \| `generic` \| `map` \| `opt` \| `all` |
 | `PDK_ROOT` | TSMC 28 install | technology root |
 
 ## Constraints
