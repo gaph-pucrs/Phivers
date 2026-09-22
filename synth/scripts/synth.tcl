@@ -131,28 +131,13 @@ if {$RETIME} {
 # Synthesis
 ################################################################################
 
-if {$STOP_AFTER eq "elaborate"} {
-    banner "Stopping after elaboration (STOP_AFTER=elaborate)"
-    exit
-}
-
 banner "Generic synthesis"
 syn_generic
 report_stage generic
 
-if {$STOP_AFTER eq "generic"} {
-    banner "Stopping after generic synthesis (STOP_AFTER=generic)"
-    exit
-}
-
 banner "Technology mapping"
 syn_map
 report_stage map
-
-if {$STOP_AFTER eq "map"} {
-    banner "Stopping after mapping (STOP_AFTER=map)"
-    exit
-}
 
 banner "Incremental optimization"
 syn_opt

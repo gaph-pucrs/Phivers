@@ -30,25 +30,27 @@ create_library_set -name libset_ff_0p99v_m40c \
     # only thing this corner is used for
 
 ################################################################################
-# opconds
-################################################################################
-
-create_opcond -name opcond_0p81v_125c -voltage 0.81 -temperature  125.0
-create_opcond -name opcond_0p90v_25c  -voltage 0.90 -temperature   25.0
-create_opcond -name opcond_0p99v_m40c -voltage 0.99 -temperature  -40.0
-
-################################################################################
 # timing_conditions
+#
+# No create_opcond here on purpose. Every TSMC .lib declares the PVT point it
+# was characterised at, and names it as its default:
+#
+#     operating_conditions("ssg0p81v125c") { temperature : 125; voltage : 0.81; }
+#     default_operating_conditions : ssg0p81v125c ;
+#
+# so each timing condition inherits voltage, temperature, tree_type and the
+# voltage_map straight from its library set. Writing those numbers out by hand
+# only risks them drifting from the library: a mismatch is not an error, Genus
+# silently extrapolates the timing to the stated PVT instead of using the
+# characterised data.
+#
+# Add -opcond only to analyse a PVT the library was not characterised at.
+#                   (NOT recommended)
 ################################################################################
 
-create_timing_condition -name tc_ss_0p81v_125c \
-    -opcond opcond_0p81v_125c -library_sets {libset_ss_0p81v_125c}
-
-create_timing_condition -name tc_tt_0p90v_25c \
-    -opcond opcond_0p90v_25c  -library_sets {libset_tt_0p90v_25c}
-
-create_timing_condition -name tc_ff_0p99v_m40c \
-    -opcond opcond_0p99v_m40c -library_sets {libset_ff_0p99v_m40c}
+create_timing_condition -name tc_ss_0p81v_125c -library_sets {libset_ss_0p81v_125c}
+create_timing_condition -name tc_tt_0p90v_25c  -library_sets {libset_tt_0p90v_25c}
+create_timing_condition -name tc_ff_0p99v_m40c -library_sets {libset_ff_0p99v_m40c}
 
 ################################################################################
 # rc_corners

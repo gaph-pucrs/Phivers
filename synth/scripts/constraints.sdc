@@ -47,7 +47,7 @@ set_input_delay  -clock $CLK_NAME [expr {$CLK_PERIOD * 0.40}] $design_inputs
 set_output_delay -clock $CLK_NAME [expr {$CLK_PERIOD * 0.40}] $design_outputs
 
 set_driving_cell -lib_cell $DRIVING_CELL -pin $DRIVING_PIN $design_inputs
-set_load 0.020 $design_outputs ;# 20 fF
+set_load 0.025 $design_outputs ;# 25 fF
 
 ################################################################################
 # Design rules

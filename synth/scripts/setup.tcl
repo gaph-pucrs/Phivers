@@ -99,9 +99,6 @@ set RETIME           [opt RETIME         false]    ;# register retiming
 set PHYSICAL         [opt PHYSICAL       true]     ;# read LEF + physical-aware synthesis
 set WRITE_LEC        [opt LEC            false]    ;# emit Conformal dofile
 
-# Where to stop: elaborate | generic | map | opt | all
-set STOP_AFTER       [opt STOP_AFTER     all]
-
 ################################################################################
 # Technology - TSMC 28 HPC+ (tcbn28hpcplusbwp30p140)
 #
