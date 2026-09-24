@@ -30,9 +30,6 @@ set_clock_latency -source    0.00                        [get_clocks $CLK_NAME]
 # Reset
 ################################################################################
 
-# rst_ni is an asynchronous active-low reset (always_ff @(posedge clk_i or
-# negedge rst_ni)). Its release is synchronised at the system level, so the
-# path is not timed here; recovery/removal is checked after CTS.
 set_false_path -from [get_ports $RST_PORT]
 
 ################################################################################

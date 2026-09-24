@@ -33,7 +33,6 @@ VLEN           ?= 128
 #   CLOCK_GATING    insert integrated clock gates
 #   ERROR_ON_LATCH  abort when a latch is inferred
 #   RETIME          register retiming
-#   PHYSICAL        physical-aware synthesis (reads the LEF, uses PLE)
 #   LEC             also write the Conformal dofile
 ################################################################################
 
@@ -43,12 +42,11 @@ POWER_EFFORT   ?= high
 CLOCK_GATING   ?= true
 ERROR_ON_LATCH ?= true
 RETIME         ?= false
-PHYSICAL       ?= true
 LEC            ?= false
 
 # scripts/setup.tcl reads all of these; an empty one falls back to its default.
 export PERIOD VECTOR VLEN CPUS EFFORT POWER_EFFORT CLOCK_GATING
-export ERROR_ON_LATCH RETIME PHYSICAL LEC SYNTH_DIR
+export ERROR_ON_LATCH RETIME LEC SYNTH_DIR
 
 ################################################################################
 # Paths and run name

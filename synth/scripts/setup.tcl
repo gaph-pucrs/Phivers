@@ -96,7 +96,6 @@ set POWER_EFFORT     [opt POWER_EFFORT   high]
 set CLOCK_GATING     [opt CLOCK_GATING   true]
 set ERROR_ON_LATCH   [opt ERROR_ON_LATCH true]     ;# abort when a latch is inferred
 set RETIME           [opt RETIME         false]    ;# register retiming
-set PHYSICAL         [opt PHYSICAL       true]     ;# read LEF + physical-aware synthesis
 set WRITE_LEC        [opt LEC            false]    ;# emit Conformal dofile
 
 ################################################################################
