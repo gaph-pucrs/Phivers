@@ -19,6 +19,7 @@ puts "  outputs : $OUTPUTS_DIR"
 
 ################################################################################
 # Tool configuration
+# https://support.cadence.com/apex/techpubDocViewerPage?xmlName=genus_user.xml&title=Genus%20User%20Guide%20--%20Retiming%20the%20Design%20-%20Retiming%20the%20Design&hash=&c_version=23.1&path=genus_user/genus_user23.1/Retiming_the_Design.html
 ################################################################################
 
 banner "Tool configuration"
@@ -26,11 +27,10 @@ banner "Tool configuration"
 set_multi_cpu_usage -local_cpu $NUM_CPUS
 set_db super_thread_debug_directory $WORK_DIR
 
-set_db information_level        9
+set_db information_level        4
 set_db detailed_sdc_messages    true
 
-# Keep the RTL hierarchy: the PE is a block of a NoC, its boundaries are useful
-# for debugging and for hierarchical place and route.
+# Keep the RTL hierarchy:
 set_db auto_ungroup             none
 
 set_db syn_global_effort        $SYN_EFFORT
@@ -68,14 +68,10 @@ if {$CLOCK_GATING} {
     }
 }
 
-if {$PHYSICAL} {
-    banner "Reading physical data (LEF)"
-    read_physical -lefs "$TECH_LEF $STDCELL_LEF"
-    # Wire load estimated from a virtual layout instead of a wire load model
-    set_db interconnect_mode ple
-} else {
-    set_db interconnect_mode wireload
-}
+# Wire load estimated from a virtual layout instead of a wire load model
+banner "Reading physical data (LEF)"
+read_physical -lefs "$TECH_LEF $STDCELL_LEF"
+set_db interconnect_mode ple
 
 ################################################################################
 # RTL
@@ -83,12 +79,6 @@ if {$PHYSICAL} {
 
 banner "Reading RTL"
 
-# rtl.f holds nothing but file paths. Genus has no comment syntax in a -f file:
-# every whitespace separated token is taken as a file name, so a commented line
-# is read as a list of files and silently warns about each word - or worse,
-# picks one up if a word happens to match a real path. -incdir is not honoured
-# there either; it is not needed, because every `include in this RTL resolves
-# relative to the file that contains it.
 read_hdl -define SYNTH -f $SCRIPTS_DIR/rtl.f
 
 banner "Elaborating $TOP_MODULE"
@@ -115,9 +105,6 @@ puts "Top design: [get_db [current_design] .name]"
 
 init_design
 
-banner "Design checks"
-
-report_elaboration
 check_dft_rules
 
 # The PE has no scan chains inserted at this level
@@ -127,31 +114,21 @@ if {$RETIME} {
     set_db [current_design] .retime true
 }
 
+
 ################################################################################
 # Synthesis
 ################################################################################
 
-banner "Generic synthesis"
+banner "Synthesis - mapping and optimization"
+
 syn_generic
-report_stage generic
-
-banner "Technology mapping"
 syn_map
-report_stage map
-
-banner "Incremental optimization"
 syn_opt
-report_stage opt
 
-banner "Uniquifying"
 uniquify $TOP_MODULE
 
-################################################################################
-# Reports
-################################################################################
-
-banner "Final reports"
 report_final
+
 
 ################################################################################
 # Deliverables
@@ -180,14 +157,8 @@ if {$WRITE_LEC} {
 
 ################################################################################
 # Place and route hand-off
-#
 # Everything Innovus needs: netlist, mmmc setup, libraries, physical config.
 # Genus 23.1 dropped the -innovus flag, write_design only takes -base_name.
-#
-# Every run ends with this, and deliberately not through rpt: the hand-off is a
-# required output, so a failure has to stop the flow loudly instead of leaving a
-# silently incomplete outputs directory behind. It runs last, so that stopping
-# here costs none of the other deliverables.
 ################################################################################
 
 banner "Writing the Innovus hand-off"
