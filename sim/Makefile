@@ -51,6 +51,7 @@ SVSRC += \
 	Debug.sv \
 	RedSignal.sv \
 	DMNILog.sv \
+	MemProfile.sv \
 	TrafficRouter.sv \
 	TrafficBroadcast.sv \
 	PhiversTB.sv

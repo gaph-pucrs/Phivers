@@ -66,6 +66,9 @@ int main(int argc, char** argv, char** env) {
         }
     }
 
+    // Run $final blocks, so the simulation logs get closed out
+    top->final();
+
     #if TRACE
         tfp->close();
     #endif
