@@ -13,7 +13,7 @@ verilator:
 
 vsim:
 	@mkdir -p debug
-	@vsim $(VSIM_CMDLINE) ../Phivers/sim/work.$(TARGET) -suppress 3691 -quiet $(RUN_CMDLINE) $(VSIM_WAVE)
+	@vsim $(VSIM_CMDLINE) ../Phivers/sim/work.$(TARGET) -suppress 3691 -quiet $(SIM_TIMEOUT) $(RUN_CMDLINE) $(VSIM_WAVE)
 
 clean:
 	@rm -rf debug

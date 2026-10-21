@@ -4,10 +4,47 @@
 module PhiversTB
     import RS5_pkg::*;
     import PhiversPkg::*;
-(
-    input logic clk,
-    input logic rst_n
-);
+#(
+    parameter bit TRACE = 0
+)
+();
+
+    timeunit 1ns;
+    timeprecision 1ns;
+
+    logic clk;
+    logic rst_n;
+
+    initial begin
+        clk = 1'b0;
+        forever #5 clk = !clk;
+    end
+
+    initial begin
+        rst_n = 1'b0;
+        #100 rst_n = 1'b1;
+    end
+
+    /* +timeout=<ms>: 0 or absent runs until $finish */
+    initial begin
+        int unsigned timeout;
+        if ($value$plusargs("timeout=%d", timeout) && timeout != 0) begin
+            $display("Simulating until %0dms", timeout);
+            repeat (timeout) #1ms;
+            $display("\nSimulation ending due to timeout");
+            $finish();
+        end
+    end
+
+    if (TRACE) begin : gen_trace
+        initial begin
+            $dumpfile("trace.fst");
+            $dumpvars();
+        end
+    end
+
+    final $display("\nSimulation time: %0.3fms", $realtime / 1ms);
+
     logic [15:0] mapper_address;
     
     logic        ma_src_rx;
