@@ -147,6 +147,38 @@ module PhiversTB
                     .dataB_i    (dma_data       [x][y]                         ), 
                     .dataB_o    (ddma_data      [x][y]                         )
                 );
+
+                if (MEM_PROFILE) begin : gen_mem_profile
+                    MemProfile #(
+                        .MEM_SZ   (IMEM_SZ                 ),
+                        .PAGE_SZ  (IMEM_PAGE_SZ            ),
+                        .BLOCK_SZ (MEM_PROFILE_BLOCK       ),
+                        .ADDRESS  (16'(x << 8) | 16'(y)    ),
+                        .MEM_NAME ("I"                     )
+                    )
+                    I_MEM_PROFILE (
+                        .clk     (clk               ),
+                        .enA_i   (imem_enable[x][y] ),
+                        .addrA_i (imem_addr  [x][y] ),
+                        .enB_i   (idma_en    [x][y] ),
+                        .addrB_i (dma_addr   [x][y] )
+                    );
+
+                    MemProfile #(
+                        .MEM_SZ   (DMEM_SZ                 ),
+                        .PAGE_SZ  (DMEM_PAGE_SZ            ),
+                        .BLOCK_SZ (MEM_PROFILE_BLOCK       ),
+                        .ADDRESS  (16'(x << 8) | 16'(y)    ),
+                        .MEM_NAME ("D"                     )
+                    )
+                    D_MEM_PROFILE (
+                        .clk     (clk             ),
+                        .enA_i   (dmem_en  [x][y] ),
+                        .addrA_i (dmem_addr[x][y] ),
+                        .enB_i   (ddma_en  [x][y] ),
+                        .addrB_i (dma_addr [x][y] )
+                    );
+                end
             end
         end
     endgenerate
