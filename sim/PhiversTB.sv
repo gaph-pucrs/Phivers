@@ -88,7 +88,6 @@ module PhiversTB
         .PORT_MA_INJ   (PORT_MA_INJ  ),
         .ADDR_APP_INJ  (ADDR_APP_INJ ),
         .PORT_APP_INJ  (PORT_APP_INJ ),
-        .RS5_DEBUG     (RS5_DEBUG    ),
         .Environment   (ASIC         ),
         .LINK_CFG      (LINK_CFG     ),
         .UART_DEBUG    (UART_DEBUG   ),
@@ -128,6 +127,16 @@ module PhiversTB
         .dma_data_o       (dma_data       )
     );
 
+    /* Macros, not parameters: Verilator applies a bind even inside a false generate if */
+`ifdef RS5_DEBUG
+    bind regbank RegbankDebug debug();
+    bind CSRBank HPMProfiler report();
+`endif
+
+`ifdef RAM_DEBUG
+    bind RAM_mem MemDebug debug();
+`endif
+
 //////////////////////////////////////////////////////////////////////////////
 // Memory
 //////////////////////////////////////////////////////////////////////////////
@@ -143,9 +152,7 @@ module PhiversTB
             for (genvar y = 0; y < N_PE_Y; y++) begin : gen_pe_y
                 RAM_mem #(
                     .MEM_WIDTH  (IMEM_SZ                                 ),
-                    .BIN_FILE   (KERNEL_TEXT                             ),
-                    .DEBUG      (RAM_DEBUG                               ),
-                    .DEBUG_PATH ($sformatf("./debug/ram/%0dx%0d_I", x, y))
+                    .BIN_FILE   (KERNEL_TEXT                             )
                 ) 
                 I_MEM (
                     .clk        (clk                                     ),
@@ -165,9 +172,7 @@ module PhiversTB
 
                 RAM_mem #(
                     .MEM_WIDTH  (DMEM_SZ                                 ),
-                    .BIN_FILE   (KERNEL_DATA                             ),
-                    .DEBUG      (RAM_DEBUG                               ),
-                    .DEBUG_PATH ($sformatf("./debug/ram/%0dx%0d_D", x, y))
+                    .BIN_FILE   (KERNEL_DATA                             )
                 ) 
                 D_MEM (
                     .clk        (clk                                           ), 

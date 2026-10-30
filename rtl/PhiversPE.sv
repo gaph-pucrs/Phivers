@@ -15,7 +15,6 @@ module PhiversPE
     parameter               TASKS_PER_PE  = 1,
     parameter               IMEM_PAGE_SZ  = 32768,
     parameter               DMEM_PAGE_SZ  = 32768,
-    parameter               RS5_DEBUG     = 0,
     parameter environment_e Environment   = ASIC,
     parameter bit           UART_DEBUG    = 1,
     parameter bit           SCHED_DEBUG   = 1,
@@ -101,10 +100,6 @@ module PhiversPE
     assign dmem_data_o = cpu_data_write;
 
     RS5 #(
-        .DEBUG           (RS5_DEBUG  ),
-        .DBG_REG_FILE    ($sformatf("./debug/cpu/%0dx%0d_regBank.txt", ADDRESS[15:8], ADDRESS[7:0])),
-        .PROFILING       (RS5_DEBUG  ),
-        .PROFILING_FILE  ($sformatf("./debug/cpu/%0dx%0d_Report.txt",  ADDRESS[15:8], ADDRESS[7:0])),
         .Environment     (Environment),
         .MULEXT          (MUL_M      ),
         .AMOEXT          (AMO_A      ),
