@@ -111,7 +111,7 @@ module PhiversPE
         .ZKNEEnable      (1'b0       ),
         .ZICONDEnable    (1'b1       ),
         .ZCBEnable       (1'b1       ),
-        .HPMCOUNTEREnable(1'b0       ),
+        .HPMCOUNTEREnable(1'b1       ),
         .IQUEUE_SIZE     (2          ),
         .BRANCHPRED      (1'b1       ),
         .FORWARDING      (1'b1       )

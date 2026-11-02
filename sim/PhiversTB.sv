@@ -150,7 +150,7 @@ module PhiversTB
     generate
         for (genvar x = 0; x < N_PE_X; x++) begin : gen_pe_x
             for (genvar y = 0; y < N_PE_Y; y++) begin : gen_pe_y
-                RAM_mem #(
+                RamArray #(
                     .MEM_WIDTH  (IMEM_SZ                                 ),
                     .BIN_FILE   (KERNEL_TEXT                             )
                 ) 
@@ -170,7 +170,7 @@ module PhiversTB
                     .dataB_o    (idma_data[x][y]                         )
                 );
 
-                RAM_mem #(
+                RamArray #(
                     .MEM_WIDTH  (DMEM_SZ                                 ),
                     .BIN_FILE   (KERNEL_DATA                             )
                 ) 
