@@ -85,6 +85,7 @@ module PhiversTB
         .IMEM_PAGE_SZ  (IMEM_PAGE_SZ ),
         .DMEM_PAGE_SZ  (DMEM_PAGE_SZ ),
         .OSZ_WINDOW    (OSZ_WINDOW   ),
+        .OSZ_ATTACK    (OSZ_ATTACK   ),
         .ADDR_MA_INJ   (ADDR_MA_INJ  ),
         .PORT_MA_INJ   (PORT_MA_INJ  ),
         .ADDR_APP_INJ  (ADDR_APP_INJ ),

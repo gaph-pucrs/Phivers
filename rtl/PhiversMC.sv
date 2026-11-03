@@ -13,7 +13,8 @@ module PhiversMC
     parameter               IMEM_PAGE_SZ                              = 32768,
     parameter               DMEM_PAGE_SZ                              = 32768,
     parameter logic [15:0]  OSZ_WINDOW                                = 16'h0000,
-    parameter logic [15:0]  ADDR_MA_INJ                               = 16'h0000,
+    parameter bit           OSZ_ATTACK                                = 0,          /* simulation-only zone attack test */
+    parameter logic [15:0]  ADDR_MA_INJ                              = 16'h0000,
     parameter hermes_port_t PORT_MA_INJ                               = HERMES_SOUTH,
     parameter logic [15:0]  ADDR_APP_INJ                              = 16'h0100,
     parameter hermes_port_t PORT_APP_INJ                              = HERMES_SOUTH,
@@ -183,6 +184,95 @@ module PhiversMC
 ////////////////////////////////////////////////////////////////////////////////
 // Add new peripherals here
 ////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * OSZ zone attack test (simulation only, OSZ_ATTACK = 1). Attackers on
+     * unused mesh-edge ports inject packets that ignore the single-entrance
+     * routing:
+     *   0: east edge of (N_PE_X-1, 0)      -> (0, 0)        reaches a blocked E port below the entrance row
+     *   1: east edge of (N_PE_X-1, OSZ_Y-1) -> (0, OSZ_Y-1)  wrong source at the access point
+     *                                       -> (OSZ_X-1, OSZ_Y-1) service not allowed at the access point
+     *   2: north edge of (0, N_PE_Y-1)     -> (0, OSZ_Y-1)  reaches the zone's blocked N edge
+     */
+    localparam int OSZ_X = 32'(OSZ_WINDOW[15:8]);
+    localparam int OSZ_Y = 32'(OSZ_WINDOW[ 7:0]);
+
+    localparam bit ATK_ROW0 = OSZ_ATTACK && OSZ_Y > 0;
+    localparam bit ATK_TOP  = OSZ_ATTACK && OSZ_Y > 1;
+    localparam bit ATK_N    = OSZ_ATTACK && OSZ_Y > 0 && OSZ_Y < N_PE_Y;
+
+    logic        atk_tx  [2:0];
+    logic        atk_eop [2:0];
+    logic [31:0] atk_data[2:0];
+
+    if (ATK_ROW0) begin : gen_atk_row0
+        OszAttacker #(
+            .NAME  ("E edge of row 0"),
+            .START (1_000_000),
+            .NPKT  (1),
+            .HEADER('{{8'h00, 8'h43, 8'd0, 8'd0}, '0, '0, '0}),
+            .SOURCE('{{16'h0000, 8'(N_PE_X - 1), 8'd0}, '0, '0, '0})
+        )
+        atk (
+            .clk_i   (clk_i                                      ),
+            .rst_ni  (rst_ni                                     ),
+            .tx_o    (atk_tx[0]                                  ),
+            .eop_o   (atk_eop[0]                                 ),
+            .data_o  (atk_data[0]                                ),
+            .credit_i(credit_rx[N_PE_X - 1][0][2'(HERMES_EAST)]  )
+        );
+    end
+    else begin : gen_no_atk_row0
+        assign atk_tx[0]   = 1'b0;
+        assign atk_eop[0]  = 1'b0;
+        assign atk_data[0] = '0;
+    end
+
+    if (ATK_TOP) begin : gen_atk_top
+        OszAttacker #(
+            .NAME  ("E edge of the region top row"),
+            .START (1_100_000),
+            .NPKT  (2),
+            .HEADER('{{8'h00, 8'h43, 8'd0, 8'(OSZ_Y - 1)}, {8'h00, 8'h50, 8'(OSZ_X - 1), 8'(OSZ_Y - 1)}, '0, '0}),
+            .SOURCE('{{16'h0000, 8'(N_PE_X - 1), 8'(OSZ_Y - 1)}, {16'h0000, 8'(N_PE_X - 1), 8'(OSZ_Y - 1)}, '0, '0})
+        )
+        atk (
+            .clk_i   (clk_i                                          ),
+            .rst_ni  (rst_ni                                         ),
+            .tx_o    (atk_tx[1]                                      ),
+            .eop_o   (atk_eop[1]                                     ),
+            .data_o  (atk_data[1]                                    ),
+            .credit_i(credit_rx[N_PE_X - 1][OSZ_Y - 1][2'(HERMES_EAST)])
+        );
+    end
+    else begin : gen_no_atk_top
+        assign atk_tx[1]   = 1'b0;
+        assign atk_eop[1]  = 1'b0;
+        assign atk_data[1] = '0;
+    end
+
+    if (ATK_N) begin : gen_atk_n
+        OszAttacker #(
+            .NAME  ("N edge of column 0"),
+            .START (1_300_000),
+            .NPKT  (1),
+            .HEADER('{{8'h00, 8'h43, 8'd0, 8'(OSZ_Y - 1)}, '0, '0, '0}),
+            .SOURCE('{{16'h0000, 8'd0, 8'(N_PE_Y - 1)}, '0, '0, '0})
+        )
+        atk (
+            .clk_i   (clk_i                                       ),
+            .rst_ni  (rst_ni                                      ),
+            .tx_o    (atk_tx[2]                                   ),
+            .eop_o   (atk_eop[2]                                  ),
+            .data_o  (atk_data[2]                                 ),
+            .credit_i(credit_rx[0][N_PE_Y - 1][2'(HERMES_NORTH)]  )
+        );
+    end
+    else begin : gen_no_atk_n
+        assign atk_tx[2]   = 1'b0;
+        assign atk_eop[2]  = 1'b0;
+        assign atk_data[2] = '0;
+    end
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -388,6 +478,23 @@ module PhiversMC
         eop_rx   [APP_INJ_X][APP_INJ_Y][2'(PORT_APP_INJ)] = app_inj_eop_tx    && release_peripheral[APP_INJ_X][APP_INJ_Y];
         credit_tx[APP_INJ_X][APP_INJ_Y][2'(PORT_APP_INJ)] = app_inj_credit_rx && release_peripheral[APP_INJ_X][APP_INJ_Y];
         data_rx  [APP_INJ_X][APP_INJ_Y][2'(PORT_APP_INJ)] = app_inj_data_tx;
+
+        /* OSZ zone attack test: attackers drive their edge ports */
+        if (ATK_ROW0) begin
+            rx      [N_PE_X - 1][0][2'(HERMES_EAST)] = atk_tx[0];
+            eop_rx  [N_PE_X - 1][0][2'(HERMES_EAST)] = atk_eop[0];
+            data_rx [N_PE_X - 1][0][2'(HERMES_EAST)] = atk_data[0];
+        end
+        if (ATK_TOP) begin
+            rx      [N_PE_X - 1][OSZ_Y - 1][2'(HERMES_EAST)] = atk_tx[1];
+            eop_rx  [N_PE_X - 1][OSZ_Y - 1][2'(HERMES_EAST)] = atk_eop[1];
+            data_rx [N_PE_X - 1][OSZ_Y - 1][2'(HERMES_EAST)] = atk_data[1];
+        end
+        if (ATK_N) begin
+            rx      [0][N_PE_Y - 1][2'(HERMES_NORTH)] = atk_tx[2];
+            eop_rx  [0][N_PE_Y - 1][2'(HERMES_NORTH)] = atk_eop[2];
+            data_rx [0][N_PE_Y - 1][2'(HERMES_NORTH)] = atk_data[2];
+        end
 
         /* Insert the IO wiring for your component here if it connected to a port */
     end

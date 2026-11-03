@@ -201,20 +201,70 @@ module PhiversPE
     logic        noc_credit_rcv [(HERMES_NPORT - 1):0];
     logic [31:0] noc_data_rcv   [(HERMES_NPORT - 1):0];
 
-    assign noc_rx      [(HERMES_NPORT - 2):0] = noc_rx_i;
-    assign noc_eop_rcv [(HERMES_NPORT - 2):0] = noc_eop_i;
-    assign noc_data_rcv[(HERMES_NPORT - 2):0] = noc_data_i;
-    assign noc_credit_o                       = noc_credit_rcv[(HERMES_NPORT - 2):0];
-
     logic        noc_tx         [(HERMES_NPORT - 1):0];
     logic        noc_eop_snd    [(HERMES_NPORT - 1):0];
     logic        noc_credit_snd [(HERMES_NPORT - 1):0];
     logic [31:0] noc_data_snd   [(HERMES_NPORT - 1):0];
 
-    assign noc_tx_o                             = noc_tx      [(HERMES_NPORT - 2):0];
-    assign noc_eop_o                            = noc_eop_snd [(HERMES_NPORT - 2):0];
-    assign noc_data_o                           = noc_data_snd[(HERMES_NPORT - 2):0];
-    assign noc_credit_snd[(HERMES_NPORT - 2):0] = noc_credit_i;
+    /**
+     * OSZ zone wrapper: every external link passes a filter in each direction,
+     * driven by DMNI_OSZ_BLOCK (written by the kernel). Outside the region, and
+     * without a region, every port stays OPEN and the filter is a wire.
+     */
+    logic [31:0] osz_block;
+
+    for (genvar p = 0; p < (HERMES_NPORT - 1); p++) begin : gen_osz_wrapper
+        localparam string PORT_NAME = (p == 0) ? "E" : (p == 1) ? "W" : (p == 2) ? "N" : "S";
+
+        logic [1:0] mode_rx;
+        logic [1:0] mode_tx;
+        assign mode_rx = osz_block[p] ? 2'd1                                             /* BLOCKED */
+                       : (p == HERMES_EAST && osz_block[OSZ_BLOCK_ACCESS_BIT]) ? 2'd2    /* ACCESS  */
+                       : 2'd0;                                                           /* OPEN    */
+        assign mode_tx = osz_block[p] ? 2'd1 : 2'd0;
+
+        PhiversOszFilter #(
+            .ADDRESS(ADDRESS  ),
+            .PORT   (PORT_NAME),
+            .DIR    ("RX"     )
+        )
+        osz_rx (
+            .clk_i      (clk_i                            ),
+            .rst_ni     (rst_ni                           ),
+            .mode_i     (mode_rx                          ),
+            .src_valid_i(osz_block[OSZ_BLOCK_SRC_VALID_BIT]),
+            .src_i      (osz_block[31:16]                 ),
+            .rx_i       (noc_rx_i[p]                      ),
+            .eop_i      (noc_eop_i[p]                     ),
+            .data_i     (noc_data_i[p]                    ),
+            .credit_o   (noc_credit_o[p]                  ),
+            .rx_o       (noc_rx[p]                        ),
+            .eop_o      (noc_eop_rcv[p]                   ),
+            .data_o     (noc_data_rcv[p]                  ),
+            .credit_i   (noc_credit_rcv[p]                )
+        );
+
+        PhiversOszFilter #(
+            .ADDRESS(ADDRESS  ),
+            .PORT   (PORT_NAME),
+            .DIR    ("TX"     )
+        )
+        osz_tx (
+            .clk_i      (clk_i                            ),
+            .rst_ni     (rst_ni                           ),
+            .mode_i     (mode_tx                          ),
+            .src_valid_i(1'b0                             ),
+            .src_i      (16'h0000                         ),
+            .rx_i       (noc_tx[p]                        ),
+            .eop_i      (noc_eop_snd[p]                   ),
+            .data_i     (noc_data_snd[p]                  ),
+            .credit_o   (noc_credit_snd[p]                ),
+            .rx_o       (noc_tx_o[p]                      ),
+            .eop_o      (noc_eop_o[p]                     ),
+            .data_o     (noc_data_o[p]                    ),
+            .credit_i   (noc_credit_i[p]                  )
+        );
+    end
 
     HermesRouter #(
         .ADDRESS(ADDRESS),
@@ -370,6 +420,7 @@ module PhiversPE
         .cfg_data_i           (cpu_data_write                         ),
         .cfg_data_o           (ni_data_read                           ),
         .release_peripheral_o (release_peripheral_o                   ),
+        .osz_block_o          (osz_block                              ),
         .mem_en_o             (dma_en                                 ),
         .mem_we_o             (dma_we                                 ),
         .mem_addr_o           (dma_addr                               ),
