@@ -103,7 +103,8 @@ module PhiversMC
     TaskInjector #(
         .INJECTOR_ADDRESS ({1'b1, PORT_MA_INJ[1:0], 13'b0, ADDR_MA_INJ}),
         .FLIT_SIZE        (32                                          ),
-        .INJECT_MAPPER    (1                                           )
+        .INJECT_MAPPER    (1                                           ),
+        .OSZ_WINDOW       (OSZ_WINDOW                                  )
     )
     MAInjector (
         .clk_i           (clk_i           ),
@@ -149,7 +150,8 @@ module PhiversMC
     TaskInjector #(
         .INJECTOR_ADDRESS ({1'b1, PORT_APP_INJ[1:0], 13'b0, ADDR_APP_INJ}),
         .FLIT_SIZE        (32                                            ),
-        .INJECT_MAPPER    (0                                             )
+        .INJECT_MAPPER    (0                                             ),
+        .OSZ_WINDOW       (OSZ_WINDOW                                    )
     )
     AppInjector (
         .clk_i           (clk_i            ),
