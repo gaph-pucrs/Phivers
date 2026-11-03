@@ -15,6 +15,7 @@ module PhiversPE
     parameter               TASKS_PER_PE  = 1,
     parameter               IMEM_PAGE_SZ  = 32768,
     parameter               DMEM_PAGE_SZ  = 32768,
+    parameter logic [15:0]  OSZ_WINDOW    = 16'h0000,
     parameter environment_e Environment   = ASIC,
     parameter bit           UART_DEBUG    = 1,
     parameter bit           SCHED_DEBUG   = 1,
@@ -355,6 +356,7 @@ module PhiversPE
         .TASKS_PER_PE       (TASKS_PER_PE),
         .IMEM_PAGE_SZ       (IMEM_PAGE_SZ),
         .DMEM_PAGE_SZ       (DMEM_PAGE_SZ),
+        .OSZ_WINDOW         (OSZ_WINDOW  ),
         .ADDRESS            (ADDRESS     )
     )
     dmni (
