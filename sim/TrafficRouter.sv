@@ -1,9 +1,11 @@
 `include "../Hermes/rtl/HermesPkg.sv"
 `include "../TaskInjector/rtl/TaskInjectorPkg.sv"
+`include "../DMNI/rtl/DMNIPkg.sv"
 
 module TrafficRouter
     import HermesPkg::*;
     import TaskInjectorPkg::*;
+    import DMNIPkg::SR_FLAG;
 #(
     parameter               FLIT_SIZE = 32,
     parameter logic [15:0]  ADDRESS   = 16'h0000,
@@ -102,14 +104,47 @@ module TrafficRouter
     end
 
 ////////////////////////////////////////////////////////////////////////////////
-// Flit 0 monitored variables
+// Leading source-routing (waypoint) headers
+////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * A source-routed packet starts with waypoint headers (SR_FLAG set, service
+     * 0) that DMNI loopbacks remove on the way. They are skipped here, so the
+     * fields below always describe the real packet (service, final target,
+     * sender, receiver) on every segment. The flit count still includes them.
+     */
+    logic       sr_lead;    /* Still reading leading waypoint headers */
+    logic [7:0] nsr;        /* Leading waypoint headers seen so far   */
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (!rst_ni) begin
+            sr_lead <= 1'b0;
+            nsr     <= '0;
+        end
+        else if (mon_state == MON_RCV_HEADER) begin
+            sr_lead <= data_i[SR_FLAG];
+            nsr     <= {7'b0, data_i[SR_FLAG]};
+        end
+        else if (flit_received && sr_lead) begin
+            if (data_i[SR_FLAG])
+                nsr <= nsr + 1'b1;
+            else
+                sr_lead <= 1'b0;
+        end
+    end
+
+    /* The real header is the first flit without SR_FLAG */
+    logic hdr_flit;
+    assign hdr_flit = (mon_state == MON_RCV_HEADER) || (sr_lead && flit_received);
+
+////////////////////////////////////////////////////////////////////////////////
+// Flit 0 monitored variables (first flit after the waypoint headers)
 ////////////////////////////////////////////////////////////////////////////////
 
     logic [15:0] target;
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni)
             target <= '0;
-        else if (mon_state == MON_RCV_HEADER)
+        else if (hdr_flit)
             target <= data_i[15:0];
     end
 
@@ -117,12 +152,12 @@ module TrafficRouter
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni)
             service <= '0;
-        else if (mon_state == MON_RCV_HEADER)
+        else if (hdr_flit)
             service <= data_i[23:16];
     end
 
 ////////////////////////////////////////////////////////////////////////////////
-// Flit 2 monitored variables
+// Flit 2 monitored variables (counted from the real header)
 ////////////////////////////////////////////////////////////////////////////////
 
     /* 2 */
@@ -130,7 +165,7 @@ module TrafficRouter
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni)
             receiver <= '0;
-        else if (flit_idx == 32'h00000002)
+        else if (flit_idx == 32'(nsr) + 32'd2)
             receiver <= data_i[15:0];
     end
 
@@ -138,31 +173,41 @@ module TrafficRouter
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni)
             sender <= '0;
-        else if (flit_idx == 32'h00000002)
+        else if (flit_idx == 32'(nsr) + 32'd2)
             sender <= data_i[31:16];
     end
 
+    /**
+     * In a 3-flit packet (DATA_AV, MESSAGE_REQUEST) the sender/receiver flit is
+     * also the last one, and the log line is written in that same cycle, before
+     * the registers above are updated: take the values from the flit itself.
+     */
+    logic [15:0] receiver_log;
+    logic [15:0] sender_log;
+    assign receiver_log = (flit_idx == 32'(nsr) + 32'd2) ? data_i[15:0]  : receiver;
+    assign sender_log   = (flit_idx == 32'(nsr) + 32'd2) ? data_i[31:16] : sender;
+
 ////////////////////////////////////////////////////////////////////////////////
-// Flit 4 monitored variables
+// Flit 4 monitored variables (counted from the real header)
 ////////////////////////////////////////////////////////////////////////////////
 
     logic [15:0] mig_task;
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni)
             mig_task <= '0;
-        else if (flit_idx == 32'h00000004)
+        else if (flit_idx == 32'(nsr) + 32'd4)
             mig_task <= data_i[15:0];
     end
 
 ////////////////////////////////////////////////////////////////////////////////
-// Flit 5 monitored variables
+// Flit 5 monitored variables (counted from the real header)
 ////////////////////////////////////////////////////////////////////////////////
 
     logic [15:0] alloc_task;
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni)
             alloc_task <= '0;
-        else if (flit_idx == 32'h00000005)
+        else if (flit_idx == 32'(nsr) + 32'd5)
             alloc_task <= data_i[31:16];
     end
 
@@ -223,7 +268,7 @@ module TrafficRouter
                 $fwrite(fd, "\t%0d", alloc_task);
 
             if (write_edge)
-                $fwrite(fd, "\t%0d\t%0d", sender, receiver);
+                $fwrite(fd, "\t%0d\t%0d", sender_log, receiver_log);
 
             $fwrite(fd, "\n");
 

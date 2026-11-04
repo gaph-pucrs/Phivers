@@ -53,6 +53,10 @@ SVSRC += \
 	MemProfile.sv \
 	TrafficRouter.sv \
 	TrafficBroadcast.sv \
+	OszAttacker.sv \
+	SRTrace.sv \
+	OszFilterTrace.sv \
+	OszPeTrace.sv \
 	PhiversTB.sv
 
 default: $(TARGET)

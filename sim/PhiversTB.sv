@@ -84,6 +84,8 @@ module PhiversTB
         .TASKS_PER_PE  (TASKS_PER_PE ),
         .IMEM_PAGE_SZ  (IMEM_PAGE_SZ ),
         .DMEM_PAGE_SZ  (DMEM_PAGE_SZ ),
+        .OSZ_WINDOW    (OSZ_WINDOW   ),
+        .OSZ_ATTACK    (OSZ_ATTACK   ),
         .ADDR_MA_INJ   (ADDR_MA_INJ  ),
         .PORT_MA_INJ   (PORT_MA_INJ  ),
         .ADDR_APP_INJ  (ADDR_APP_INJ ),
@@ -135,6 +137,90 @@ module PhiversTB
 
 `ifdef RAM_DEBUG
     bind RAM_mem MemDebug debug();
+`endif
+
+    /* Packet trace for tools/meshviz (debug/sr_trace.txt): every Hermes packet */
+`ifdef SR_TRACE
+    /* On each mesh link, RX side, before the OSZ zone wrapper: dropped packets are seen arriving */
+    bind PhiversOszFilter SRTrace #(
+        .ADDRESS(ADDRESS),
+        .PORT   (PORT   ),
+        .DIR    ("IN"   ),
+        .ENABLE (DIR == "RX")
+    ) sr_trace (
+        .clk_i   (clk_i   ),
+        .rst_ni  (rst_ni  ),
+        .tx_i    (rx_i    ),
+        .eop_i   (eop_i   ),
+        .credit_i(credit_o),
+        .data_i  (data_i  )
+    );
+
+    /* Injection by the DMNI into the router */
+    bind PhiversPE SRTrace #(
+        .ADDRESS(ADDRESS),
+        .PORT   ("L"    ),
+        .DIR    ("IN"   )
+    ) sr_trace_in (
+        .clk_i   (clk_i                           ),
+        .rst_ni  (rst_ni                          ),
+        .tx_i    (noc_rx        [HERMES_NPORT - 1]),
+        .eop_i   (noc_eop_rcv   [HERMES_NPORT - 1]),
+        .credit_i(noc_credit_rcv[HERMES_NPORT - 1]),
+        .data_i  (noc_data_rcv  [HERMES_NPORT - 1])
+    );
+
+    /* Delivery by the router to the DMNI: shows each source-routing loopback */
+    bind PhiversPE SRTrace #(
+        .ADDRESS(ADDRESS),
+        .PORT   ("L"    ),
+        .DIR    ("DMNI" )
+    ) sr_trace_dmni (
+        .clk_i   (clk_i                           ),
+        .rst_ni  (rst_ni                          ),
+        .tx_i    (noc_tx        [HERMES_NPORT - 1]),
+        .eop_i   (noc_eop_snd   [HERMES_NPORT - 1]),
+        .credit_i(noc_credit_snd[HERMES_NPORT - 1]),
+        .data_i  (noc_data_snd  [HERMES_NPORT - 1])
+    );
+`endif
+
+    /* OSZ zone trace for tools/meshviz (debug/osz_trace.txt) and regression/osz_check.py */
+`ifdef OSZ_TRACE
+    /* Every zone wrapper filter: drops, holds and accepts at the access point */
+    bind PhiversOszFilter OszFilterTrace #(
+        .ADDRESS(ADDRESS),
+        .PORT   (PORT   ),
+        .DIR    (DIR    )
+    ) osz_trace (
+        .clk_i             (clk_i           ),
+        .rst_ni            (rst_ni          ),
+        .rx_i              (rx_i            ),
+        .eop_i             (eop_i           ),
+        .credit_i          (credit_o        ),
+        .data_i            (data_i          ),
+        .header_i          (header          ),
+        .ev_drop_i         (ev_drop         ),
+        .ev_drop_blocked_i (ev_drop_blocked ),
+        .ev_hold_i         (ev_hold         ),
+        .ev_accept_i       (ev_accept       ),
+        .ev_refuse_src_i   (ev_refuse_src   ),
+        .ev_refuse_single_i(ev_refuse_single)
+    );
+
+    /* Every PE: DMNI_OSZ_BLOCK changes and the kernel's OSZ events */
+    bind PhiversPE OszPeTrace #(
+        .ADDRESS(ADDRESS)
+    ) osz_trace (
+        .clk_i      (clk_i          ),
+        .rst_ni     (rst_ni         ),
+        .tick_i     (mtime          ),
+        .osz_block_i(osz_block      ),
+        .dbg_en_i   (dbg_en         ),
+        .dbg_we_i   (dbg_we         ),
+        .dbg_addr_i (cpu_addr[23:0] ),
+        .dbg_data_i (cpu_data_write )
+    );
 `endif
 
 //////////////////////////////////////////////////////////////////////////////
