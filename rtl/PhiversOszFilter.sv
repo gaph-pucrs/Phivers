@@ -22,9 +22,12 @@
 
 module PhiversOszFilter
 #(
+    /* Identify the filter to the simulation-only monitors bound from PhiversTB */
+    /* verilator lint_off UNUSEDPARAM */
     parameter logic [15:0] ADDRESS = 16'h0000,
     parameter string       PORT    = "E",
     parameter string       DIR     = "RX"
+    /* verilator lint_on UNUSEDPARAM */
 )
 (
     input  logic        clk_i,
@@ -183,33 +186,26 @@ module PhiversOszFilter
         end
     end
 
-    /* One line per dropped packet */
-    always_ff @(posedge clk_i) begin
-        /* Separate messages: a ?: between strings is padded to the longer one */
-        if (state == F_IDLE && rx_i && decision == D_DROP && mode_i == OSZ_BLOCKED)
-            $display(
-                "[%7.3f] [OSZ] PE %0d,%0d %s %s dropped packet: target %0d,%0d service %h (blocked port)",
-                $time()/1_000_000.0, ADDRESS[15:8], ADDRESS[7:0], DIR, PORT,
-                data_i[15:8], data_i[7:0], service
-            );
-        if (state == F_IDLE && rx_i && decision == D_DROP && mode_i != OSZ_BLOCKED)
-            $display(
-                "[%7.3f] [OSZ] PE %0d,%0d %s %s dropped packet: target %0d,%0d service %h (refused at access point)",
-                $time()/1_000_000.0, ADDRESS[15:8], ADDRESS[7:0], DIR, PORT,
-                data_i[15:8], data_i[7:0], service
-            );
-        if (state == F_HOLD && header_eop)
-            $display(
-                "[%7.3f] [OSZ] PE %0d,%0d %s %s dropped packet: target %0d,%0d service %h single flit (refused at access point)",
-                $time()/1_000_000.0, ADDRESS[15:8], ADDRESS[7:0], DIR, PORT,
-                header[15:8], header[7:0], header[23:16]
-            );
-        if (state == F_HOLD && !header_eop && rx_i && !source_ok)
-            $display(
-                "[%7.3f] [OSZ] PE %0d,%0d %s %s dropped packet: target %0d,%0d service %h source %h (refused at access point)",
-                $time()/1_000_000.0, ADDRESS[15:8], ADDRESS[7:0], DIR, PORT,
-                header[15:8], header[7:0], header[23:16], data_i
-            );
-    end
+    /**
+     * Decision status, one cycle each, for the simulation-only monitor
+     * (sim/OszFilterTrace.sv, bound from PhiversTB under `ifdef OSZ_TRACE).
+     * Plain logic, unused by the RTL itself.
+     */
+    /* verilator lint_off UNUSEDSIGNAL */
+    logic ev_drop;            /* a header is dropped at once (blocked port, or service refused at the access point) */
+    logic ev_drop_blocked;    /* ... because the port is blocked */
+    logic ev_hold;            /* the access point takes a header into the hold register */
+    logic ev_accept;          /* the access point lets a packet in */
+    logic ev_refuse_src;      /* the access point refuses a held packet: flit 1 is not an accepted source */
+    logic ev_refuse_single;   /* the access point drops a held single-flit packet */
+    /* verilator lint_on UNUSEDSIGNAL */
+
+    assign ev_drop          = (state == F_IDLE) && rx_i && (decision == D_DROP);
+    assign ev_drop_blocked  = ev_drop && (mode_i == OSZ_BLOCKED);
+    assign ev_hold          = (state == F_IDLE) && rx_i && (decision == D_HOLD);
+    assign ev_accept        = ((state == F_HOLD) && !header_eop && rx_i && source_ok)
+                           || ((state == F_IDLE) && rx_i && credit_i && (decision == D_PASS) && (mode_i == OSZ_ACCESS));
+    assign ev_refuse_src    = (state == F_HOLD) && !header_eop && rx_i && !source_ok;
+    assign ev_refuse_single = (state == F_HOLD) && header_eop;
 
 endmodule
