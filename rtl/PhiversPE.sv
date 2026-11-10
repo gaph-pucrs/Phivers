@@ -13,8 +13,7 @@ module PhiversPE
     parameter               N_PE_X        = 2,
     parameter               N_PE_Y        = 2,
     parameter               TASKS_PER_PE  = 1,
-    parameter               IMEM_PAGE_SZ  = 32768,
-    parameter               DMEM_PAGE_SZ  = 32768,
+    parameter               PAGE_SZ       = 32768,
     parameter environment_e Environment   = ASIC,
     parameter bit           UART_DEBUG    = 1,
     parameter bit           SCHED_DEBUG   = 1,
@@ -34,21 +33,12 @@ module PhiversPE
     output logic     [29:0]             imem_addr_o,
     input  logic     [31:0]             imem_data_i,
 
-    /* Data memory interface: read/write */
-    output logic                        dmem_en_o,
-    output logic     [3:0]              dmem_we_o,
-    output logic     [29:0]             dmem_addr_o,
-    input  logic     [31:0]             dmem_data_i,
-    output logic     [31:0]             dmem_data_o,
-
-    /* DMA memory interface: read/write on instruction/data */
-    output logic                        idma_en_o,
-    output logic                        ddma_en_o,
-    output logic     [3:0]              dma_we_o,
-    output logic     [29:0]             dma_addr_o,
-    input  logic     [31:0]             idma_data_i,
-    input  logic     [31:0]             ddma_data_i,
-    output logic     [31:0]             dma_data_o,
+    /* Shared memory interface: load/store and DMA, the CPU always wins */
+    output logic                        mem_en_o,
+    output logic     [3:0]              mem_we_o,
+    output logic     [29:0]             mem_addr_o,
+    input  logic     [31:0]             mem_data_i,
+    output logic     [31:0]             mem_data_o,
 
     /* NoC input interface */
     output logic                        release_peripheral_o,
@@ -95,9 +85,6 @@ module PhiversPE
     /* verilator lint_on UNUSEDSIGNAL */
 
     assign imem_addr_o = imem_addr[29:0];
-    assign dmem_we_o   = cpu_we;
-    assign dmem_addr_o = cpu_addr[29:0];
-    assign dmem_data_o = cpu_data_write;
 
     RS5 #(
         .Environment     (Environment),
@@ -282,38 +269,8 @@ module PhiversPE
 
     logic        dma_en;
     logic [3:0]  dma_we;
-    logic [31:0] dma_data_read;
+    logic [31:0] dma_data_write;
     logic [31:0] dma_addr;
-
-    assign idma_en_o  = (dma_addr[31:30] == 2'b00) && dma_en;
-    assign ddma_en_o  = (dma_addr[31:30] == 2'b01) && dma_en;
-    assign dma_we_o   = dma_we;
-    assign dma_addr_o = dma_addr[29:0];
-
-    logic idma_en_r;
-    always_ff @(posedge clk_i or negedge rst_ni) begin
-        if (!rst_ni)
-            idma_en_r <= '0;
-        else
-            idma_en_r <= idma_en_o;
-    end
-
-    logic ddma_en_r;
-    always_ff @(posedge clk_i or negedge rst_ni) begin
-        if (!rst_ni)
-            ddma_en_r <= '0;
-        else
-            ddma_en_r <= ddma_en_o;
-    end
-
-    always_comb begin
-        if (ddma_en_r)
-            dma_data_read = ddma_data_i;
-        else if (idma_en_r)
-            dma_data_read = idma_data_i;
-        else
-            dma_data_read = '0;
-    end
 
     logic        brlite_req;
     logic        brlite_ack;
@@ -353,8 +310,7 @@ module PhiversPE
         .N_PE_X             (N_PE_X      ),
         .N_PE_Y             (N_PE_Y      ),
         .TASKS_PER_PE       (TASKS_PER_PE),
-        .IMEM_PAGE_SZ       (IMEM_PAGE_SZ),
-        .DMEM_PAGE_SZ       (DMEM_PAGE_SZ),
+        .PAGE_SZ            (PAGE_SZ     ),
         .ADDRESS            (ADDRESS     )
     )
     dmni (
@@ -371,8 +327,9 @@ module PhiversPE
         .mem_en_o             (dma_en                                 ),
         .mem_we_o             (dma_we                                 ),
         .mem_addr_o           (dma_addr                               ),
-        .mem_data_o           (dma_data_o                             ),
-        .mem_data_i           (dma_data_read                          ),
+        .mem_data_o           (dma_data_write                         ),
+        .mem_data_i           (mem_data_i                             ),
+        .mem_stall_i          (cpu_mem_en                             ),
         .noc_rx_i             (noc_tx        [HERMES_NPORT - 1]       ),
         .noc_eop_i            (noc_eop_snd   [HERMES_NPORT - 1]       ),
         .noc_credit_o         (noc_credit_snd[HERMES_NPORT - 1]       ),
@@ -396,15 +353,25 @@ module PhiversPE
 
     /**
      * Memory map:
-     * [0x00000000, 0x40000000[ -> instruction
-     * [0x40000000, 0x80000000[ -> data
+     * [0x00000000, 0x40000000[ -> memory
      * [0x80000000, 0x90000000[ -> PLIC
      * [0x90000000, 0xA0000000[ -> NI
      * [0xA0000000, 0xB0000000[ -> RTC
      * [0xF0000000, 0xFFFFFFFF] -> DEBUG
+     *
+     * Port A belongs to instruction fetch. Port B is shared by load/store and
+     * DMA. A store and a DMA read also compete, as a port has a single address.
+     * Blocking receives spin on the NI registers, so they never lose the port.
      */
 
-    assign dmem_en_o = cpu_en && (cpu_addr[31:30] == 2'b01);
+    logic cpu_mem_en;
+
+    assign cpu_mem_en = cpu_en && (cpu_addr[31:30] == 2'b00);
+
+    assign mem_en_o   = cpu_mem_en || (dma_en && (dma_addr[31:30] == 2'b00));
+    assign mem_we_o   = cpu_mem_en ? cpu_we         : dma_we;
+    assign mem_data_o = cpu_mem_en ? cpu_data_write : dma_data_write;
+    assign mem_addr_o = cpu_mem_en ? cpu_addr[29:0] : dma_addr[29:0];
 
     assign plic_en   = cpu_en && (cpu_addr[31:28] == 4'b1000);
     assign ni_en     = cpu_en && (cpu_addr[31:28] == 4'b1001);
@@ -436,7 +403,7 @@ module PhiversPE
         else if (ni_en_r)
             cpu_data_read = ni_data_read;
         else
-            cpu_data_read = dmem_data_i;
+            cpu_data_read = mem_data_i;
     end
 
 ////////////////////////////////////////////////////////////////////////////////

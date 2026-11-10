@@ -10,8 +10,7 @@ module PhiversMC
     parameter               N_PE_X                                    = 4,
     parameter               N_PE_Y                                    = 4,
     parameter               TASKS_PER_PE                              = 4,
-    parameter               IMEM_PAGE_SZ                              = 32768,
-    parameter               DMEM_PAGE_SZ                              = 32768,
+    parameter               PAGE_SZ                                   = 32768,
     parameter logic [15:0]  ADDR_MA_INJ                               = 16'h0000,
     parameter hermes_port_t PORT_MA_INJ                               = HERMES_SOUTH,
     parameter logic [15:0]  ADDR_APP_INJ                              = 16'h0100,
@@ -47,21 +46,12 @@ module PhiversMC
     output logic [29:0] imem_addr_o       [(N_PE_X - 1):0][(N_PE_Y - 1):0],
     input  logic [31:0] imem_data_i       [(N_PE_X - 1):0][(N_PE_Y - 1):0],
 
-    /* Data memory interface: read/write */
-    output logic        dmem_en_o         [(N_PE_X - 1):0][(N_PE_Y - 1):0],
-    output logic [3:0]  dmem_we_o         [(N_PE_X - 1):0][(N_PE_Y - 1):0],
-    output logic [29:0] dmem_addr_o       [(N_PE_X - 1):0][(N_PE_Y - 1):0],
-    input  logic [31:0] dmem_data_i       [(N_PE_X - 1):0][(N_PE_Y - 1):0],
-    output logic [31:0] dmem_data_o       [(N_PE_X - 1):0][(N_PE_Y - 1):0],
-
-    /* DMA memory interface: read/write on instruction/data */
-    output logic        idma_en_o         [(N_PE_X - 1):0][(N_PE_Y - 1):0],
-    output logic        ddma_en_o         [(N_PE_X - 1):0][(N_PE_Y - 1):0],
-    output logic [3:0]  dma_we_o          [(N_PE_X - 1):0][(N_PE_Y - 1):0],
-    output logic [29:0] dma_addr_o        [(N_PE_X - 1):0][(N_PE_Y - 1):0],
-    input  logic [31:0] idma_data_i       [(N_PE_X - 1):0][(N_PE_Y - 1):0],
-    input  logic [31:0] ddma_data_i       [(N_PE_X - 1):0][(N_PE_Y - 1):0],
-    output logic [31:0] dma_data_o        [(N_PE_X - 1):0][(N_PE_Y - 1):0]
+    /* Shared memory interface: load/store and DMA */
+    output logic        mem_en_o          [(N_PE_X - 1):0][(N_PE_Y - 1):0],
+    output logic [3:0]  mem_we_o          [(N_PE_X - 1):0][(N_PE_Y - 1):0],
+    output logic [29:0] mem_addr_o        [(N_PE_X - 1):0][(N_PE_Y - 1):0],
+    input  logic [31:0] mem_data_i        [(N_PE_X - 1):0][(N_PE_Y - 1):0],
+    output logic [31:0] mem_data_o        [(N_PE_X - 1):0][(N_PE_Y - 1):0]
 );
 
     /* Hermes signals */
@@ -196,8 +186,7 @@ module PhiversMC
                     .N_PE_X        (N_PE_X       ),
                     .N_PE_Y        (N_PE_Y       ),
                     .TASKS_PER_PE  (TASKS_PER_PE ),
-                    .IMEM_PAGE_SZ  (IMEM_PAGE_SZ ),
-                    .DMEM_PAGE_SZ  (DMEM_PAGE_SZ ),
+                    .PAGE_SZ       (PAGE_SZ      ),
                     .Environment   (Environment  ),
                     .UART_DEBUG    (UART_DEBUG   ),
                     .SCHED_DEBUG   (SCHED_DEBUG  ),
@@ -214,18 +203,11 @@ module PhiversMC
                     .imem_enable_o        (imem_enable_o     [x][y]),
                     .imem_addr_o          (imem_addr_o       [x][y]),
                     .imem_data_i          (imem_data_i       [x][y]),
-                    .dmem_en_o            (dmem_en_o         [x][y]),
-                    .dmem_we_o            (dmem_we_o         [x][y]),
-                    .dmem_addr_o          (dmem_addr_o       [x][y]),
-                    .dmem_data_i          (dmem_data_i       [x][y]),
-                    .dmem_data_o          (dmem_data_o       [x][y]),
-                    .idma_en_o            (idma_en_o         [x][y]),
-                    .ddma_en_o            (ddma_en_o         [x][y]),
-                    .dma_we_o             (dma_we_o          [x][y]),
-                    .dma_addr_o           (dma_addr_o        [x][y]),
-                    .idma_data_i          (idma_data_i       [x][y]),
-                    .ddma_data_i          (ddma_data_i       [x][y]),
-                    .dma_data_o           (dma_data_o        [x][y]),
+                    .mem_en_o             (mem_en_o          [x][y]),
+                    .mem_we_o             (mem_we_o          [x][y]),
+                    .mem_addr_o           (mem_addr_o        [x][y]),
+                    .mem_data_i           (mem_data_i        [x][y]),
+                    .mem_data_o           (mem_data_o        [x][y]),
                     .release_peripheral_o (release_peripheral[x][y]),
                     .noc_rx_i             (rx                [x][y]),
                     .noc_eop_i            (eop_rx            [x][y]),

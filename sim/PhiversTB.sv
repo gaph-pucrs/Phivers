@@ -60,19 +60,11 @@ module PhiversTB
     logic [29:0] imem_addr       [(N_PE_X - 1):0][(N_PE_Y - 1):0];
     logic [31:0] imem_data       [(N_PE_X - 1):0][(N_PE_Y - 1):0];
 
-    logic        dmem_en         [(N_PE_X - 1):0][(N_PE_Y - 1):0];
-    logic [3:0]  dmem_we         [(N_PE_X - 1):0][(N_PE_Y - 1):0];
-    logic [29:0] dmem_addr       [(N_PE_X - 1):0][(N_PE_Y - 1):0];
-    logic [31:0] dmem_data_read  [(N_PE_X - 1):0][(N_PE_Y - 1):0];
-    logic [31:0] dmem_data_write [(N_PE_X - 1):0][(N_PE_Y - 1):0];
-
-    logic        idma_en         [(N_PE_X - 1):0][(N_PE_Y - 1):0];
-    logic        ddma_en         [(N_PE_X - 1):0][(N_PE_Y - 1):0];
-    logic [3:0]  dma_we          [(N_PE_X - 1):0][(N_PE_Y - 1):0];
-    logic [29:0] dma_addr        [(N_PE_X - 1):0][(N_PE_Y - 1):0];
-    logic [31:0] idma_data       [(N_PE_X - 1):0][(N_PE_Y - 1):0];
-    logic [31:0] ddma_data       [(N_PE_X - 1):0][(N_PE_Y - 1):0];
-    logic [31:0] dma_data        [(N_PE_X - 1):0][(N_PE_Y - 1):0];
+    logic        mem_en          [(N_PE_X - 1):0][(N_PE_Y - 1):0];
+    logic [3:0]  mem_we          [(N_PE_X - 1):0][(N_PE_Y - 1):0];
+    logic [29:0] mem_addr        [(N_PE_X - 1):0][(N_PE_Y - 1):0];
+    logic [31:0] mem_data_read   [(N_PE_X - 1):0][(N_PE_Y - 1):0];
+    logic [31:0] mem_data_write  [(N_PE_X - 1):0][(N_PE_Y - 1):0];
 
 //////////////////////////////////////////////////////////////////////////////
 // Many Core
@@ -82,8 +74,7 @@ module PhiversTB
         .N_PE_X        (N_PE_X       ),
         .N_PE_Y        (N_PE_Y       ),
         .TASKS_PER_PE  (TASKS_PER_PE ),
-        .IMEM_PAGE_SZ  (IMEM_PAGE_SZ ),
-        .DMEM_PAGE_SZ  (DMEM_PAGE_SZ ),
+        .PAGE_SZ       (PAGE_SZ      ),
         .ADDR_MA_INJ   (ADDR_MA_INJ  ),
         .PORT_MA_INJ   (PORT_MA_INJ  ),
         .ADDR_APP_INJ  (ADDR_APP_INJ ),
@@ -113,18 +104,11 @@ module PhiversTB
         .imem_enable_o    (imem_enable    ),
         .imem_addr_o      (imem_addr      ),
         .imem_data_i      (imem_data      ),
-        .dmem_en_o        (dmem_en        ),
-        .dmem_we_o        (dmem_we        ),
-        .dmem_addr_o      (dmem_addr      ),
-        .dmem_data_i      (dmem_data_read ),
-        .dmem_data_o      (dmem_data_write),
-        .idma_en_o        (idma_en        ),
-        .ddma_en_o        (ddma_en        ),
-        .dma_we_o         (dma_we         ),
-        .dma_addr_o       (dma_addr       ),
-        .idma_data_i      (idma_data      ),
-        .ddma_data_i      (ddma_data      ),
-        .dma_data_o       (dma_data       )
+        .mem_en_o         (mem_en         ),
+        .mem_we_o         (mem_we         ),
+        .mem_addr_o       (mem_addr       ),
+        .mem_data_i       (mem_data_read  ),
+        .mem_data_o       (mem_data_write )
     );
 
     /* Macros, not parameters: Verilator applies a bind even inside a false generate if */
@@ -141,84 +125,46 @@ module PhiversTB
 // Memory
 //////////////////////////////////////////////////////////////////////////////
 
-    localparam IMEM_SZ = IMEM_PAGE_SZ * (TASKS_PER_PE + 1);
-    localparam KERNEL_TEXT = "../MAestro/ikernel.bin";
-
-    localparam DMEM_SZ = DMEM_PAGE_SZ * (TASKS_PER_PE + 1);
-    localparam KERNEL_DATA = "../MAestro/dkernel.bin";
+    localparam MEM_SZ = PAGE_SZ * (TASKS_PER_PE + 1);
+    localparam KERNEL = "../MAestro/kernel.bin";
 
     generate
         for (genvar x = 0; x < N_PE_X; x++) begin : gen_pe_x
             for (genvar y = 0; y < N_PE_Y; y++) begin : gen_pe_y
+                /* Port A: instruction fetch. Port B: load/store and DMA. */
                 RamArray #(
                     .MEM_WIDTH  (IMEM_SZ                                 ),
                     .BIN_FILE   (KERNEL_TEXT                             )
-                ) 
-                I_MEM (
-                    .clk        (clk                                     ),
+                MEM (
+                    .clk        (clk                                   ),
 
-                    .enA_i      (imem_enable[x][y]                       ), 
-                    .weA_i      (4'h0                                    ), 
-                    .addrA_i    (imem_addr[x][y][($clog2(IMEM_SZ) - 1):0]), 
-                    .dataA_i    (32'h0                                   ), 
-                    .dataA_o    (imem_data[x][y]                         ),
+                    .enA_i      (imem_enable   [x][y]                  ), 
+                    .weA_i      (4'h0                                  ), 
+                    .addrA_i    (imem_addr     [x][y][($clog2(MEM_SZ) - 1):0]), 
+                    .dataA_i    (32'h0                                 ), 
+                    .dataA_o    (imem_data     [x][y]                  ),
 
-                    .enB_i      (idma_en  [x][y]                         ), 
-                    .weB_i      (dma_we   [x][y]                         ), 
-                    .addrB_i    (dma_addr [x][y][($clog2(IMEM_SZ) - 1):0]), 
-                    .dataB_i    (dma_data [x][y]                         ), 
-                    .dataB_o    (idma_data[x][y]                         )
-                );
-
-                RamArray #(
-                    .MEM_WIDTH  (DMEM_SZ                                 ),
-                    .BIN_FILE   (KERNEL_DATA                             )
-                ) 
-                D_MEM (
-                    .clk        (clk                                           ), 
-
-                    .enA_i      (dmem_en        [x][y]                         ), 
-                    .weA_i      (dmem_we        [x][y]                         ), 
-                    .addrA_i    (dmem_addr      [x][y][($clog2(DMEM_SZ) - 1):0]), 
-                    .dataA_i    (dmem_data_write[x][y]                         ), 
-                    .dataA_o    (dmem_data_read [x][y]                         ),
-
-                    .enB_i      (ddma_en        [x][y]                         ), 
-                    .weB_i      (dma_we         [x][y]                         ), 
-                    .addrB_i    (dma_addr       [x][y][($clog2(DMEM_SZ) - 1):0]), 
-                    .dataB_i    (dma_data       [x][y]                         ), 
-                    .dataB_o    (ddma_data      [x][y]                         )
+                    .enB_i      (mem_en        [x][y]                  ), 
+                    .weB_i      (mem_we        [x][y]                  ), 
+                    .addrB_i    (mem_addr      [x][y][($clog2(MEM_SZ) - 1):0]), 
+                    .dataB_i    (mem_data_write[x][y]                  ), 
+                    .dataB_o    (mem_data_read [x][y]                  )
                 );
 
                 if (MEM_PROFILE) begin : gen_mem_profile
                     MemProfile #(
-                        .MEM_SZ   (IMEM_SZ                 ),
-                        .PAGE_SZ  (IMEM_PAGE_SZ            ),
-                        .BLOCK_SZ (MEM_PROFILE_BLOCK       ),
-                        .ADDRESS  (16'(x << 8) | 16'(y)    ),
-                        .MEM_NAME ("I"                     )
+                        .MEM_SZ   (MEM_SZ               ),
+                        .PAGE_SZ  (PAGE_SZ              ),
+                        .BLOCK_SZ (MEM_PROFILE_BLOCK    ),
+                        .ADDRESS  (16'(x << 8) | 16'(y) ),
+                        .MEM_NAME ("M"                  )
                     )
-                    I_MEM_PROFILE (
-                        .clk     (clk               ),
-                        .enA_i   (imem_enable[x][y] ),
-                        .addrA_i (imem_addr  [x][y] ),
-                        .enB_i   (idma_en    [x][y] ),
-                        .addrB_i (dma_addr   [x][y] )
-                    );
-
-                    MemProfile #(
-                        .MEM_SZ   (DMEM_SZ                 ),
-                        .PAGE_SZ  (DMEM_PAGE_SZ            ),
-                        .BLOCK_SZ (MEM_PROFILE_BLOCK       ),
-                        .ADDRESS  (16'(x << 8) | 16'(y)    ),
-                        .MEM_NAME ("D"                     )
-                    )
-                    D_MEM_PROFILE (
-                        .clk     (clk             ),
-                        .enA_i   (dmem_en  [x][y] ),
-                        .addrA_i (dmem_addr[x][y] ),
-                        .enB_i   (ddma_en  [x][y] ),
-                        .addrB_i (dma_addr [x][y] )
+                    mem_profile (
+                        .clk     (clk              ),
+                        .enA_i   (imem_enable[x][y]),
+                        .addrA_i (imem_addr  [x][y]),
+                        .enB_i   (mem_en     [x][y]),
+                        .addrB_i (mem_addr   [x][y])
                     );
                 end
             end
