@@ -133,8 +133,9 @@ module PhiversTB
             for (genvar y = 0; y < N_PE_Y; y++) begin : gen_pe_y
                 /* Port A: instruction fetch. Port B: load/store and DMA. */
                 RamArray #(
-                    .MEM_WIDTH  (IMEM_SZ                                 ),
-                    .BIN_FILE   (KERNEL_TEXT                             )
+                    .MEM_WIDTH  (MEM_SZ                                ),
+                    .BIN_FILE   (KERNEL                                )
+                )
                 MEM (
                     .clk        (clk                                   ),
 
