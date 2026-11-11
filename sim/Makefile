@@ -46,6 +46,7 @@ SVFLAGS += -I$(PHIVERS)
 # Add simulation sources
 SVSRC += \
 	../RS5/sim/RAM_mem.sv \
+	../RS5/sim/RamArray.sv \
 	../TaskInjector/sim/TaskParser.sv \
 	Debug.sv \
 	RedSignal.sv \
