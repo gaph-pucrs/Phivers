@@ -25,12 +25,12 @@
 
 module MemProfile
 #(
-    parameter int          MEM_SZ   = 65536,
-    parameter int          PAGE_SZ  = 32768,
-    parameter int          BLOCK_SZ = 4096,
-    parameter logic [15:0] ADDRESS  = 16'h0000,
-    parameter string       MEM_NAME = "D",
-    parameter string       LOG_PATH = "./debug/ram"
+    parameter longint unsigned MEM_SZ   = 65536,
+    parameter int              PAGE_SZ  = 32768,
+    parameter int              BLOCK_SZ = 4096,
+    parameter logic [15:0]     ADDRESS  = 16'h0000,
+    parameter string           MEM_NAME = "D",
+    parameter string           LOG_PATH = "./debug/ram"
 )
 (
     input logic        clk,
@@ -40,8 +40,8 @@ module MemProfile
 
     /* Only the block-index bits of the addresses are profiled. */
     /* verilator lint_off UNUSEDSIGNAL */
-    input logic [29:0] addrA_i,
-    input logic [29:0] addrB_i
+    input logic [30:0] addrA_i,
+    input logic [30:0] addrB_i
     /* verilator lint_on UNUSEDSIGNAL */
 );
 
@@ -50,7 +50,7 @@ module MemProfile
     localparam int INDEX_BITS  = ADDR_BITS - BLOCK_BITS;
     /* Sized to the address slice, so an index can never fall out of range. */
     localparam int BLOCKS      = 1 << INDEX_BITS;
-    localparam int PAGES       = MEM_SZ / PAGE_SZ;
+    localparam int PAGES       = int'(MEM_SZ / longint'(PAGE_SZ));
     localparam int PAGE_BLOCKS = PAGE_SZ / BLOCK_SZ;
 
     logic touched [BLOCKS];

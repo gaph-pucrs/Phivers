@@ -57,12 +57,12 @@ module PhiversTB
     logic [31:0] app_src_data;
 
     logic        imem_enable     [(N_PE_X - 1):0][(N_PE_Y - 1):0];
-    logic [29:0] imem_addr       [(N_PE_X - 1):0][(N_PE_Y - 1):0];
+    logic [30:0] imem_addr       [(N_PE_X - 1):0][(N_PE_Y - 1):0];
     logic [31:0] imem_data       [(N_PE_X - 1):0][(N_PE_Y - 1):0];
 
     logic        mem_en          [(N_PE_X - 1):0][(N_PE_Y - 1):0];
     logic [3:0]  mem_we          [(N_PE_X - 1):0][(N_PE_Y - 1):0];
-    logic [29:0] mem_addr        [(N_PE_X - 1):0][(N_PE_Y - 1):0];
+    logic [30:0] mem_addr        [(N_PE_X - 1):0][(N_PE_Y - 1):0];
     logic [31:0] mem_data_read   [(N_PE_X - 1):0][(N_PE_Y - 1):0];
     logic [31:0] mem_data_write  [(N_PE_X - 1):0][(N_PE_Y - 1):0];
 
@@ -125,7 +125,7 @@ module PhiversTB
 // Memory
 //////////////////////////////////////////////////////////////////////////////
 
-    localparam MEM_SZ = PAGE_SZ * (TASKS_PER_PE + 1);
+    localparam longint unsigned MEM_SZ = longint'(PAGE_SZ) * (TASKS_PER_PE + 1);
     localparam KERNEL = "../MAestro/kernel.bin";
 
     generate

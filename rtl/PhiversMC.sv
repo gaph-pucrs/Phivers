@@ -43,13 +43,13 @@ module PhiversMC
 
     /* Instruction memory interface: read-only */
     output logic        imem_enable_o     [(N_PE_X - 1):0][(N_PE_Y - 1):0],
-    output logic [29:0] imem_addr_o       [(N_PE_X - 1):0][(N_PE_Y - 1):0],
+    output logic [30:0] imem_addr_o       [(N_PE_X - 1):0][(N_PE_Y - 1):0],
     input  logic [31:0] imem_data_i       [(N_PE_X - 1):0][(N_PE_Y - 1):0],
 
     /* Shared memory interface: load/store and DMA */
     output logic        mem_en_o          [(N_PE_X - 1):0][(N_PE_Y - 1):0],
     output logic [3:0]  mem_we_o          [(N_PE_X - 1):0][(N_PE_Y - 1):0],
-    output logic [29:0] mem_addr_o        [(N_PE_X - 1):0][(N_PE_Y - 1):0],
+    output logic [30:0] mem_addr_o        [(N_PE_X - 1):0][(N_PE_Y - 1):0],
     input  logic [31:0] mem_data_i        [(N_PE_X - 1):0][(N_PE_Y - 1):0],
     output logic [31:0] mem_data_o        [(N_PE_X - 1):0][(N_PE_Y - 1):0]
 );

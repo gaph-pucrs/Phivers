@@ -30,13 +30,13 @@ module PhiversPE
 
     /* Instruction memory interface: read-only */
     output logic                        imem_enable_o,
-    output logic     [29:0]             imem_addr_o,
+    output logic     [30:0]             imem_addr_o,
     input  logic     [31:0]             imem_data_i,
 
     /* Shared memory interface: load/store and DMA, the CPU always wins */
     output logic                        mem_en_o,
     output logic     [3:0]              mem_we_o,
-    output logic     [29:0]             mem_addr_o,
+    output logic     [30:0]             mem_addr_o,
     input  logic     [31:0]             mem_data_i,
     output logic     [31:0]             mem_data_o,
 
@@ -84,7 +84,7 @@ module PhiversPE
     logic [31:0] imem_addr;
     /* verilator lint_on UNUSEDSIGNAL */
 
-    assign imem_addr_o = imem_addr[29:0];
+    assign imem_addr_o = imem_addr[30:0];
 
     RS5 #(
         .Environment     (Environment),
@@ -366,12 +366,12 @@ module PhiversPE
 
     logic cpu_mem_en;
 
-    assign cpu_mem_en = cpu_en && (cpu_addr[31:30] == 2'b00);
+    assign cpu_mem_en = cpu_en && (cpu_addr[31] == 1'b0);
 
-    assign mem_en_o   = cpu_mem_en || (dma_en && (dma_addr[31:30] == 2'b00));
+    assign mem_en_o   = cpu_mem_en || (dma_en && (dma_addr[31] == 1'b0));
     assign mem_we_o   = cpu_mem_en ? cpu_we         : dma_we;
     assign mem_data_o = cpu_mem_en ? cpu_data_write : dma_data_write;
-    assign mem_addr_o = cpu_mem_en ? cpu_addr[29:0] : dma_addr[29:0];
+    assign mem_addr_o = cpu_mem_en ? cpu_addr[30:0] : dma_addr[30:0];
 
     assign plic_en   = cpu_en && (cpu_addr[31:28] == 4'b1000);
     assign ni_en     = cpu_en && (cpu_addr[31:28] == 4'b1001);
@@ -392,7 +392,7 @@ module PhiversPE
             rtc_en_r  <= rtc_en;
             plic_en_r <= plic_en;
             ni_en_r   <= ni_en;
-        end;
+        end
     end
 
     always_comb begin
