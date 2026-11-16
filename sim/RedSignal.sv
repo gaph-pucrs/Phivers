@@ -150,6 +150,7 @@ module RedSignal
     /* verilator lint_off UNUSEDSIGNAL */
     logic almost_full;
     logic almost_empty;
+    logic [2:0] count;
     /* verilator lint_on UNUSEDSIGNAL */
 
     logic buf_rx;
@@ -174,6 +175,7 @@ module RedSignal
         .tx_ack_i (buf_cr_tx            ),
         .data_o   ({buf_eop,   buf_data}),
 
+        .count_o       (count           ),
         .almost_full_o (almost_full     ),
         .almost_empty_o(almost_empty    )
     );
