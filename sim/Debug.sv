@@ -68,6 +68,29 @@ module Debug
         end
     end
 
+    /**
+     * Zero-delay write: the kernel sets the physical address of a buffer in
+     * this PE's memory, then its length. Writing the length prints the
+     * buffer, read straight from the memory.
+     */
+    logic [31:0] write_ptr;
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (!rst_ni)
+            write_ptr <= '0;
+        else if (en && we_i && addr == 24'h000018)
+            write_ptr <= wdata_i;
+    end
+
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (rst_ni) begin
+            if (en && we_i && addr == 24'h00001C) begin
+                for (logic [31:0] i = '0; i < wdata_i; i++)
+                    $fwrite(log_fd, "%c", PhiversTB.gen_pe_x[ADDRESS[15:8]].gen_pe_y[ADDRESS[7:0]].MEM.backdoor.peek(write_ptr + i));
+                $fflush(log_fd);
+            end
+        end
+    end
+
     final begin
         $fclose(log_fd);
     end
