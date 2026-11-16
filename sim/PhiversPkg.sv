@@ -1,6 +1,12 @@
 `ifndef PHIVERS_PKG
 `define PHIVERS_PKG
 
+`define UART_DEBUG
+`define SCHED_DEBUG
+`define PIPE_DEBUG
+`define TRAFFIC_DEBUG
+`define SAFE_DEBUG
+
 `include "../Hermes/rtl/HermesPkg.sv"
 
 package PhiversPkg;
@@ -15,14 +21,6 @@ package PhiversPkg;
     parameter logic [15:0] ADDR_APP_INJ = 16'h0101;
     parameter hermes_port_t PORT_APP_INJ = HERMES_NORTH;
     parameter PAGE_SZ = 32768;
-    parameter RAM_DEBUG = 0;
-    parameter RS5_DEBUG = 0;
-    parameter UART_DEBUG = 1;
-    parameter SCHED_DEBUG = 1;
-    parameter PIPE_DEBUG = 1;
-    parameter TRAFFIC_DEBUG = 1;
-    parameter DMNI_DEBUG = 0;
-    parameter SAFE_DEBUG = 1;
 
 endpackage
 

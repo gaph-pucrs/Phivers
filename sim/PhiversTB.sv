@@ -90,12 +90,6 @@ module PhiversTB
         .PORT_APP_INJ  (PORT_APP_INJ ),
         .Environment   (ASIC         ),
         .LINK_CFG      (LINK_CFG     ),
-        .UART_DEBUG    (UART_DEBUG   ),
-        .SCHED_DEBUG   (SCHED_DEBUG  ),
-        .PIPE_DEBUG    (PIPE_DEBUG   ),
-        .TRAFFIC_DEBUG (TRAFFIC_DEBUG),
-        .DMNI_DEBUG    (DMNI_DEBUG   ),
-        .SAFE_DEBUG    (SAFE_DEBUG   ),
         .VEnable       (VEnable      ),
         .VLEN          (VLEN         )
     )
@@ -125,7 +119,63 @@ module PhiversTB
         .mem_rdata_i      (mem_rdata      )
     );
 
-    /* Macros, not parameters: Verilator applies a bind even inside a false generate if */
+    /**
+     * Debug monitors, bound into every PhiversPE. Their switches are macros
+     * from PhiversPkg, not parameters: Verilator applies a bind even inside a
+     * false generate if. Ports and parameters resolve inside each PE.
+     */
+
+    /* Always bound: the kernel also ends the simulation through it */
+    bind PhiversPE Debug #(
+        .ADDRESS         (ADDRESS                        ),
+        .SEQ_ADDR        (seq_addr                       ),
+        .DBG_SCHED_FILE  ("./debug/scheduling_report.txt"),
+        .DBG_TRAFFIC_FILE("./debug/traffic_router.txt"   )
+    ) dbg (
+        .clk_i      (clk_i     ),
+        .rst_ni     (rst_ni    ),
+        .req_i      (data_req  ),
+        .gnt_i      (data_gnt  ),
+        .addr_i     (data_addr ),
+        .we_i       (data_we   ),
+        .wdata_i    (data_wdata),
+        .tick_cntr_i(mtime     )
+    );
+
+`ifdef TRAFFIC_DEBUG
+    bind PhiversPE TrafficDebug #(
+        .ADDRESS(ADDRESS)
+    ) traffic_dbg (
+        .clk_i            (clk_i          ),
+        .rst_ni           (rst_ni         ),
+        .noc_rx_i         (noc_rx         ),
+        .noc_eop_rcv_i    (noc_eop_rcv    ),
+        .noc_credit_rcv_i (noc_credit_rcv ),
+        .noc_data_rcv_i   (noc_data_rcv   ),
+        .brlite_req_rcv_i (brlite_req_rcv ),
+        .brlite_ack_rcv_i (brlite_ack_rcv ),
+        .brlite_flit_rcv_i(brlite_flit_rcv),
+        .tick_cntr_i      (mtime          )
+    );
+`endif
+
+`ifdef DMNI_DEBUG
+    /* The local port of the router is the DMNI input */
+    bind PhiversPE DMNILog #(
+        .FLIT_SIZE(32            ),
+        .ADDRESS  (ADDRESS       ),
+        .LOG_PATH ("./debug/dmni")
+    ) dmni_log (
+        .clk_i      (clk_i                           ),
+        .rst_ni     (rst_ni                          ),
+        .tx_i       (noc_tx        [HERMES_NPORT - 1]),
+        .eop_i      (noc_eop_snd   [HERMES_NPORT - 1]),
+        .credit_i   (noc_credit_snd[HERMES_NPORT - 1]),
+        .data_i     (noc_data_snd  [HERMES_NPORT - 1]),
+        .tick_cntr_i(mtime                           )
+    );
+`endif
+
 `ifdef RS5_DEBUG
     bind regbank RegbankDebug debug();
     bind CSRBank HPMProfiler report();

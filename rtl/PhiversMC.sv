@@ -17,12 +17,6 @@ module PhiversMC
     parameter hermes_port_t PORT_APP_INJ                              = HERMES_SOUTH,
     parameter environment_e Environment                               = ASIC,
     parameter string        LINK_CFG     [N_PE_X*N_PE_Y*HERMES_NPORT] = '{default: ""},
-    parameter bit           UART_DEBUG                                = 1,
-    parameter bit           SCHED_DEBUG                               = 1,
-    parameter bit           PIPE_DEBUG                                = 1,
-    parameter bit           TRAFFIC_DEBUG                             = 1,
-    parameter bit           DMNI_DEBUG                                = 0,
-    parameter bit           SAFE_DEBUG                                = 1,
     parameter bit           VEnable                                   = 0,
     parameter int           VLEN                                      = 64
 )
@@ -193,12 +187,6 @@ module PhiversMC
                     .TASKS_PER_PE  (TASKS_PER_PE ),
                     .PAGE_SZ       (PAGE_SZ      ),
                     .Environment   (Environment  ),
-                    .UART_DEBUG    (UART_DEBUG   ),
-                    .SCHED_DEBUG   (SCHED_DEBUG  ),
-                    .PIPE_DEBUG    (PIPE_DEBUG   ),
-                    .TRAFFIC_DEBUG (TRAFFIC_DEBUG),
-                    .DMNI_DEBUG    (DMNI_DEBUG   ),
-                    .SAFE_DEBUG    (SAFE_DEBUG   ),
                     .VEnable       (VEnable      ),
                     .VLEN          (VLEN         )
                 ) 
