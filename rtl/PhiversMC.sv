@@ -41,17 +41,22 @@ module PhiversMC
     output logic        app_src_credit_o,
     input  logic [31:0] app_src_data_i,
 
-    /* Instruction memory interface: read-only */
-    output logic        imem_enable_o     [(N_PE_X - 1):0][(N_PE_Y - 1):0],
-    output logic [30:0] imem_addr_o       [(N_PE_X - 1):0][(N_PE_Y - 1):0],
-    input  logic [31:0] imem_data_i       [(N_PE_X - 1):0][(N_PE_Y - 1):0],
+    /* OBI instruction interface: read-only */
+    output logic        instr_req_o       [(N_PE_X - 1):0][(N_PE_Y - 1):0],
+    input  logic        instr_gnt_i       [(N_PE_X - 1):0][(N_PE_Y - 1):0],
+    output logic [31:0] instr_addr_o      [(N_PE_X - 1):0][(N_PE_Y - 1):0],
+    input  logic        instr_rvalid_i    [(N_PE_X - 1):0][(N_PE_Y - 1):0],
+    input  logic [31:0] instr_rdata_i     [(N_PE_X - 1):0][(N_PE_Y - 1):0],
 
-    /* Shared memory interface: load/store and DMA */
-    output logic        mem_en_o          [(N_PE_X - 1):0][(N_PE_Y - 1):0],
-    output logic [3:0]  mem_we_o          [(N_PE_X - 1):0][(N_PE_Y - 1):0],
-    output logic [30:0] mem_addr_o        [(N_PE_X - 1):0][(N_PE_Y - 1):0],
-    input  logic [31:0] mem_data_i        [(N_PE_X - 1):0][(N_PE_Y - 1):0],
-    output logic [31:0] mem_data_o        [(N_PE_X - 1):0][(N_PE_Y - 1):0]
+    /* OBI memory interface: load/store and DMA */
+    output logic        mem_req_o         [(N_PE_X - 1):0][(N_PE_Y - 1):0],
+    input  logic        mem_gnt_i         [(N_PE_X - 1):0][(N_PE_Y - 1):0],
+    output logic [31:0] mem_addr_o        [(N_PE_X - 1):0][(N_PE_Y - 1):0],
+    output logic        mem_we_o          [(N_PE_X - 1):0][(N_PE_Y - 1):0],
+    output logic [3:0]  mem_be_o          [(N_PE_X - 1):0][(N_PE_Y - 1):0],
+    output logic [31:0] mem_wdata_o       [(N_PE_X - 1):0][(N_PE_Y - 1):0],
+    input  logic        mem_rvalid_i      [(N_PE_X - 1):0][(N_PE_Y - 1):0],
+    input  logic [31:0] mem_rdata_i       [(N_PE_X - 1):0][(N_PE_Y - 1):0]
 );
 
     /* Hermes signals */
@@ -200,14 +205,19 @@ module PhiversMC
                 pe (
                     .clk_i                (clk_i                   ),
                     .rst_ni               (rst_ni                  ),
-                    .imem_enable_o        (imem_enable_o     [x][y]),
-                    .imem_addr_o          (imem_addr_o       [x][y]),
-                    .imem_data_i          (imem_data_i       [x][y]),
-                    .mem_en_o             (mem_en_o          [x][y]),
-                    .mem_we_o             (mem_we_o          [x][y]),
+                    .instr_req_o          (instr_req_o       [x][y]),
+                    .instr_gnt_i          (instr_gnt_i       [x][y]),
+                    .instr_addr_o         (instr_addr_o      [x][y]),
+                    .instr_rvalid_i       (instr_rvalid_i    [x][y]),
+                    .instr_rdata_i        (instr_rdata_i     [x][y]),
+                    .mem_req_o            (mem_req_o         [x][y]),
+                    .mem_gnt_i            (mem_gnt_i         [x][y]),
                     .mem_addr_o           (mem_addr_o        [x][y]),
-                    .mem_data_i           (mem_data_i        [x][y]),
-                    .mem_data_o           (mem_data_o        [x][y]),
+                    .mem_we_o             (mem_we_o          [x][y]),
+                    .mem_be_o             (mem_be_o          [x][y]),
+                    .mem_wdata_o          (mem_wdata_o       [x][y]),
+                    .mem_rvalid_i         (mem_rvalid_i      [x][y]),
+                    .mem_rdata_i          (mem_rdata_i       [x][y]),
                     .release_peripheral_o (release_peripheral[x][y]),
                     .noc_rx_i             (rx                [x][y]),
                     .noc_eop_i            (eop_rx            [x][y]),

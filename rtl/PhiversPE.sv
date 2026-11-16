@@ -28,17 +28,22 @@ module PhiversPE
     input  logic                        clk_i,
     input  logic                        rst_ni,
 
-    /* Instruction memory interface: read-only */
-    output logic                        imem_enable_o,
-    output logic     [30:0]             imem_addr_o,
-    input  logic     [31:0]             imem_data_i,
+    /* OBI instruction interface: read-only */
+    output logic                        instr_req_o,
+    input  logic                        instr_gnt_i,
+    output logic     [31:0]             instr_addr_o,
+    input  logic                        instr_rvalid_i,
+    input  logic     [31:0]             instr_rdata_i,
 
-    /* Shared memory interface: load/store and DMA, the CPU always wins */
-    output logic                        mem_en_o,
-    output logic     [3:0]              mem_we_o,
-    output logic     [30:0]             mem_addr_o,
-    input  logic     [31:0]             mem_data_i,
-    output logic     [31:0]             mem_data_o,
+    /* OBI memory interface: load/store and DMA, atomics already resolved */
+    output logic                        mem_req_o,
+    input  logic                        mem_gnt_i,
+    output logic     [31:0]             mem_addr_o,
+    output logic                        mem_we_o,
+    output logic     [3:0]              mem_be_o,
+    output logic     [31:0]             mem_wdata_o,
+    input  logic                        mem_rvalid_i,
+    input  logic     [31:0]             mem_rdata_i,
 
     /* NoC input interface */
     output logic                        release_peripheral_o,
@@ -72,19 +77,18 @@ module PhiversPE
     logic        mti;
 
     logic        irq_ack;
-    logic        cpu_en;
-    logic [3:0]  cpu_we;
-    logic [31:0] cpu_addr;
-    logic [31:0] cpu_data_write;
-    logic [31:0] cpu_data_read;
     logic [63:0] mtime;
 
-    /* The CPU is 32 bits but not all bits are used in memory */
-    /* verilator lint_off UNUSEDSIGNAL */
-    logic [31:0] imem_addr;
-    /* verilator lint_on UNUSEDSIGNAL */
-
-    assign imem_addr_o = imem_addr[30:0];
+    logic        data_req;
+    logic        data_gnt;
+    logic [31:0] data_addr;
+    logic        data_we;
+    logic [3:0]  data_be;
+    logic [31:0] data_wdata;
+    logic [5:0]  data_atop;
+    logic        data_rvalid;
+    logic [31:0] data_rdata;
+    logic        data_exokay;
 
     RS5 #(
         .Environment     (Environment),
@@ -99,28 +103,32 @@ module PhiversPE
         .ZICONDEnable    (1'b1       ),
         .ZCBEnable       (1'b1       ),
         .HPMCOUNTEREnable(1'b0       ),
-        .IQUEUE_SIZE     (2          ),
         .BRANCHPRED      (1'b1       ),
         .FORWARDING      (1'b1       )
     )
     processor (
-        .clk                    (clk_i         ),
-        .reset_n                (rst_ni        ),
-        .sys_reset_i            (1'b0          ),
-        .stall                  (1'b0          ),
-        .busy_i                 (1'b0          ),
-        .tip_i                  (mti           ),
-        .eip_i                  (mei           ),
-        .interrupt_ack_o        (irq_ack       ),
-        .mtime_i                (mtime         ),
-        .imem_operation_enable_o(imem_enable_o ),
-        .instruction_address_o  (imem_addr     ),
-        .instruction_i          (imem_data_i   ),
-        .dmem_operation_enable_o(cpu_en        ),
-        .mem_write_enable_o     (cpu_we        ),
-        .mem_address_o          (cpu_addr      ),
-        .mem_data_o             (cpu_data_write),
-        .mem_data_i             (cpu_data_read )        
+        .clk            (clk_i         ),
+        .reset_n        (rst_ni        ),
+        .sys_reset_i    (1'b0          ),
+        .tip_i          (mti           ),
+        .eip_i          (mei           ),
+        .interrupt_ack_o(irq_ack       ),
+        .mtime_i        (mtime         ),
+        .instr_req_o    (instr_req_o   ),
+        .instr_gnt_i    (instr_gnt_i   ),
+        .instr_addr_o   (instr_addr_o  ),
+        .instr_rvalid_i (instr_rvalid_i),
+        .instr_rdata_i  (instr_rdata_i ),
+        .data_req_o     (data_req      ),
+        .data_gnt_i     (data_gnt      ),
+        .data_addr_o    (data_addr     ),
+        .data_we_o      (data_we       ),
+        .data_be_o      (data_be       ),
+        .data_wdata_o   (data_wdata    ),
+        .data_atop_o    (data_atop     ),
+        .data_rvalid_i  (data_rvalid   ),
+        .data_rdata_i   (data_rdata    ),
+        .data_exokay_i  (data_exokay   )
     );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -135,23 +143,33 @@ module PhiversPE
     /* verilator lint_on UNUSEDSIGNAL */
 
     logic        plic_en;
+    logic        plic_rvalid;
     logic [31:0] plic_data_read;
+
+    /* OBI subordinates that never stall: the data bus grants for them */
+    /* verilator lint_off UNUSEDSIGNAL */
+    logic        plic_gnt;
+    logic        rtc_gnt;
+    /* verilator lint_on UNUSEDSIGNAL */
 
     plic #(
         .i_cnt(1)
     )
     plic_m (
-        .clk    (clk_i         ),
-        .reset_n(rst_ni        ),
-        .en_i   (plic_en       ),
-        .we_i   (cpu_we        ),
-        .addr_i (cpu_addr[23:0]),
-        .data_i (cpu_data_write),
-        .data_o (plic_data_read),
-        .irq_i  (dmni_irq      ),
-        .iack_i (irq_ack       ),
-        .iack_o (plic_ack      ),
-        .irq_o  (mei           )
+        .clk     (clk_i          ),
+        .reset_n (rst_ni         ),
+        .req_i   (plic_en        ),
+        .gnt_o   (plic_gnt       ),
+        .addr_i  (data_addr[23:0]),
+        .we_i    (data_we        ),
+        .be_i    (data_be        ),
+        .wdata_i (data_wdata     ),
+        .rvalid_o(plic_rvalid    ),
+        .rdata_o (plic_data_read ),
+        .irq_i   (dmni_irq       ),
+        .iack_i  (irq_ack        ),
+        .iack_o  (plic_ack       ),
+        .irq_o   (mei            )
     );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -159,23 +177,23 @@ module PhiversPE
 ////////////////////////////////////////////////////////////////////////////////
 
     logic        rtc_en;
-    
-    /* The RTC bus is 64 bits, while the CPU bus is 32 bits */
-    /* verilator lint_off UNUSEDSIGNAL */
-    logic [63:0] rtc_data_read;
-    /* verilator lint_on UNUSEDSIGNAL */
+    logic        rtc_rvalid;
+    logic [31:0] rtc_data_read;
 
-    rtc 
+    rtc
     rtc_m (
-        .clk     (clk_i                  ),
-        .reset_n (rst_ni                 ),
-        .en_i    (rtc_en                 ),
-        .addr_i  (cpu_addr[3:0]          ),
-        .we_i    ({4'h0, cpu_we}         ),
-        .data_i  ({32'h0, cpu_data_write}),
-        .data_o  (rtc_data_read          ),
-        .mti_o   (mti                    ),
-        .mtime_o (mtime                  )
+        .clk     (clk_i         ),
+        .reset_n (rst_ni        ),
+        .req_i   (rtc_en        ),
+        .gnt_o   (rtc_gnt       ),
+        .addr_i  (data_addr[3:0]),
+        .we_i    (data_we       ),
+        .be_i    (data_be       ),
+        .wdata_i (data_wdata    ),
+        .rvalid_o(rtc_rvalid    ),
+        .rdata_o (rtc_data_read ),
+        .mti_o   (mti           ),
+        .mtime_o (mtime         )
     );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -265,12 +283,21 @@ module PhiversPE
 ////////////////////////////////////////////////////////////////////////////////
 
     logic        ni_en;
+    logic        ni_rvalid;
     logic [31:0] ni_data_read;
 
-    logic        dma_en;
-    logic [3:0]  dma_we;
-    logic [31:0] dma_data_write;
+    /* Never stalls: the data bus grants for it */
+    /* verilator lint_off UNUSEDSIGNAL */
+    logic        ni_gnt;
+    /* verilator lint_on UNUSEDSIGNAL */
+
+    logic        dma_req;
+    logic        dma_gnt;
     logic [31:0] dma_addr;
+    logic        dma_we;
+    logic [3:0]  dma_be;
+    logic [31:0] dma_wdata;
+    logic        dma_rvalid;
 
     logic        brlite_req;
     logic        brlite_ack;
@@ -318,18 +345,23 @@ module PhiversPE
         .rst_ni               (rst_ni                                 ),
         .tick_counter_i       (mtime[31:0]                            ),
         .irq_o                (dmni_irq                               ),
-        .cfg_en_i             (ni_en                                  ),
-        .cfg_we_i             (cpu_we                                 ),
-        .cfg_addr_i           (cpu_addr[7:0]                          ),
-        .cfg_data_i           (cpu_data_write                         ),
-        .cfg_data_o           (ni_data_read                           ),
+        .cfg_req_i            (ni_en                                  ),
+        .cfg_gnt_o            (ni_gnt                                 ),
+        .cfg_addr_i           (data_addr[7:0]                         ),
+        .cfg_we_i             (data_we                                ),
+        .cfg_be_i             (data_be                                ),
+        .cfg_wdata_i          (data_wdata                             ),
+        .cfg_rvalid_o         (ni_rvalid                              ),
+        .cfg_rdata_o          (ni_data_read                           ),
         .release_peripheral_o (release_peripheral_o                   ),
-        .mem_en_o             (dma_en                                 ),
-        .mem_we_o             (dma_we                                 ),
+        .mem_req_o            (dma_req                                ),
+        .mem_gnt_i            (dma_gnt                                ),
         .mem_addr_o           (dma_addr                               ),
-        .mem_data_o           (dma_data_write                         ),
-        .mem_data_i           (mem_data_i                             ),
-        .mem_stall_i          (cpu_mem_en                             ),
+        .mem_we_o             (dma_we                                 ),
+        .mem_be_o             (dma_be                                 ),
+        .mem_wdata_o          (dma_wdata                              ),
+        .mem_rvalid_i         (dma_rvalid                             ),
+        .mem_rdata_i          (amu_rdata                              ),
         .noc_rx_i             (noc_tx        [HERMES_NPORT - 1]       ),
         .noc_eop_i            (noc_eop_snd   [HERMES_NPORT - 1]       ),
         .noc_credit_o         (noc_credit_snd[HERMES_NPORT - 1]       ),
@@ -348,62 +380,191 @@ module PhiversPE
     );
 
 ////////////////////////////////////////////////////////////////////////////////
-// Memory address multiplexing
+// Data bus
 ////////////////////////////////////////////////////////////////////////////////
 
     /**
      * Memory map:
-     * [0x00000000, 0x40000000[ -> memory
+     * [0x00000000, 0x80000000[ -> memory
      * [0x80000000, 0x90000000[ -> PLIC
      * [0x90000000, 0xA0000000[ -> NI
      * [0xA0000000, 0xB0000000[ -> RTC
      * [0xF0000000, 0xFFFFFFFF] -> DEBUG
      *
-     * Port A belongs to instruction fetch. Port B is shared by load/store and
-     * DMA. A store and a DMA read also compete, as a port has a single address.
-     * Blocking receives spin on the NI registers, so they never lose the port.
+     * Peripherals are accessed in the grant cycle and answer in the next one.
+     * The memory is shared by the CPU and the DMA, which only access memory.
+     * Blocking receives spin on the NI registers, so they never lose the bus.
      */
 
-    logic cpu_mem_en;
+    logic cpu_mem_req;
+    logic periph_req;
+    assign cpu_mem_req = data_req && (data_addr[31] == 1'b0);
+    assign periph_req  = data_req && (data_addr[31] == 1'b1);
 
-    assign cpu_mem_en = cpu_en && (cpu_addr[31] == 1'b0);
+    /* CPU memory transactions granted and not answered yet */
+    logic [1:0] cpu_mem_pending;
 
-    assign mem_en_o   = cpu_mem_en || (dma_en && (dma_addr[31] == 1'b0));
-    assign mem_we_o   = cpu_mem_en ? cpu_we         : dma_we;
-    assign mem_data_o = cpu_mem_en ? cpu_data_write : dma_data_write;
-    assign mem_addr_o = cpu_mem_en ? cpu_addr[30:0] : dma_addr[30:0];
+    /* OBI: a manager gets its responses in order, and a peripheral answers */
+    /* faster than the memory, so it waits for the memory to answer first   */
+    logic periph_gnt;
+    assign periph_gnt = periph_req && (cpu_mem_pending == '0);
 
-    assign plic_en   = cpu_en && (cpu_addr[31:28] == 4'b1000);
-    assign ni_en     = cpu_en && (cpu_addr[31:28] == 4'b1001);
-    assign rtc_en    = cpu_en && (cpu_addr[31:28] == 4'b1010);
+    assign plic_en = periph_gnt && (data_addr[31:28] == 4'b1000);
+    assign ni_en   = periph_gnt && (data_addr[31:28] == 4'b1001);
+    assign rtc_en  = periph_gnt && (data_addr[31:28] == 4'b1010);
 
-    /* On read, the data is available at the next cycle */
-    logic rtc_en_r;
-    logic plic_en_r;
-    logic ni_en_r;
+    /* Every peripheral answers in the next cycle, Debug and unmapped addresses too */
+    logic periph_gnt_r;
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
-        if (!rst_ni) begin
-            rtc_en_r  <= '0;
-            plic_en_r <= '0;
-            ni_en_r   <= '0;
-        end
-        else begin
-            rtc_en_r  <= rtc_en;
-            plic_en_r <= plic_en;
-            ni_en_r   <= ni_en;
-        end
+        if (!rst_ni)
+            periph_gnt_r <= 1'b0;
+        else
+            periph_gnt_r <= periph_gnt;
     end
 
-    always_comb begin
-        if (rtc_en_r)
-            cpu_data_read = rtc_data_read[31:0];
-        else if (plic_en_r)
-            cpu_data_read = plic_data_read;
-        else if (ni_en_r)
-            cpu_data_read = ni_data_read;
+
+    /* Requests reaching the atomic unit: the CPU (id 0) or the DMA (id 1) */
+    logic        amu_req;
+    logic        amu_gnt;
+    logic [31:0] amu_addr;
+    logic        amu_we;
+    logic [3:0]  amu_be;
+    logic [31:0] amu_wdata;
+    logic [5:0]  amu_atop;
+    logic        amu_rvalid;
+    logic [31:0] amu_rdata;
+    logic        amu_exokay;
+
+    /**
+     * Arbiter: the CPU first, but a request left waiting keeps the bus until
+     * its gnt, as OBI forbids changing a request before it is granted.
+     */
+    logic held;
+    logic held_dma;
+    logic sel_dma;
+    assign sel_dma = held ? held_dma : !cpu_mem_req;
+
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (!rst_ni)
+            held <= 1'b0;
         else
-            cpu_data_read = mem_data_i;
+            held <= amu_req && !amu_gnt;
+    end
+
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (!rst_ni)
+            held_dma <= 1'b0;
+        else
+            held_dma <= sel_dma;
+    end
+
+    /* Responses come back in order: the owner of each one, oldest first */
+    logic owner_room;
+    logic rsp_dma;
+
+    /* verilator lint_off UNUSEDSIGNAL */
+    logic owner_tx;
+    logic owner_almost_full;
+    logic owner_almost_empty;
+    logic [3:0] owner_count;
+    /* verilator lint_on UNUSEDSIGNAL */
+
+    logic sel_req;
+    assign sel_req = sel_dma ? dma_req : cpu_mem_req;
+
+    /* The owner FIFO only frees room while a request waits, so it stays stable */
+    assign amu_req   = sel_req && owner_room;
+    assign amu_addr  = sel_dma ? dma_addr  : data_addr;
+    assign amu_we    = sel_dma ? dma_we    : data_we;
+    assign amu_be    = sel_dma ? dma_be    : data_be;
+    assign amu_wdata = sel_dma ? dma_wdata : data_wdata;
+    assign amu_atop  = sel_dma ? '0        : data_atop;
+
+    logic amu_accept;
+    assign amu_accept = amu_req && amu_gnt;
+
+    /* CPU (2 in flight) and DMA (4 in flight) */
+    RingBuffer #(
+        .DATA_SIZE              (1),
+        .BUFFER_SIZE            (8),
+        .FIRST_WORD_FALL_THROUGH(0),
+        .ALMOST_FULL_THRESHOLD  (0),
+        .ALMOST_EMPTY_THRESHOLD (0)
+    )
+    owner_buffer (
+        .clk_i         (clk_i             ),
+        .rst_ni        (rst_ni            ),
+        .buf_rst_i     (1'b0              ),
+        .rx_i          (amu_accept        ),
+        .rx_ack_o      (owner_room        ),
+        .data_i        (sel_dma           ),
+        .tx_o          (owner_tx          ),
+        .tx_ack_i      (amu_rvalid        ),
+        .data_o        (rsp_dma           ),
+        .count_o       (owner_count       ),
+        .almost_full_o (owner_almost_full ),
+        .almost_empty_o(owner_almost_empty)
+    );
+
+    AtomicALU #(
+        .AMOEXT    (AMO_A),
+        .BUS_WIDTH (32   ),
+        .NUM_IDS   (2    )
+    )
+    amu (
+        .clk      (clk_i       ),
+        .reset_n  (rst_ni      ),
+        .req_i    (amu_req     ),
+        .gnt_o    (amu_gnt     ),
+        .addr_i   (amu_addr    ),
+        .we_i     (amu_we      ),
+        .be_i     (amu_be      ),
+        .wdata_i  (amu_wdata   ),
+        .atop_i   (amu_atop    ),
+        .aid_i    (sel_dma     ),
+        .rvalid_o (amu_rvalid  ),
+        .rdata_o  (amu_rdata   ),
+        .exokay_o (amu_exokay  ),
+        .req_o    (mem_req_o   ),
+        .gnt_i    (mem_gnt_i   ),
+        .addr_o   (mem_addr_o  ),
+        .we_o     (mem_we_o    ),
+        .be_o     (mem_be_o    ),
+        .wdata_o  (mem_wdata_o ),
+        .rvalid_i (mem_rvalid_i),
+        .rdata_i  (mem_rdata_i )
+    );
+
+    logic cpu_mem_gnt;
+    assign cpu_mem_gnt = !sel_dma && amu_gnt;
+
+    logic cpu_mem_rvalid;
+    assign cpu_mem_rvalid = amu_rvalid && !rsp_dma;
+
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (!rst_ni)
+            cpu_mem_pending <= '0;
+        else
+            cpu_mem_pending <= cpu_mem_pending + 2'(cpu_mem_req && cpu_mem_gnt) - 2'(cpu_mem_rvalid);
+    end
+
+    assign dma_gnt    = sel_dma && amu_gnt;
+    assign dma_rvalid = amu_rvalid && rsp_dma;
+
+    assign data_gnt    = periph_gnt || cpu_mem_gnt;
+    assign data_rvalid = periph_gnt_r || cpu_mem_rvalid;
+    assign data_exokay = amu_exokay;
+
+    always_comb begin
+        if (rtc_rvalid)
+            data_rdata = rtc_data_read;
+        else if (plic_rvalid)
+            data_rdata = plic_data_read;
+        else if (ni_rvalid)
+            data_rdata = ni_data_read;
+        else
+            data_rdata = amu_rdata;
     end
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -413,8 +574,8 @@ module PhiversPE
     logic dbg_en;
     logic dbg_we;
 
-    assign dbg_en = cpu_en && (cpu_addr[31:28] == 4'b1111);
-    assign dbg_we = (| cpu_we);
+    assign dbg_en = periph_gnt && (data_addr[31:28] == 4'b1111);
+    assign dbg_we = data_we;
     
     Debug #(
         .ADDRESS         (ADDRESS                        ),
@@ -428,13 +589,13 @@ module PhiversPE
         .DBG_TRAFFIC_FILE("./debug/traffic_router.txt"   )
     )
     dbg (
-        .clk_i      (clk_i         ),
-        .rst_ni     (rst_ni        ),
-        .en_i       (dbg_en        ),
-        .we_i       (dbg_we        ),
-        .addr_i     (cpu_addr[23:0]),
-        .data_i     (cpu_data_write),
-        .tick_cntr_i(mtime         )
+        .clk_i      (clk_i          ),
+        .rst_ni     (rst_ni         ),
+        .en_i       (dbg_en         ),
+        .we_i       (dbg_we         ),
+        .addr_i     (data_addr[23:0]),
+        .data_i     (data_wdata     ),
+        .tick_cntr_i(mtime          )
     );
 
     if (TRAFFIC_DEBUG) begin : gen_traffic_dbg
