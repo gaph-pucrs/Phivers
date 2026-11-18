@@ -101,11 +101,11 @@ module PhiversMC
     logic        ma_inj_credit_rx;
     logic [31:0] ma_inj_data_rx;
 
+    /* No OSZ_WINDOW: management tasks are never mapped inside the OSZ region */
     TaskInjector #(
         .INJECTOR_ADDRESS ({1'b1, PORT_MA_INJ[1:0], 13'b0, ADDR_MA_INJ}),
         .FLIT_SIZE        (32                                          ),
-        .INJECT_MAPPER    (1                                           ),
-        .OSZ_WINDOW       (OSZ_WINDOW                                  )
+        .INJECT_MAPPER    (1                                           )
     )
     MAInjector (
         .clk_i           (clk_i           ),
