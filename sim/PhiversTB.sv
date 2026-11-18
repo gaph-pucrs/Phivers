@@ -3,6 +3,7 @@
 
 module PhiversTB
     import RS5_pkg::*;
+    import HermesPkg::*;
     import PhiversPkg::*;
 #(
     parameter bit TRACE = 0
@@ -56,6 +57,13 @@ module PhiversTB
     logic        app_src_credit;
     logic [31:0] app_src_data;
 
+    logic        edge_rx         [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
+    logic        edge_eop        [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
+    logic [31:0] edge_data       [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
+    /* verilator lint_off UNUSEDSIGNAL */
+    logic        edge_credit     [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
+    /* verilator lint_on UNUSEDSIGNAL */
+
     logic        imem_enable     [(N_PE_X - 1):0][(N_PE_Y - 1):0];
     logic [29:0] imem_addr       [(N_PE_X - 1):0][(N_PE_Y - 1):0];
     logic [31:0] imem_data       [(N_PE_X - 1):0][(N_PE_Y - 1):0];
@@ -85,7 +93,7 @@ module PhiversTB
         .IMEM_PAGE_SZ  (IMEM_PAGE_SZ ),
         .DMEM_PAGE_SZ  (DMEM_PAGE_SZ ),
         .OSZ_WINDOW    (OSZ_WINDOW   ),
-        .OSZ_ATTACK    (OSZ_ATTACK   ),
+        .EXT_EDGE      (OSZ_ATTACK   ),
         .ADDR_MA_INJ   (ADDR_MA_INJ  ),
         .PORT_MA_INJ   (PORT_MA_INJ  ),
         .ADDR_APP_INJ  (ADDR_APP_INJ ),
@@ -112,6 +120,10 @@ module PhiversTB
         .app_src_rx_i     (app_src_rx     ),
         .app_src_credit_o (app_src_credit ),
         .app_src_data_i   (app_src_data   ),
+        .edge_rx_i        (edge_rx        ),
+        .edge_eop_i       (edge_eop       ),
+        .edge_data_i      (edge_data      ),
+        .edge_credit_o    (edge_credit    ),
         .imem_enable_o    (imem_enable    ),
         .imem_addr_o      (imem_addr      ),
         .imem_data_i      (imem_data      ),
@@ -128,6 +140,128 @@ module PhiversTB
         .ddma_data_i      (ddma_data      ),
         .dma_data_o       (dma_data       )
     );
+
+//////////////////////////////////////////////////////////////////////////////
+// OSZ zone attack test
+//////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Simulation only (OSZ_ATTACK = 1). Attackers on unused mesh-edge ports,
+     * driven through the many-core's edge ports (EXT_EDGE), inject packets that
+     * ignore the single-entrance routing:
+     *   0: east edge of (N_PE_X-1, 0)      -> (0, 0)        reaches a blocked E port below the entrance row
+     *   1: east edge of (N_PE_X-1, OSZ_Y-1) -> (0, OSZ_Y-1)  wrong source at the access point
+     *                                       -> (OSZ_X-1, OSZ_Y-1) service not allowed at the access point
+     *   2: north edge of (0, N_PE_Y-1)     -> (0, OSZ_Y-1)  reaches the zone's blocked N edge
+     */
+    localparam int OSZ_X = 32'(OSZ_WINDOW[15:8]);
+    localparam int OSZ_Y = 32'(OSZ_WINDOW[ 7:0]);
+
+    localparam bit ATK_ROW0 = OSZ_ATTACK && OSZ_Y > 0;
+    localparam bit ATK_TOP  = OSZ_ATTACK && OSZ_Y > 1;
+    localparam bit ATK_N    = OSZ_ATTACK && OSZ_Y > 0 && OSZ_Y < N_PE_Y;
+
+    logic        atk_tx  [2:0];
+    logic        atk_eop [2:0];
+    logic [31:0] atk_data[2:0];
+
+    if (ATK_ROW0) begin : gen_atk_row0
+        OszAttacker #(
+            .NAME  ("E edge of row 0"),
+            .START (1_000_000),
+            .NPKT  (1),
+            .HEADER('{{8'h00, 8'h43, 8'd0, 8'd0}, '0, '0, '0}),
+            .SOURCE('{{16'h0000, 8'(N_PE_X - 1), 8'd0}, '0, '0, '0})
+        )
+        atk (
+            .clk_i   (clk                                          ),
+            .rst_ni  (rst_n                                        ),
+            .tx_o    (atk_tx[0]                                    ),
+            .eop_o   (atk_eop[0]                                   ),
+            .data_o  (atk_data[0]                                  ),
+            .credit_i(edge_credit[N_PE_X - 1][0][2'(HERMES_EAST)]  )
+        );
+    end
+    else begin : gen_no_atk_row0
+        assign atk_tx[0]   = 1'b0;
+        assign atk_eop[0]  = 1'b0;
+        assign atk_data[0] = '0;
+    end
+
+    if (ATK_TOP) begin : gen_atk_top
+        OszAttacker #(
+            .NAME  ("E edge of the region top row"),
+            .START (1_100_000),
+            .NPKT  (2),
+            .HEADER('{{8'h00, 8'h43, 8'd0, 8'(OSZ_Y - 1)}, {8'h00, 8'h50, 8'(OSZ_X - 1), 8'(OSZ_Y - 1)}, '0, '0}),
+            .SOURCE('{{16'h0000, 8'(N_PE_X - 1), 8'(OSZ_Y - 1)}, {16'h0000, 8'(N_PE_X - 1), 8'(OSZ_Y - 1)}, '0, '0})
+        )
+        atk (
+            .clk_i   (clk                                              ),
+            .rst_ni  (rst_n                                            ),
+            .tx_o    (atk_tx[1]                                        ),
+            .eop_o   (atk_eop[1]                                       ),
+            .data_o  (atk_data[1]                                      ),
+            .credit_i(edge_credit[N_PE_X - 1][OSZ_Y - 1][2'(HERMES_EAST)])
+        );
+    end
+    else begin : gen_no_atk_top
+        assign atk_tx[1]   = 1'b0;
+        assign atk_eop[1]  = 1'b0;
+        assign atk_data[1] = '0;
+    end
+
+    if (ATK_N) begin : gen_atk_n
+        OszAttacker #(
+            .NAME  ("N edge of column 0"),
+            .START (1_300_000),
+            .NPKT  (1),
+            .HEADER('{{8'h00, 8'h43, 8'd0, 8'(OSZ_Y - 1)}, '0, '0, '0}),
+            .SOURCE('{{16'h0000, 8'd0, 8'(N_PE_Y - 1)}, '0, '0, '0})
+        )
+        atk (
+            .clk_i   (clk                                           ),
+            .rst_ni  (rst_n                                         ),
+            .tx_o    (atk_tx[2]                                     ),
+            .eop_o   (atk_eop[2]                                    ),
+            .data_o  (atk_data[2]                                   ),
+            .credit_i(edge_credit[0][N_PE_Y - 1][2'(HERMES_NORTH)]  )
+        );
+    end
+    else begin : gen_no_atk_n
+        assign atk_tx[2]   = 1'b0;
+        assign atk_eop[2]  = 1'b0;
+        assign atk_data[2] = '0;
+    end
+
+    /* Edge port inputs: idle, except where an attacker sits */
+    always_comb begin
+        for (int x = 0; x < N_PE_X; x++) begin
+            for (int y = 0; y < N_PE_Y; y++) begin
+                for (int p = 0; p < HERMES_NPORT - 1; p++) begin
+                    edge_rx  [x][y][p] = 1'b0;
+                    edge_eop [x][y][p] = 1'b0;
+                    edge_data[x][y][p] = '0;
+                end
+            end
+        end
+
+        if (ATK_ROW0) begin
+            edge_rx  [N_PE_X - 1][0][2'(HERMES_EAST)] = atk_tx[0];
+            edge_eop [N_PE_X - 1][0][2'(HERMES_EAST)] = atk_eop[0];
+            edge_data[N_PE_X - 1][0][2'(HERMES_EAST)] = atk_data[0];
+        end
+        if (ATK_TOP) begin
+            edge_rx  [N_PE_X - 1][OSZ_Y - 1][2'(HERMES_EAST)] = atk_tx[1];
+            edge_eop [N_PE_X - 1][OSZ_Y - 1][2'(HERMES_EAST)] = atk_eop[1];
+            edge_data[N_PE_X - 1][OSZ_Y - 1][2'(HERMES_EAST)] = atk_data[1];
+        end
+        if (ATK_N) begin
+            edge_rx  [0][N_PE_Y - 1][2'(HERMES_NORTH)] = atk_tx[2];
+            edge_eop [0][N_PE_Y - 1][2'(HERMES_NORTH)] = atk_eop[2];
+            edge_data[0][N_PE_Y - 1][2'(HERMES_NORTH)] = atk_data[2];
+        end
+    end
 
     /* Macros, not parameters: Verilator applies a bind even inside a false generate if */
 `ifdef RS5_DEBUG

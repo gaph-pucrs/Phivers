@@ -13,8 +13,8 @@ module PhiversMC
     parameter               IMEM_PAGE_SZ                              = 32768,
     parameter               DMEM_PAGE_SZ                              = 32768,
     parameter logic [15:0]  OSZ_WINDOW                                = 16'h0000,
-    parameter bit           OSZ_ATTACK                                = 0,          /* simulation-only zone attack test */
-    parameter logic [15:0]  ADDR_MA_INJ                              = 16'h0000,
+    parameter bit           EXT_EDGE                                  = 0,          /* unused mesh-edge ports driven from edge_* */
+    parameter logic [15:0]  ADDR_MA_INJ                               = 16'h0000,
     parameter hermes_port_t PORT_MA_INJ                               = HERMES_SOUTH,
     parameter logic [15:0]  ADDR_APP_INJ                              = 16'h0100,
     parameter hermes_port_t PORT_APP_INJ                              = HERMES_SOUTH,
@@ -43,6 +43,18 @@ module PhiversMC
     input  logic        app_src_rx_i,
     output logic        app_src_credit_o,
     input  logic [31:0] app_src_data_i,
+
+    /**
+     * Mesh-edge Hermes ports, indexed like the PE ports. With EXT_EDGE = 1 the
+     * unused edge ports take their input from here (e.g. testbench traffic);
+     * otherwise they are grounded and these inputs are ignored.
+     */
+    /* verilator lint_off UNUSEDSIGNAL */
+    input  logic        edge_rx_i         [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0],
+    input  logic        edge_eop_i        [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0],
+    input  logic [31:0] edge_data_i       [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0],
+    /* verilator lint_on UNUSEDSIGNAL */
+    output logic        edge_credit_o     [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0],
 
     /* Instruction memory interface: read-only */
     output logic        imem_enable_o     [(N_PE_X - 1):0][(N_PE_Y - 1):0],
@@ -184,95 +196,6 @@ module PhiversMC
 ////////////////////////////////////////////////////////////////////////////////
 // Add new peripherals here
 ////////////////////////////////////////////////////////////////////////////////
-
-    /**
-     * OSZ zone attack test (simulation only, OSZ_ATTACK = 1). Attackers on
-     * unused mesh-edge ports inject packets that ignore the single-entrance
-     * routing:
-     *   0: east edge of (N_PE_X-1, 0)      -> (0, 0)        reaches a blocked E port below the entrance row
-     *   1: east edge of (N_PE_X-1, OSZ_Y-1) -> (0, OSZ_Y-1)  wrong source at the access point
-     *                                       -> (OSZ_X-1, OSZ_Y-1) service not allowed at the access point
-     *   2: north edge of (0, N_PE_Y-1)     -> (0, OSZ_Y-1)  reaches the zone's blocked N edge
-     */
-    localparam int OSZ_X = 32'(OSZ_WINDOW[15:8]);
-    localparam int OSZ_Y = 32'(OSZ_WINDOW[ 7:0]);
-
-    localparam bit ATK_ROW0 = OSZ_ATTACK && OSZ_Y > 0;
-    localparam bit ATK_TOP  = OSZ_ATTACK && OSZ_Y > 1;
-    localparam bit ATK_N    = OSZ_ATTACK && OSZ_Y > 0 && OSZ_Y < N_PE_Y;
-
-    logic        atk_tx  [2:0];
-    logic        atk_eop [2:0];
-    logic [31:0] atk_data[2:0];
-
-    if (ATK_ROW0) begin : gen_atk_row0
-        OszAttacker #(
-            .NAME  ("E edge of row 0"),
-            .START (1_000_000),
-            .NPKT  (1),
-            .HEADER('{{8'h00, 8'h43, 8'd0, 8'd0}, '0, '0, '0}),
-            .SOURCE('{{16'h0000, 8'(N_PE_X - 1), 8'd0}, '0, '0, '0})
-        )
-        atk (
-            .clk_i   (clk_i                                      ),
-            .rst_ni  (rst_ni                                     ),
-            .tx_o    (atk_tx[0]                                  ),
-            .eop_o   (atk_eop[0]                                 ),
-            .data_o  (atk_data[0]                                ),
-            .credit_i(credit_rx[N_PE_X - 1][0][2'(HERMES_EAST)]  )
-        );
-    end
-    else begin : gen_no_atk_row0
-        assign atk_tx[0]   = 1'b0;
-        assign atk_eop[0]  = 1'b0;
-        assign atk_data[0] = '0;
-    end
-
-    if (ATK_TOP) begin : gen_atk_top
-        OszAttacker #(
-            .NAME  ("E edge of the region top row"),
-            .START (1_100_000),
-            .NPKT  (2),
-            .HEADER('{{8'h00, 8'h43, 8'd0, 8'(OSZ_Y - 1)}, {8'h00, 8'h50, 8'(OSZ_X - 1), 8'(OSZ_Y - 1)}, '0, '0}),
-            .SOURCE('{{16'h0000, 8'(N_PE_X - 1), 8'(OSZ_Y - 1)}, {16'h0000, 8'(N_PE_X - 1), 8'(OSZ_Y - 1)}, '0, '0})
-        )
-        atk (
-            .clk_i   (clk_i                                          ),
-            .rst_ni  (rst_ni                                         ),
-            .tx_o    (atk_tx[1]                                      ),
-            .eop_o   (atk_eop[1]                                     ),
-            .data_o  (atk_data[1]                                    ),
-            .credit_i(credit_rx[N_PE_X - 1][OSZ_Y - 1][2'(HERMES_EAST)])
-        );
-    end
-    else begin : gen_no_atk_top
-        assign atk_tx[1]   = 1'b0;
-        assign atk_eop[1]  = 1'b0;
-        assign atk_data[1] = '0;
-    end
-
-    if (ATK_N) begin : gen_atk_n
-        OszAttacker #(
-            .NAME  ("N edge of column 0"),
-            .START (1_300_000),
-            .NPKT  (1),
-            .HEADER('{{8'h00, 8'h43, 8'd0, 8'(OSZ_Y - 1)}, '0, '0, '0}),
-            .SOURCE('{{16'h0000, 8'd0, 8'(N_PE_Y - 1)}, '0, '0, '0})
-        )
-        atk (
-            .clk_i   (clk_i                                       ),
-            .rst_ni  (rst_ni                                      ),
-            .tx_o    (atk_tx[2]                                   ),
-            .eop_o   (atk_eop[2]                                  ),
-            .data_o  (atk_data[2]                                 ),
-            .credit_i(credit_rx[0][N_PE_Y - 1][2'(HERMES_NORTH)]  )
-        );
-    end
-    else begin : gen_no_atk_n
-        assign atk_tx[2]   = 1'b0;
-        assign atk_eop[2]  = 1'b0;
-        assign atk_data[2] = '0;
-    end
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -432,6 +355,25 @@ module PhiversMC
 // NoC border grounding and peripheral connection
 ////////////////////////////////////////////////////////////////////////////////
 
+    /* Edge port input: ground, or the edge_* inputs with EXT_EDGE = 1 */
+    logic        edge_rx  [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
+    logic        edge_eop [(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
+    logic [31:0] edge_data[(N_PE_X - 1):0][(N_PE_Y - 1):0][(HERMES_NPORT - 2):0];
+
+    always_comb begin
+        for (int x = 0; x < N_PE_X; x++) begin
+            for (int y = 0; y < N_PE_Y; y++) begin
+                for (int p = 0; p < HERMES_NPORT - 1; p++) begin
+                    edge_rx  [x][y][p] = EXT_EDGE && edge_rx_i [x][y][p];
+                    edge_eop [x][y][p] = EXT_EDGE && edge_eop_i[x][y][p];
+                    edge_data[x][y][p] = EXT_EDGE ? edge_data_i[x][y][p] : '0;
+                end
+            end
+        end
+    end
+
+    assign edge_credit_o = credit_rx;
+
     always_comb begin
         /* MA Injector address */
         localparam MA_INJ_X = 32'(ADDR_MA_INJ[15:8]);
@@ -440,31 +382,31 @@ module PhiversMC
         /* App Injector address */
         localparam APP_INJ_X = 32'(ADDR_APP_INJ[15:8]);
         localparam APP_INJ_Y = 32'(ADDR_APP_INJ[ 7:0]);
-        
+
         /* North and south ground */
         for (int x = 0; x < N_PE_X; x++) begin
-            rx       [x][N_PE_Y - 1][2'(HERMES_NORTH)] = '0;
-            eop_rx   [x][N_PE_Y - 1][2'(HERMES_NORTH)] = '0;
+            rx       [x][N_PE_Y - 1][2'(HERMES_NORTH)] = edge_rx  [x][N_PE_Y - 1][2'(HERMES_NORTH)];
+            eop_rx   [x][N_PE_Y - 1][2'(HERMES_NORTH)] = edge_eop [x][N_PE_Y - 1][2'(HERMES_NORTH)];
             credit_tx[x][N_PE_Y - 1][2'(HERMES_NORTH)] = '1;
-            data_rx  [x][N_PE_Y - 1][2'(HERMES_NORTH)] = '0;
+            data_rx  [x][N_PE_Y - 1][2'(HERMES_NORTH)] = edge_data[x][N_PE_Y - 1][2'(HERMES_NORTH)];
 
-            rx       [x][0         ][2'(HERMES_SOUTH)] = '0;
-            eop_rx   [x][0         ][2'(HERMES_SOUTH)] = '0;
+            rx       [x][0         ][2'(HERMES_SOUTH)] = edge_rx  [x][0         ][2'(HERMES_SOUTH)];
+            eop_rx   [x][0         ][2'(HERMES_SOUTH)] = edge_eop [x][0         ][2'(HERMES_SOUTH)];
             credit_tx[x][0         ][2'(HERMES_SOUTH)] = '1;
-            data_rx  [x][0         ][2'(HERMES_SOUTH)] = '0;
+            data_rx  [x][0         ][2'(HERMES_SOUTH)] = edge_data[x][0         ][2'(HERMES_SOUTH)];
         end
 
         /* East and west ground */
         for (int y = 0; y < N_PE_Y; y++) begin
-            rx       [N_PE_X - 1][y][2'(HERMES_EAST)]  = '0;
-            eop_rx   [N_PE_X - 1][y][2'(HERMES_EAST)]  = '0;
+            rx       [N_PE_X - 1][y][2'(HERMES_EAST)]  = edge_rx  [N_PE_X - 1][y][2'(HERMES_EAST)];
+            eop_rx   [N_PE_X - 1][y][2'(HERMES_EAST)]  = edge_eop [N_PE_X - 1][y][2'(HERMES_EAST)];
             credit_tx[N_PE_X - 1][y][2'(HERMES_EAST)]  = '1;
-            data_rx  [N_PE_X - 1][y][2'(HERMES_EAST)]  = '0;
+            data_rx  [N_PE_X - 1][y][2'(HERMES_EAST)]  = edge_data[N_PE_X - 1][y][2'(HERMES_EAST)];
 
-            rx       [0         ][y][2'(HERMES_WEST)]  = '0;
-            eop_rx   [0         ][y][2'(HERMES_WEST)]  = '0;
+            rx       [0         ][y][2'(HERMES_WEST)]  = edge_rx  [0         ][y][2'(HERMES_WEST)];
+            eop_rx   [0         ][y][2'(HERMES_WEST)]  = edge_eop [0         ][y][2'(HERMES_WEST)];
             credit_tx[0         ][y][2'(HERMES_WEST)]  = '1;
-            data_rx  [0         ][y][2'(HERMES_WEST)]  = '0;
+            data_rx  [0         ][y][2'(HERMES_WEST)]  = edge_data[0         ][y][2'(HERMES_WEST)];
         end
 
         /* MA Injector connection */
@@ -478,23 +420,6 @@ module PhiversMC
         eop_rx   [APP_INJ_X][APP_INJ_Y][2'(PORT_APP_INJ)] = app_inj_eop_tx    && release_peripheral[APP_INJ_X][APP_INJ_Y];
         credit_tx[APP_INJ_X][APP_INJ_Y][2'(PORT_APP_INJ)] = app_inj_credit_rx && release_peripheral[APP_INJ_X][APP_INJ_Y];
         data_rx  [APP_INJ_X][APP_INJ_Y][2'(PORT_APP_INJ)] = app_inj_data_tx;
-
-        /* OSZ zone attack test: attackers drive their edge ports */
-        if (ATK_ROW0) begin
-            rx      [N_PE_X - 1][0][2'(HERMES_EAST)] = atk_tx[0];
-            eop_rx  [N_PE_X - 1][0][2'(HERMES_EAST)] = atk_eop[0];
-            data_rx [N_PE_X - 1][0][2'(HERMES_EAST)] = atk_data[0];
-        end
-        if (ATK_TOP) begin
-            rx      [N_PE_X - 1][OSZ_Y - 1][2'(HERMES_EAST)] = atk_tx[1];
-            eop_rx  [N_PE_X - 1][OSZ_Y - 1][2'(HERMES_EAST)] = atk_eop[1];
-            data_rx [N_PE_X - 1][OSZ_Y - 1][2'(HERMES_EAST)] = atk_data[1];
-        end
-        if (ATK_N) begin
-            rx      [0][N_PE_Y - 1][2'(HERMES_NORTH)] = atk_tx[2];
-            eop_rx  [0][N_PE_Y - 1][2'(HERMES_NORTH)] = atk_eop[2];
-            data_rx [0][N_PE_Y - 1][2'(HERMES_NORTH)] = atk_data[2];
-        end
 
         /* Insert the IO wiring for your component here if it connected to a port */
     end
